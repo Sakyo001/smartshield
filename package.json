@@ -1,0 +1,32 @@
+{
+  "name": "phishguard-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "AI-powered phishing detection - simple and effective",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types",
+    "test": "turbo run test",
+    "clean": "rm -rf node_modules packages/*/node_modules apps/*/node_modules",
+    "reset": "npm run clean && pnpm install",
+    "build:extension": "cd apps/extension && npm run build",
+    "start:web": "cd apps/web && npm run dev"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "turbo": "^2.5.8",
+    "typescript": "5.9.2"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["phishing", "security", "browser-extension", "web-app", "ai"],
+  "repository": {
+    "type": "git",
+    "url": "your-repo-url"
+  }
+}

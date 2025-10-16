@@ -1,0 +1,12 @@
+{
+  "name": "@phishguard/ml",
+  "version": "1.0.0",
+  "description": "Simple phishing detection for PhishGuard",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo 'Building ML package...'",
+    "dev": "echo 'ML package ready for development'"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            width: 320px;
+            padding: 16px;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .status {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            border: 2px solid;
+        }
+        
+        .status.safe {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        
+        .status.warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        
+        .status.danger {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        
+        .scan-button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .scan-button:hover {
+            background: #0056b3;
+        }
+        
+        .warnings {
+            margin-top: 8px;
+            font-size: 12px;
+        }
+        
+        .warnings ul {
+            margin: 4px 0;
+            padding-left: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">🛡️ PhishGuard</div>
+        <div style="font-size: 12px; color: #666;">Simple Phishing Protection</div>
+    </div>
+
+    <div id="status" class="status safe">
+        <div id="status-text">Checking current page...</div>
+        <div id="warnings" class="warnings"></div>
+    </div>
+
+    <button id="scan-button" class="scan-button">Scan This Page</button>
+
+    <div style="margin-top: 12px; font-size: 11px; color: #666; text-align: center;">
+        Stay safe online! Always verify suspicious websites.
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

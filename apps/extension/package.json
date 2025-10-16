@@ -1,0 +1,12 @@
+{
+  "name": "phishguard-extension",
+  "version": "1.0.0",
+  "description": "PhishGuard browser extension - simple phishing protection",
+  "scripts": {
+    "build": "echo 'Building extension...' && xcopy /E /I /Y src dist",
+    "dev": "echo 'Extension ready for development'"
+  },
+  "dependencies": {
+    "@phishguard/ml": "workspace:*"
+  }
+}

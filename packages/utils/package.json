@@ -1,0 +1,10 @@
+{
+  "name": "@phishguard/utils",
+  "version": "1.0.0",
+  "description": "Shared utilities for PhishGuard",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo 'Building utils package...'",
+    "dev": "echo 'Utils package ready for development'"
+  }
+}
