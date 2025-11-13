@@ -1,10 +1,15 @@
-import auth from "@lib/auth"
-import { redirect } from "next/navigation"
+import {getServerSession} from 'next-auth/next';
+import {redirect} from 'next/navigation';
+import {authOptions} from '@lib/auth';
+import AdminDashboardClient from './AdminDashboardClient';
 
-export default async function AdminDashboard() {
-  const session = await auth()
-  if (!session) redirect("/admin/login")
-  if (session.user.role !== "admin") redirect("/dashboard")
+export default async function AdminDashboardPage() {
+  const session = await getServerSession(authOptions);
 
-  return <div>Welcome Admin {session.user.name}</div>
+  if(!session || session.user.role !== 'admin'){
+    redirect('/login');
+  }
+
+  return <AdminDashboardClient session={session} />
+
 }
