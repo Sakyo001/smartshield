@@ -1,12 +1,13 @@
-import { getServerSession } from "next-auth"
-import { authOptions } from "@lib/auth"
+import { createClient } from "@lib/supabase-server"
 import { redirect } from "next/navigation"
 
 export default async function DashboardRedirectPage() {
-  const session = await getServerSession(authOptions)
+  const supabase = await createClient()
+  
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session) redirect("/login")
+  if (!user) redirect("/login")
 
   // Redirect to dynamic URL
-  redirect(`/dashboard/${session.user.id}`)
+  redirect(`/dashboard/${user.id}`)
 }
