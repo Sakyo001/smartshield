@@ -12,7 +12,7 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: '/login',
-    error: '/login', // Redirect errors to login page instead of /api/error
+    error: '/login', 
   },
   callbacks: {
     async session({ session, token }) {

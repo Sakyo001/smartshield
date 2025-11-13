@@ -13,7 +13,9 @@ export default function LoginPage() {
 
   return (
     <div>
-      <button onClick={() => signIn("credentials")}>Sign in</button>
+      <button onClick={() => signIn("google", {
+        callbackUrl: '/dashboard'
+      })}>Sign in</button>
     </div>
   )
 }
