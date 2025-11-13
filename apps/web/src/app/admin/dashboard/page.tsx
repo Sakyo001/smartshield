@@ -1,15 +1,17 @@
-import {getServerSession} from 'next-auth/next';
-import {redirect} from 'next/navigation';
-import {authOptions} from '@lib/auth';
+import { createClient } from '@lib/supabase-server';
+import { redirect } from 'next/navigation';
 import AdminDashboardClient from './AdminDashboardClient';
 
 export default async function AdminDashboardPage() {
-  const session = await getServerSession(authOptions);
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if(!session || session.user.role !== 'admin'){
+  // Check if user is admin (you may need to adjust this based on your user metadata)
+  const isAdmin = user?.email === 'admin@example.com' || user?.user_metadata?.role === 'admin';
+
+  if (!user || !isAdmin) {
     redirect('/login');
   }
 
-  return <AdminDashboardClient session={session} />
-
+  return <AdminDashboardClient user={user} />
 }
