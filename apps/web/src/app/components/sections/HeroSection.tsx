@@ -26,9 +26,9 @@ export default function HeroSection() {
               >
                 Get the Extension
               </Link>
-              <button className="text-white border border-gray-600 px-7 py-3 rounded-lg hover:border-gray-400 hover:bg-white/5 transition font-medium">
+              <Link href="/dashboard" className="text-white border border-gray-600 px-7 py-3 rounded-lg hover:border-gray-400 hover:bg-white/5 transition font-medium">
                 Scan Website
-              </button>
+              </Link>
             </div>
           </div>
 
@@ -39,6 +39,7 @@ export default function HeroSection() {
               alt="SmartShield Protection"
               width={600}
               height={400}
+              priority
               className="w-full h-auto relative z-10"
             />
           </div>
