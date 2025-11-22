@@ -11,19 +11,19 @@ export default function AIBanner() {
   ]
 
   return (
-    <section className="py-20 px-6 bg-[#0a0a0f]">
+    <section className="py-20 px-6 bg-gray-100 dark:bg-[#0a0a0f] transition-colors">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-gradient-to-br from-[#1a1a2e] to-[#0f0f1e] rounded-3xl overflow-hidden">
+        <div className="bg-linear-to-br from-gray-200 to-gray-300 dark:from-[#1a1a2e] dark:to-[#0f0f1e] rounded-3xl overflow-hidden transition-colors">
           <div className="grid md:grid-cols-2 gap-8 items-center">
             {/* Left Content */}
             <div className="p-12 lg:p-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6 leading-tight">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6 leading-tight transition-colors">
                 <span className="text-[#7B83FF]">Smarter</span> Protection<br />
                 Powered by <span className="text-[#7B83FF]">AI</span>
               </h2>
               <ul className="space-y-4 mb-8">
                 {features.map((feature, index) => (
-                  <li key={index} className="flex items-center gap-3 text-white">
+                  <li key={index} className="flex items-center gap-3 text-gray-900 dark:text-white transition-colors">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M6 10L9 13L14 7" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
@@ -38,7 +38,7 @@ export default function AIBanner() {
                 >
                   Get the Extension
                 </Link>
-                <button className="text-white border border-gray-600 px-7 py-3 rounded-lg hover:border-gray-400 hover:bg-white/5 transition font-medium">
+                <button className="text-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 px-7 py-3 rounded-lg hover:border-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 transition font-medium">
                   Scan Website
                 </button>
               </div>

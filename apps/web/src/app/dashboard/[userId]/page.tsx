@@ -84,7 +84,7 @@ export default function UserDashboard() {
             }}
             className="text-white border border-white rounded-full px-5 py-2 hover:bg-white hover:text-[#0a0a0f] transition flex items-center gap-2 text-sm"
           >
-            Try For Free Now
+            Logout
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>

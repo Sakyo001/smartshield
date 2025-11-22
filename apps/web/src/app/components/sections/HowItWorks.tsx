@@ -35,31 +35,31 @@ export default function HowItWorks() {
   ]
 
   return (
-    <section className="py-20 px-6 bg-white">
+    <section className="py-20 px-6 bg-white dark:bg-white transition-colors">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-black mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-black mb-4 transition-colors">
             How <span className="text-[#6B73FF]">SmartShield</span> Protects You
           </h2>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
           {steps.map((step, index) => (
-            <div key={index} className="text-center bg-gray-50 rounded-2xl p-8 relative">
+            <div key={index} className="text-center bg-gray-100 dark:bg-gray-50 rounded-2xl p-8 relative transition-colors">
               <div className="absolute top-6 left-6 w-10 h-10 bg-[#E5E7FF] rounded-full flex items-center justify-center text-[#6B73FF] font-bold text-lg">
                 {step.number}
               </div>
               <div className="mb-6 mt-8">
                 <Image
-                  src={images[index].src}
+                  src={step.icon}
                   alt={step.title}
                   width={120}
                   height={120}
                   className="mx-auto"
                 />
               </div>
-              <h3 className="text-xl font-bold text-black mb-3">{step.title}</h3>
-              <p className="text-gray-600 text-sm leading-relaxed">{step.description}</p>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-black mb-3 transition-colors">{step.title}</h3>
+              <p className="text-gray-700 dark:text-gray-600 text-sm leading-relaxed transition-colors">{step.description}</p>
             </div>
           ))}
         </div>

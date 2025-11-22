@@ -37,14 +37,14 @@ export default function FAQSection() {
   ]
 
   return (
-    <section className="py-20 px-6 bg-white">
+    <section className="py-20 px-6 bg-white dark:bg-white transition-colors">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-black mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-black mb-4 transition-colors">
             Answers To<br />
             Common <span className="text-[#6B73FF]">Questions</span>
           </h2>
-          <p className="text-gray-600 text-base">
+          <p className="text-gray-600 dark:text-gray-600 text-base transition-colors">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
           </p>
         </div>
@@ -53,14 +53,14 @@ export default function FAQSection() {
           {faqs.map((faq, index) => (
             <div
               key={index}
-              className="border-b border-gray-300"
+              className="border-b border-gray-300 dark:border-gray-300"
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
                 className="w-full px-0 py-5 flex items-center justify-between text-left"
               >
-                <span className="text-black font-normal pr-4 text-sm">{faq.question}</span>
-                <div className="shrink-0 w-6 h-6 rounded-full bg-black flex items-center justify-center">
+                <span className="text-gray-900 dark:text-black font-normal pr-4 text-sm transition-colors">{faq.question}</span>
+                <div className="shrink-0 w-6 h-6 rounded-full bg-gray-900 dark:bg-black flex items-center justify-center transition-colors">
                   <svg
                     width="12"
                     height="12"
@@ -80,7 +80,7 @@ export default function FAQSection() {
               </button>
               {openIndex === index && faq.answer && (
                 <div className="pb-5">
-                  <p className="text-gray-600 text-sm leading-relaxed">{faq.answer}</p>
+                  <p className="text-gray-600 dark:text-gray-600 text-sm leading-relaxed transition-colors">{faq.answer}</p>
                 </div>
               )}
             </div>
