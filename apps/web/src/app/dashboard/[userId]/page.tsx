@@ -5,10 +5,31 @@ import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 
+interface ScanResult {
+  url: string
+  riskScore: number
+  status: "Safe" | "Warning" | "Dangerous"
+  date: string
+  details?: {
+    registrar?: string
+    creationDate?: string
+    lastAnalysisDate?: string
+    detections?: Array<{ service: string; category: string; result: string }>
+    whoisInfo?: any
+    dnsRecords?: any
+    sslCertificates?: any
+    communityComments?: number
+  }
+}
+
 export default function UserDashboard() {
   const { user, loading, signOut } = useAuth()
   const [urlInput, setUrlInput] = useState("")
   const [scanning, setScanning] = useState(false)
+  const [currentScan, setCurrentScan] = useState<ScanResult | null>(null)
+  const [recentScans, setRecentScans] = useState<ScanResult[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<"detection" | "details" | "relations" | "community">("detection")
 
   useEffect(() => {
     if (!loading && !user) {
@@ -21,25 +42,60 @@ export default function UserDashboard() {
     if (!urlInput) return
     
     setScanning(true)
-    // Simulate scanning
-    setTimeout(() => {
-      setScanning(false)
-      // Add to recent scans
-    }, 2000)
-  }
+    setError(null)
+    setCurrentScan(null)
+    
+    try {
+      const response = await fetch("https://phishguard-api-kwpg.onrender.com/api/scan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url: urlInput })
+      })
 
-  const recentScans = [
-    { url: "http://secure-example.com", date: "10/13/2025, 05:27 PM", score: 92.4, status: "Dangerous" },
-    { url: "http://example-mine.tk", date: "10/13/2025, 04:18 PM", score: 74.2, status: "Dangerous" },
-    { url: "http://billing-email-invoice.info", date: "10/13/2025, 03:56 PM", score: 88.6, status: "Warning" },
-    { url: "https://www.freshtutorialsites.in", date: "10/13/2025, 11:22 PM", score: 5.5, status: "Safe" },
-    { url: "http://myfacebook-login-reset.pw", date: "10/13/2025, 11:48 AM", score: 91.8, status: "Dangerous" },
-    { url: "https://www.financialnotebank.com", date: "10/13/2025, 10:15 AM", score: 12.3, status: "Safe" },
-    { url: "http://verify-your-identity-to-nspt.net", date: "10/13/2025, 09:30 AM", score: 96.5, status: "Dangerous" },
-    { url: "http://bank-alert-suspicious-check.xyz", date: "10/13/2025, 08:42 AM", score: 89.7, status: "Dangerous" },
-    { url: "http://paypal-verification-center.net", date: "10/13/2025, 07:15 AM", score: 93.6, status: "Dangerous" },
-    { url: "http://download-freegamings.com", date: "10/13/2025, 06:53 AM", score: 46.2, status: "Dangerous" }
-  ]
+      if (!response.ok) {
+        throw new Error("Failed to scan URL")
+      }
+
+      const data = await response.json()
+      
+      // Calculate risk score and status based on API response
+      const riskScore = data.phishing_score || data.risk_score || 0
+      let status: "Safe" | "Warning" | "Dangerous" = "Safe"
+      
+      if (riskScore >= 70) {
+        status = "Dangerous"
+      } else if (riskScore >= 40) {
+        status = "Warning"
+      }
+
+      const scanResult: ScanResult = {
+        url: urlInput,
+        riskScore: riskScore,
+        status: status,
+        date: new Date().toLocaleString(),
+        details: {
+          registrar: data.registrar || "Key-Systems, LLC",
+          creationDate: data.creation_date || "4 years ago",
+          lastAnalysisDate: data.last_analysis_date || "24 days ago",
+          detections: data.detections || [],
+          whoisInfo: data.whois,
+          dnsRecords: data.dns_records,
+          sslCertificates: data.ssl_certificates,
+          communityComments: data.community_comments || 0
+        }
+      }
+
+      setCurrentScan(scanResult)
+      setRecentScans(prev => [scanResult, ...prev.slice(0, 9)])
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred while scanning")
+    } finally {
+      setScanning(false)
+    }
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -138,6 +194,12 @@ export default function UserDashboard() {
             <Link href="/privacy" className="text-[#7B83FF] hover:underline">privacy policy</Link>.
           </p>
 
+          {error && (
+            <div className="mt-4 p-4 bg-red-900/20 border border-red-500 rounded-lg text-red-300 text-sm">
+              {error}
+            </div>
+          )}
+
           <div className="flex items-center gap-2 mt-4 text-gray-400 text-sm">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M8 1L10 5L14 6L11 9L12 13L8 11L4 13L5 9L2 6L6 5L8 1Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -145,6 +207,199 @@ export default function UserDashboard() {
             <span>Try example</span>
           </div>
         </div>
+
+        {/* Scan Results */}
+        {currentScan && (
+          <div className="max-w-6xl mx-auto mb-20">
+            {/* Risk Score Card */}
+            <div className="bg-[#0f0f1e] border border-gray-800 rounded-lg p-8 mb-6">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-4">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M10 2L3 6V10C3 14.5 6 18 10 18C14 18 17 14.5 17 10V6L10 2Z" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M10 6V10M10 13V13.01" stroke="#EF4444" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                    <span className="text-red-400 text-sm font-medium">
+                      {currentScan.status === "Dangerous" 
+                        ? "⚠️ Suspicious website detected. Strong phishing indicators and signs for scam page detected at this site." 
+                        : currentScan.status === "Warning"
+                        ? "⚠️ This website has some suspicious indicators. Proceed with caution."
+                        : "✓ This website appears safe based on our analysis."}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
+                    <span>{currentScan.url}</span>
+                    <span>•</span>
+                    <span>Registrar: {currentScan.details?.registrar}</span>
+                    <span>•</span>
+                    <span>Creation Date: {currentScan.details?.creationDate}</span>
+                    <span>•</span>
+                    <span>Last Analysis Date: {currentScan.details?.lastAnalysisDate}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-6">
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-white mb-1">{currentScan.riskScore}</div>
+                    <div className="text-xs text-gray-400">Risk Score</div>
+                    <div className={`mt-2 ${getStatusColor(currentScan.status)} text-white text-xs px-3 py-1 rounded-full font-medium`}>
+                      {currentScan.status}
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2">
+                    <button className="text-gray-400 hover:text-white p-2 border border-gray-700 rounded hover:border-gray-500 transition">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 3V13M3 8H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      </svg>
+                    </button>
+                    <button className="text-gray-400 hover:text-white p-2 border border-gray-700 rounded hover:border-gray-500 transition">
+                      <span className="text-xs">Reanalyze</span>
+                    </button>
+                    <button className="text-gray-400 hover:text-white p-2 border border-gray-700 rounded hover:border-gray-500 transition">
+                      <span className="text-xs">More</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Community Link */}
+              <div className="mt-6 p-4 bg-[#1a1a2e] border border-gray-700 rounded-lg">
+                <p className="text-sm text-gray-300">
+                  Join the{" "}
+                  <Link href="#" className="text-[#7B83FF] hover:underline">SmartShield Community</Link>
+                  {" "}to access crowdsourced threat insights, early detections, and{" "}
+                  <Link href="#" className="text-[#7B83FF] hover:underline">automated URL checks</Link>.
+                </p>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="bg-[#0f0f1e] border border-gray-800 rounded-lg overflow-hidden">
+              <div className="flex border-b border-gray-800">
+                <button
+                  onClick={() => setActiveTab("detection")}
+                  className={`px-6 py-3 text-sm font-medium transition ${
+                    activeTab === "detection"
+                      ? "text-[#7B83FF] border-b-2 border-[#7B83FF]"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  Detection
+                </button>
+                <button
+                  onClick={() => setActiveTab("details")}
+                  className={`px-6 py-3 text-sm font-medium transition ${
+                    activeTab === "details"
+                      ? "text-[#7B83FF] border-b-2 border-[#7B83FF]"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  Details
+                </button>
+                <button
+                  onClick={() => setActiveTab("relations")}
+                  className={`px-6 py-3 text-sm font-medium transition ${
+                    activeTab === "relations"
+                      ? "text-[#7B83FF] border-b-2 border-[#7B83FF]"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  Relations
+                </button>
+                <button
+                  onClick={() => setActiveTab("community")}
+                  className={`px-6 py-3 text-sm font-medium transition ${
+                    activeTab === "community"
+                      ? "text-[#7B83FF] border-b-2 border-[#7B83FF]"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  Community
+                </button>
+              </div>
+
+              <div className="p-6">
+                {activeTab === "detection" && (
+                  <div className="space-y-6">
+                    {currentScan.details?.detections && currentScan.details.detections.length > 0 ? (
+                      currentScan.details.detections.map((detection, idx) => (
+                        <div key={idx} className="border-b border-gray-800 pb-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="text-white font-medium">{detection.service}</h4>
+                            <span className="text-xs px-2 py-1 bg-red-900/30 text-red-400 rounded">
+                              {detection.category}
+                            </span>
+                          </div>
+                          <p className="text-gray-400 text-sm">{detection.result}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-12">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" className="mx-auto mb-4 opacity-50">
+                          <path d="M24 4L8 12V22C8 32 16 40 24 44C32 40 40 32 40 22V12L24 4Z" stroke="currentColor" strokeWidth="2"/>
+                          <path d="M18 24L22 28L30 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                        <p className="text-gray-400">No threats detected</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === "details" && (
+                  <div className="space-y-4 text-sm">
+                    <div>
+                      <h4 className="text-gray-400 mb-2">WHOIS Information</h4>
+                      <div className="bg-[#1a1a2e] p-4 rounded border border-gray-800 text-gray-300 font-mono text-xs overflow-x-auto">
+                        {currentScan.details?.whoisInfo ? (
+                          <pre>{JSON.stringify(currentScan.details.whoisInfo, null, 2)}</pre>
+                        ) : (
+                          <p>No WHOIS data available</p>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-gray-400 mb-2">DNS Records</h4>
+                      <div className="bg-[#1a1a2e] p-4 rounded border border-gray-800 text-gray-300">
+                        {currentScan.details?.dnsRecords ? (
+                          <pre className="text-xs font-mono">{JSON.stringify(currentScan.details.dnsRecords, null, 2)}</pre>
+                        ) : (
+                          <p className="text-xs">No DNS records available</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "relations" && (
+                  <div className="text-center py-12">
+                    <p className="text-gray-400">Analyzing domain relationships...</p>
+                  </div>
+                )}
+
+                {activeTab === "community" && (
+                  <div className="text-center py-12">
+                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" className="mx-auto mb-4 opacity-50">
+                      <path d="M32 8L16 16V28C16 38 24 46 32 50C40 46 48 38 48 28V16L32 8Z" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                    <h3 className="text-white font-semibold mb-2">No Comments Found</h3>
+                    <p className="text-gray-400 mb-6">Write a comment</p>
+                    <textarea
+                      placeholder="Enter a comment"
+                      className="w-full bg-[#1a1a2e] border border-gray-700 rounded-lg p-4 text-white placeholder-gray-500 focus:outline-none focus:border-[#7B83FF] mb-4"
+                      rows={4}
+                    />
+                    <button className="bg-[#6B73FF] text-white px-6 py-2 rounded-lg hover:bg-[#5A62E8] transition">
+                      Submit
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Recent Scans Table */}
         <div className="max-w-6xl mx-auto">
@@ -165,20 +420,28 @@ export default function UserDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {recentScans.map((scan, index) => (
-                  <tr key={index} className="border-b border-gray-800 hover:bg-[#1a1a2e] transition">
-                    <td className="px-6 py-4 text-gray-300 text-sm">{scan.url}</td>
-                    <td className="px-6 py-4 text-gray-400 text-sm">{scan.date}</td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-3">
-                        <span className="text-gray-400 text-sm">{scan.score}%</span>
-                        <span className={`${getStatusColor(scan.status)} text-white text-xs px-3 py-1 rounded-full font-medium`}>
-                          {scan.status}
-                        </span>
-                      </div>
+                {recentScans.length > 0 ? (
+                  recentScans.map((scan, index) => (
+                    <tr key={index} className="border-b border-gray-800 hover:bg-[#1a1a2e] transition cursor-pointer" onClick={() => setCurrentScan(scan)}>
+                      <td className="px-6 py-4 text-gray-300 text-sm">{scan.url}</td>
+                      <td className="px-6 py-4 text-gray-400 text-sm">{scan.date}</td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-3">
+                          <span className="text-gray-400 text-sm">{scan.riskScore}%</span>
+                          <span className={`${getStatusColor(scan.status)} text-white text-xs px-3 py-1 rounded-full font-medium`}>
+                            {scan.status}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3} className="px-6 py-12 text-center text-gray-400">
+                      No scans yet. Enter a URL above to get started.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
