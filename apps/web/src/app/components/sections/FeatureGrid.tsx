@@ -41,13 +41,13 @@ export default function FeatureGrid() {
   ]
 
   return (
-    <section className="py-20 px-6 bg-white">
+    <section className="py-20 px-6 bg-gray-50 dark:bg-white transition-colors">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-black mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-black mb-4 transition-colors">
             Six Ways <span className="text-[#6B73FF]">SmartShield</span> Keeps You Safe
           </h2>
-          <p className="text-gray-600 text-base max-w-2xl mx-auto">
+          <p className="text-gray-600 dark:text-gray-600 text-base max-w-2xl mx-auto transition-colors">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
           </p>
         </div>
@@ -56,7 +56,7 @@ export default function FeatureGrid() {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="bg-white border border-gray-200 rounded-xl p-8 hover:shadow-lg transition group"
+              className="bg-white dark:bg-white border border-gray-200 dark:border-gray-200 rounded-xl p-8 hover:shadow-lg transition-all group"
             >
               <div className="mb-5">
                 <div className={`${feature.color}`}>
@@ -69,8 +69,8 @@ export default function FeatureGrid() {
                   />
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-black mb-3">{feature.title}</h3>
-              <p className="text-gray-600 text-sm leading-relaxed">{feature.description}</p>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-black mb-3 transition-colors">{feature.title}</h3>
+              <p className="text-gray-600 dark:text-gray-600 text-sm leading-relaxed transition-colors">{feature.description}</p>
             </div>
           ))}
         </div>
