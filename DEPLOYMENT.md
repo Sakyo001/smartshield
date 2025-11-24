@@ -28,9 +28,10 @@ git push origin user-dashboard
 3. Select your GitHub repository: `Sakyo001/smartshield`
 4. **Framework Preset**: Next.js
 5. **Root Directory**: `apps/web`
-6. **Build Command**: Leave as default or use: `pnpm run build`
+6. **Build Command**: `npm run build`
 7. **Output Directory**: `.next`
-8. **Install Command**: `pnpm install`
+8. **Install Command**: `npm install`
+9. **Node.js Version**: 20.x
 
 ## Step 3: Configure Environment Variables
 
@@ -56,18 +57,27 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ### Build & Development Settings:
 - **Framework**: Next.js
 - **Root Directory**: `apps/web`
-- **Build Command**: `pnpm run build`
+- **Build Command**: `npm run build`
 - **Output Directory**: `.next`
-- **Install Command**: `pnpm install`
-- **Node Version**: 18.x or 20.x
+- **Install Command**: `npm install`
+- **Node Version**: 20.x
 
 ### Advanced Settings (Optional):
 ```json
 {
-  "buildCommand": "cd apps/web && pnpm run build",
-  "devCommand": "cd apps/web && pnpm run dev",
-  "installCommand": "pnpm install"
+  "buildCommand": "cd apps/web && npm run build",
+  "devCommand": "cd apps/web && npm run dev",
+  "installCommand": "npm install"
 }
+```
+
+### Environment Variables to Set in Vercel:
+```bash
+# Node.js version
+NODE_VERSION=20.x
+
+# Package manager (use npm instead of pnpm for compatibility)
+NPM_CONFIG_LEGACY_PEER_DEPS=true
 ```
 
 ## Step 5: Deploy
@@ -114,22 +124,44 @@ Vercel automatically deploys on every push to your GitHub repository:
 
 ### API Errors
 - Check that PhishGuard API endpoint is accessible
-- Verify Supabase RLS policies are configured
-- Check browser console for detailed error messages
-
-## Monitoring
-
-- **Analytics**: Vercel provides built-in analytics
-- **Logs**: View real-time logs in Vercel dashboard
-- **Performance**: Check Web Vitals in Vercel Speed Insights
-
 ## Commands Reference
 
 ```bash
-# Local development
+# Local development (from root)
 pnpm dev
 
+# Local development (from apps/web)
+cd apps/web && npm run dev
+
 # Build for production
+cd apps/web && npm run build
+
+# Start production server locally
+cd apps/web && npm start
+
+# Deploy manually via Vercel CLI
+cd apps/web && vercel deploy
+cd apps/web && vercel deploy --prod
+```
+
+## Fix pnpm Issues Locally (if needed)
+
+If you encounter pnpm errors locally:
+
+```bash
+# Clear pnpm cache
+pnpm store prune
+
+# Remove node_modules and lockfile
+rm -rf node_modules pnpm-lock.yaml apps/web/node_modules
+
+# Reinstall with npm instead
+cd apps/web
+npm install
+
+# Or use npm workspaces
+npm install --legacy-peer-deps
+```uild for production
 pnpm run build
 
 # Start production server locally
