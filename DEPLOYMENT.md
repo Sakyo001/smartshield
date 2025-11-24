@@ -27,10 +27,10 @@ git push origin user-dashboard
 2. Click "Import Project"
 3. Select your GitHub repository: `Sakyo001/smartshield`
 4. **Framework Preset**: Next.js
-5. **Root Directory**: `apps/web`
-6. **Build Command**: `npm run build`
-7. **Output Directory**: `.next`
-8. **Install Command**: `npm install`
+5. **Root Directory**: `apps/web` ⚠️ **IMPORTANT: Set this in Vercel dashboard**
+6. **Build Command**: `npm run build` (auto-detected)
+7. **Output Directory**: `.next` (auto-detected)
+8. **Install Command**: `npm install` (auto-detected)
 9. **Node.js Version**: 20.x
 
 ## Step 3: Configure Environment Variables
@@ -62,22 +62,25 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - **Install Command**: `npm install`
 - **Node Version**: 20.x
 
-### Advanced Settings (Optional):
-```json
-{
-  "buildCommand": "cd apps/web && npm run build",
-  "devCommand": "cd apps/web && npm run dev",
-  "installCommand": "npm install"
-}
-```
+### Important: Root Directory Setting
+
+When importing to Vercel, you **MUST** set the Root Directory:
+
+1. During import, click on "Edit" next to "Root Directory"
+2. Type: `apps/web`
+3. Vercel will then automatically detect Next.js settings
+
+If you miss this step, Vercel will fail to build because it won't find the Next.js app.
 
 ### Environment Variables to Set in Vercel:
 ```bash
-# Node.js version
-NODE_VERSION=20.x
+# Required Supabase variables
+NEXT_PUBLIC_SUPABASE_URL=https://jlgktijajxapqclgjyjx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-# Package manager (use npm instead of pnpm for compatibility)
-NPM_CONFIG_LEGACY_PEER_DEPS=true
+# Optional: Node.js version
+NODE_VERSION=20.x
 ```
 
 ## Step 5: Deploy
