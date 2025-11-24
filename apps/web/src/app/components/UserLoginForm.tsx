@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { createClient } from "@lib/supabase"
 import { useAuth } from "@lib/auth-context"
 
@@ -16,7 +17,7 @@ export default function UserLoginForm() {
 
   useEffect(() => {
     if (user) {
-      router.replace(`/dashboard/${user.id}`)
+      router.push(`/dashboard/${user.id}`)
     }
   }, [user, router])
 
@@ -42,7 +43,7 @@ export default function UserLoginForm() {
     setLoading(true)
     setError(null)
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     })
@@ -50,6 +51,8 @@ export default function UserLoginForm() {
     if (error) {
       setError(error.message)
       setLoading(false)
+    } else if (data.user) {
+      router.push(`/dashboard/${data.user.id}`)
     }
   }
 
@@ -57,21 +60,21 @@ export default function UserLoginForm() {
     <div className="min-h-screen bg-[#141414] flex items-center justify-center p-4">
       {/* Header */}
       <header className="absolute top-0 left-0 right-0 flex items-center justify-between px-8 py-6">
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <Image src="/images/light-logo.png" alt="SmartShield" width={40} height={40} />
           <span className="text-white text-xl font-semibold">SmartShield</span>
-        </div>
+        </Link>
         <nav className="flex items-center gap-8">
-          <a href="#" className="text-white hover:text-gray-300">Home</a>
-          <a href="#" className="text-white hover:text-gray-300">Scan</a>
-          <a href="#" className="text-white hover:text-gray-300">About</a>
-          <a href="#" className="text-white hover:text-gray-300">FAQ</a>
-          <button className="text-white border border-white rounded-full px-6 py-2 hover:bg-white hover:text-black transition flex items-center gap-2">
-            Try For Free Now
+          <Link href="/" className="text-white hover:text-gray-300">Home</Link>
+          <Link href="/#scan" className="text-white hover:text-gray-300">Scan</Link>
+          <Link href="/#about" className="text-white hover:text-gray-300">About</Link>
+          <Link href="/#faq" className="text-white hover:text-gray-300">FAQ</Link>
+          <Link href="/signup" className="text-white border border-white rounded-full px-6 py-2 hover:bg-white hover:text-black transition flex items-center gap-2">
+            Sign Up
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-          </button>
+          </Link>
         </nav>
       </header>
 
@@ -156,7 +159,7 @@ export default function UserLoginForm() {
 
           {/* Sign Up Link */}
           <p className="text-center text-gray-600 text-sm mt-6">
-            Already have an account? <a href="/signup" className="text-[#545BFF] hover:underline">Sign up</a>
+            Don't have an account? <Link href="/signup" className="text-[#545BFF] hover:underline font-medium">Sign up</Link>
           </p>
         </div>
 

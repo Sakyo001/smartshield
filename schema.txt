@@ -1,0 +1,81 @@
+-- USERS TABLE (unchanged)
+CREATE TABLE users (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email varchar NOT NULL UNIQUE,
+  password_hash varchar NOT NULL,
+  display_name varchar,
+  created_at timestamptz DEFAULT now(),
+  last_login timestamptz
+);
+
+-- SOCIAL ACCOUNT TABLE
+CREATE TABLE user_social_accounts (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id uuid NOT NULL,
+  provider varchar NOT NULL,
+  provider_user_id varchar NOT NULL,
+  username varchar,
+  profile_url text,
+  avatar_url text,
+  email varchar,
+  created_at timestamptz DEFAULT now(),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- PHISHING SITES (SUPER CLEAN VERSION)
+CREATE TABLE phishing_sites (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  url text NOT NULL,
+  domain varchar NOT NULL,
+  prediction jsonb NOT NULL,      -- stores your whole JSON result
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX idx_phishing_sites_domain ON phishing_sites(domain);
+
+-- EXTENSION ACTIVITY
+CREATE TABLE extension_activity (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id uuid NOT NULL,
+  url text NOT NULL,
+  domain varchar NOT NULL,
+  confidence float,
+  decision varchar,
+  prediction jsonb,               -- optional: store full prediction per scan
+  created_at timestamptz DEFAULT now(),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- REPORTS
+CREATE TABLE reports (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id uuid NOT NULL,
+  url text NOT NULL,
+  description text,
+  created_at timestamptz DEFAULT now(),
+  reviewed_by uuid,
+  reviewed_at timestamptz,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- WHITELIST
+CREATE TABLE whitelist (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  domain varchar NOT NULL UNIQUE,
+  reason text,
+  added_by uuid,
+  created_at timestamptz DEFAULT now(),
+  FOREIGN KEY (added_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- BLACKLIST
+CREATE TABLE blacklist (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  domain varchar NOT NULL UNIQUE,
+  reason text,
+  added_by uuid,
+  created_at timestamptz DEFAULT now(),
+  FOREIGN KEY (added_by) REFERENCES users(id) ON DELETE SET NULL
+);

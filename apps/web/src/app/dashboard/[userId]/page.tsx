@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { saveScanResult, getTodaysScans, addToWhitelist, addToBlacklist, addToPhishingSites } from "@lib/supabase"
 
 interface ScanResult {
   url: string
@@ -36,6 +37,43 @@ export default function UserDashboard() {
       redirect("/login")
     }
   }, [user, loading])
+
+  // Load today's scans on mount
+  useEffect(() => {
+    if (user) {
+      loadTodaysScans()
+    }
+  }, [user])
+
+  const loadTodaysScans = async () => {
+    if (!user) return
+    
+    try {
+      const scans = await getTodaysScans(user.id)
+      const formattedScans: ScanResult[] = scans.map(scan => {
+        let status: "Safe" | "Warning" | "Dangerous" = "Safe"
+        const confidence = scan.confidence || 0
+        
+        if (confidence >= 70) {
+          status = "Dangerous"
+        } else if (confidence >= 40) {
+          status = "Warning"
+        }
+        
+        return {
+          url: scan.url,
+          riskScore: confidence,
+          status: status,
+          date: new Date(scan.created_at).toLocaleString(),
+          details: scan.prediction
+        }
+      })
+      setRecentScans(formattedScans)
+    } catch (error) {
+      console.error("Error loading today's scans:", error)
+    }
+  }
+  
 
   const handleScan = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -89,6 +127,38 @@ export default function UserDashboard() {
 
       setCurrentScan(scanResult)
       setRecentScans(prev => [scanResult, ...prev.slice(0, 9)])
+      
+      // Save to Supabase
+      if (user) {
+        try {
+          const urlObj = new URL(urlInput)
+          const domain = urlObj.hostname
+          
+          // Save to extension_activity
+          await saveScanResult(user.id, {
+            url: urlInput,
+            domain: domain,
+            confidence: riskScore,
+            decision: status.toLowerCase(),
+            prediction: data
+          })
+          
+          // Add to appropriate lists based on risk score
+          if (riskScore < 40) {
+            // Safe site - add to whitelist
+            await addToWhitelist(domain, user.id, `Safe site detected with ${riskScore}% risk score`)
+          } else if (riskScore >= 70) {
+            // Phishing site - add to blacklist and phishing_sites
+            await addToBlacklist(domain, user.id, `Phishing site detected with ${riskScore}% risk score`)
+            await addToPhishingSites(urlInput, domain, data)
+          }
+          // Sites with 40-69 risk score (Warning) are not added to any list
+          
+        } catch (saveError) {
+          console.error("Error saving scan result:", saveError)
+          // Don't show error to user, just log it
+        }
+      }
       
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred while scanning")
@@ -212,56 +282,96 @@ export default function UserDashboard() {
         {currentScan && (
           <div className="max-w-6xl mx-auto mb-20">
             {/* Risk Score Card */}
-            <div className="bg-[#0f0f1e] border border-gray-800 rounded-lg p-8 mb-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-4">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M10 2L3 6V10C3 14.5 6 18 10 18C14 18 17 14.5 17 10V6L10 2Z" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M10 6V10M10 13V13.01" stroke="#EF4444" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                    <span className="text-red-400 text-sm font-medium">
-                      {currentScan.status === "Dangerous" 
-                        ? "⚠️ Suspicious website detected. Strong phishing indicators and signs for scam page detected at this site." 
-                        : currentScan.status === "Warning"
-                        ? "⚠️ This website has some suspicious indicators. Proceed with caution."
-                        : "✓ This website appears safe based on our analysis."}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
-                    <span>{currentScan.url}</span>
-                    <span>•</span>
-                    <span>Registrar: {currentScan.details?.registrar}</span>
-                    <span>•</span>
-                    <span>Creation Date: {currentScan.details?.creationDate}</span>
-                    <span>•</span>
-                    <span>Last Analysis Date: {currentScan.details?.lastAnalysisDate}</span>
+            <div className="bg-gray-200 dark:bg-[#0f0f1e] border-0 dark:border dark:border-gray-800 rounded-lg p-8 mb-6">
+              <div className="flex items-start gap-6">
+                {/* Risk Score Badge */}
+                <div className="flex-shrink-0">
+                  <div className="bg-[#1e2235] rounded-lg p-6 shadow-lg">
+                    <div className="text-sm font-semibold text-gray-400 mb-4 text-center">Risk Score</div>
+                    <div className="flex flex-col items-center">
+                      <div className="relative inline-flex items-center justify-center">
+                        <svg width="140" height="140" viewBox="0 0 140 140" className="transform -rotate-90">
+                          <circle
+                            cx="70"
+                            cy="70"
+                            r="60"
+                            stroke="#2a2d47"
+                            strokeWidth="12"
+                            fill="none"
+                          />
+                          <circle
+                            cx="70"
+                            cy="70"
+                            r="60"
+                            stroke={currentScan.status === "Dangerous" ? "#EF4444" : currentScan.status === "Warning" ? "#F59E0B" : "#10B981"}
+                            strokeWidth="12"
+                            fill="none"
+                            strokeDasharray={`${(currentScan.riskScore / 100) * 377} 377`}
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-5xl font-bold text-white">{currentScan.riskScore}</span>
+                        </div>
+                      </div>
+                      <div className={`mt-4 ${getStatusColor(currentScan.status)} text-white text-sm px-5 py-2 rounded-full font-semibold`}>
+                        {currentScan.status}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-6">
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-white mb-1">{currentScan.riskScore}</div>
-                    <div className="text-xs text-gray-400">Risk Score</div>
-                    <div className={`mt-2 ${getStatusColor(currentScan.status)} text-white text-xs px-3 py-1 rounded-full font-medium`}>
-                      {currentScan.status}
+                {/* Detection Info */}
+                <div className="flex-1">
+                  <div className="flex items-start gap-3 mb-4">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 mt-0.5">
+                      <path d="M10 2L3 6V10C3 14.5 6 18 10 18C14 18 17 14.5 17 10V6L10 2Z" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M10 6V10M10 13V13.01" stroke="#EF4444" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                    <span className={`text-sm font-medium ${
+                      currentScan.status === "Dangerous" 
+                        ? "text-red-600 dark:text-red-400" 
+                        : currentScan.status === "Warning"
+                        ? "text-yellow-600 dark:text-yellow-400"
+                        : "text-green-600 dark:text-green-400"
+                    }`}>
+                      {currentScan.status === "Dangerous" 
+                        ? `SmartShield detects strong phishing indicators and high-risk behaviors on this site.` 
+                        : currentScan.status === "Warning"
+                        ? `This website has some suspicious indicators. Proceed with caution.`
+                        : `This website appears safe based on our analysis.`}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2 text-sm text-gray-700 dark:text-gray-400">
+                    <div className="flex items-center gap-3">
+                      <span className="font-medium text-gray-900 dark:text-white">{currentScan.url}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4 mt-4">
+                      <div>
+                        <div className="text-xs text-gray-500 dark:text-gray-500 mb-1">Registrar</div>
+                        <div className="font-medium text-gray-900 dark:text-white">{currentScan.details?.registrar}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500 dark:text-gray-500 mb-1">Creation Date</div>
+                        <div className="font-medium text-gray-900 dark:text-white">{currentScan.details?.creationDate}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500 dark:text-gray-500 mb-1">Last Analysis Date</div>
+                        <div className="font-medium text-gray-900 dark:text-white">{currentScan.details?.lastAnalysisDate}</div>
+                      </div>
                     </div>
                   </div>
-                  
-                  <div className="flex flex-col gap-2">
-                    <button className="text-gray-400 hover:text-white p-2 border border-gray-700 rounded hover:border-gray-500 transition">
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M8 3V13M3 8H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                      </svg>
-                    </button>
-                    <button className="text-gray-400 hover:text-white p-2 border border-gray-700 rounded hover:border-gray-500 transition">
-                      <span className="text-xs">Reanalyze</span>
-                    </button>
-                    <button className="text-gray-400 hover:text-white p-2 border border-gray-700 rounded hover:border-gray-500 transition">
-                      <span className="text-xs">More</span>
-                    </button>
-                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-2 flex-shrink-0">
+                  <button className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white p-2 border border-gray-300 dark:border-gray-700 rounded hover:border-gray-400 dark:hover:border-gray-500 transition">
+                    <span className="text-xs">Reanalyze</span>
+                  </button>
+                  <button className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white p-2 border border-gray-300 dark:border-gray-700 rounded hover:border-gray-400 dark:hover:border-gray-500 transition">
+                    <span className="text-xs">More</span>
+                  </button>
                 </div>
               </div>
 
@@ -323,28 +433,22 @@ export default function UserDashboard() {
 
               <div className="p-6">
                 {activeTab === "detection" && (
-                  <div className="space-y-6">
-                    {currentScan.details?.detections && currentScan.details.detections.length > 0 ? (
-                      currentScan.details.detections.map((detection, idx) => (
-                        <div key={idx} className="border-b border-gray-800 pb-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <h4 className="text-white font-medium">{detection.service}</h4>
-                            <span className="text-xs px-2 py-1 bg-red-900/30 text-red-400 rounded">
-                              {detection.category}
-                            </span>
-                          </div>
-                          <p className="text-gray-400 text-sm">{detection.result}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-12">
-                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" className="mx-auto mb-4 opacity-50">
-                          <path d="M24 4L8 12V22C8 32 16 40 24 44C32 40 40 32 40 22V12L24 4Z" stroke="currentColor" strokeWidth="2"/>
-                          <path d="M18 24L22 28L30 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                        </svg>
-                        <p className="text-gray-400">No threats detected</p>
+                  <div>
+                    <div className="grid grid-cols-2 gap-px bg-gray-800">
+                      {/* Display only scanned URL and status */}
+                      <div className="bg-[#0f0f1e] p-4 flex items-center justify-between col-span-2">
+                        <span className="text-white text-sm">{currentScan.url}</span>
+                        <span className={`text-xs px-3 py-1 rounded-full font-medium ${
+                          currentScan.riskScore >= 70 
+                            ? "bg-red-500/20 text-red-400" 
+                            : currentScan.riskScore >= 40
+                            ? "bg-yellow-500/20 text-yellow-400"
+                            : "bg-green-500/20 text-green-400"
+                        }`}>
+                          {currentScan.riskScore >= 70 ? "Phishing" : currentScan.riskScore >= 40 ? "Suspicious" : "Safe"}
+                        </span>
                       </div>
-                    )}
+                    </div>
                   </div>
                 )}
 
