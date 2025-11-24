@@ -111,9 +111,9 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#141414] flex items-center justify-center p-4 pt-24 md:pt-4">
+    <div className="min-h-screen bg-[#141414] flex flex-col">
       {/* Header */}
-      <header className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 md:px-8 py-4 md:py-6 z-50 bg-[#141414]/80 backdrop-blur-sm">
+      <header className="w-full flex items-center justify-between px-4 md:px-8 py-4 md:py-6 z-50 bg-[#141414]/80 backdrop-blur-sm">
         <Link href="/" className="flex items-center gap-2">
           <Image src="/images/light-logo.png" alt="SmartShield" width={32} height={32} className="md:w-10 md:h-10" />
           <span className="text-white text-lg md:text-xl font-semibold">SmartShield</span>
@@ -136,7 +136,8 @@ export default function SignUpPage() {
       </header>
 
       {/* Main Sign Up Container */}
-      <div className="flex flex-col md:flex-row w-full max-w-5xl bg-white rounded-3xl overflow-hidden shadow-2xl mt-20 md:mt-0">
+      <div className="flex-1 flex items-center justify-center p-4 py-8 md:py-4">
+        <div className="flex flex-col md:flex-row w-full max-w-5xl bg-white rounded-3xl overflow-hidden shadow-2xl">
         {/* Left Side - Sign Up Form */}
         <div className="w-full md:w-1/2 p-6 md:p-12 flex flex-col justify-center">
           <h1 className="text-2xl md:text-4xl font-bold text-black mb-2">Create Account</h1>
@@ -299,6 +300,7 @@ export default function SignUpPage() {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>
