@@ -9,22 +9,21 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="relative inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 dark:border-white/30 hover:border-gray-400 dark:hover:border-white/50 transition-colors"
+      className="relative inline-flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       aria-label="Toggle theme"
+      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
     >
-      <span className="text-gray-700 dark:text-white text-sm">Try For Free Now</span>
-      
       {/* Toggle Switch */}
-      <div className="relative w-12 h-6 bg-gray-300 dark:bg-white/20 rounded-full transition-colors">
+      <div className="relative w-14 h-7 bg-gray-300 dark:bg-gray-700 rounded-full transition-colors">
         <div
-          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-white rounded-full shadow-md transition-transform duration-300 ${
-            isDark ? "translate-x-6" : "translate-x-0"
+          className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 ${
+            isDark ? "translate-x-7" : "translate-x-0"
           }`}
         />
         
         {/* Sun Icon (Light Mode) */}
         <svg
-          className={`absolute left-1 top-1 w-4 h-4 transition-opacity ${
+          className={`absolute left-1.5 top-1.5 w-4 h-4 transition-opacity ${
             isDark ? "opacity-0" : "opacity-100"
           }`}
           viewBox="0 0 16 16"
@@ -42,7 +41,7 @@ export default function ThemeToggle() {
 
         {/* Moon Icon (Dark Mode) */}
         <svg
-          className={`absolute right-1 top-1 w-4 h-4 transition-opacity ${
+          className={`absolute right-1.5 top-1.5 w-4 h-4 transition-opacity ${
             isDark ? "opacity-100" : "opacity-0"
           }`}
           viewBox="0 0 16 16"
@@ -55,24 +54,6 @@ export default function ThemeToggle() {
           />
         </svg>
       </div>
-
-      {/* Arrow */}
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 16 16"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="text-gray-700 dark:text-white"
-      >
-        <path
-          d="M6 12L10 8L6 4"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
     </button>
   )
 }

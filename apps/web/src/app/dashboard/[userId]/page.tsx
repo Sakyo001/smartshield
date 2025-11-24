@@ -190,10 +190,10 @@ export default function UserDashboard() {
     <div className="min-h-screen bg-[#0a0a0f]">
       {/* Navbar */}
       <nav className="border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/images/light-logo.png" alt="SmartShield" width={36} height={36} />
-            <span className="text-white text-lg font-semibold">SmartShield</span>
+            <Image src="/images/light-logo.png" alt="SmartShield" width={32} height={32} className="md:w-9 md:h-9" />
+            <span className="text-white text-base md:text-lg font-semibold">SmartShield</span>
           </Link>
           
           <div className="hidden md:flex items-center gap-8">
@@ -208,10 +208,10 @@ export default function UserDashboard() {
               await signOut()
               redirect("/login")
             }}
-            className="text-white border border-white rounded-full px-5 py-2 hover:bg-white hover:text-[#0a0a0f] transition flex items-center gap-2 text-sm"
+            className="text-white border border-white rounded-full px-3 md:px-5 py-1.5 md:py-2 hover:bg-white hover:text-[#0a0a0f] transition flex items-center gap-1 md:gap-2 text-xs md:text-sm"
           >
             Logout
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="md:w-3.5 md:h-3.5">
               <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
@@ -219,9 +219,9 @@ export default function UserDashboard() {
       </nav>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-16">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-16">
         {/* Title */}
-        <h1 className="text-4xl md:text-5xl font-bold text-white text-center mb-16">
+        <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white text-center mb-8 md:mb-16">
           Is This Website <span className="text-[#7B83FF]">Safe</span>? Find Out Instantly
         </h1>
 
@@ -237,18 +237,18 @@ export default function UserDashboard() {
             </div>
           </div>
 
-          <form onSubmit={handleScan} className="flex items-center gap-3 mb-3">
+          <form onSubmit={handleScan} className="flex flex-col sm:flex-row items-stretch gap-2 md:gap-3 mb-3">
             <input
               type="url"
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
               placeholder="Enter website url (e.g. https://example.com)"
-              className="flex-1 bg-[#1a1a2e] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#7B83FF]"
+              className="flex-1 bg-[#1a1a2e] border border-gray-700 rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-sm md:text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#7B83FF]"
             />
             <button
               type="submit"
               disabled={scanning || !urlInput}
-              className="bg-[#6B73FF] text-white px-6 py-3 rounded-lg hover:bg-[#5A62E8] transition font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-[#6B73FF] text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg hover:bg-[#5A62E8] transition font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm md:text-base min-w-[140px] sm:min-w-0"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M7 11L11 7L7 3M11 7H1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
