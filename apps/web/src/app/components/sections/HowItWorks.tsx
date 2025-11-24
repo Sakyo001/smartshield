@@ -35,18 +35,18 @@ export default function HowItWorks() {
   ]
 
   return (
-    <section className="py-20 px-6 bg-white dark:bg-white transition-colors">
+    <section className="py-12 md:py-20 px-4 md:px-6 bg-white dark:bg-gray-900 transition-colors">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-black mb-4 transition-colors">
+        <div className="text-center mb-12 md:mb-16">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 transition-colors">
             How <span className="text-[#6B73FF]">SmartShield</span> Protects You
           </h2>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           {steps.map((step, index) => (
-            <div key={index} className="text-center bg-gray-100 dark:bg-gray-50 rounded-2xl p-8 relative transition-colors">
-              <div className="absolute top-6 left-6 w-10 h-10 bg-[#E5E7FF] rounded-full flex items-center justify-center text-[#6B73FF] font-bold text-lg">
+            <div key={index} className="text-center bg-gray-50 dark:bg-gray-800 rounded-2xl p-6 md:p-8 relative transition-colors hover:shadow-lg">
+              <div className="absolute top-4 md:top-6 left-4 md:left-6 w-10 h-10 bg-[#E5E7FF] dark:bg-[#6B73FF]/20 rounded-full flex items-center justify-center text-[#6B73FF] dark:text-[#8B93FF] font-bold text-lg">
                 {step.number}
               </div>
               <div className="mb-6 mt-8">
@@ -55,11 +55,11 @@ export default function HowItWorks() {
                   alt={step.title}
                   width={120}
                   height={120}
-                  className="mx-auto"
+                  className="mx-auto w-24 h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 object-contain"
                 />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-black mb-3 transition-colors">{step.title}</h3>
-              <p className="text-gray-700 dark:text-gray-600 text-sm leading-relaxed transition-colors">{step.description}</p>
+              <h3 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-3 transition-colors">{step.title}</h3>
+              <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed transition-colors">{step.description}</p>
             </div>
           ))}
         </div>

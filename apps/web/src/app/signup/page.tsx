@@ -111,14 +111,14 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#141414] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#141414] flex items-center justify-center p-4 pt-24 md:pt-4">
       {/* Header */}
-      <header className="absolute top-0 left-0 right-0 flex items-center justify-between px-8 py-6">
+      <header className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 md:px-8 py-4 md:py-6 z-50 bg-[#141414]/80 backdrop-blur-sm">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/images/light-logo.png" alt="SmartShield" width={40} height={40} />
-          <span className="text-white text-xl font-semibold">SmartShield</span>
+          <Image src="/images/light-logo.png" alt="SmartShield" width={32} height={32} className="md:w-10 md:h-10" />
+          <span className="text-white text-lg md:text-xl font-semibold">SmartShield</span>
         </Link>
-        <nav className="flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-8">
           <Link href="/" className="text-white hover:text-gray-300">Home</Link>
           <Link href="/#scan" className="text-white hover:text-gray-300">Scan</Link>
           <Link href="/#about" className="text-white hover:text-gray-300">About</Link>
@@ -130,14 +130,17 @@ export default function SignUpPage() {
             </svg>
           </Link>
         </nav>
+        <Link href="/login" className="md:hidden text-white text-sm border border-white rounded-full px-4 py-1.5 hover:bg-white hover:text-black transition">
+          Log In
+        </Link>
       </header>
 
       {/* Main Sign Up Container */}
-      <div className="flex w-full max-w-5xl bg-white rounded-3xl overflow-hidden shadow-2xl">
+      <div className="flex flex-col md:flex-row w-full max-w-5xl bg-white rounded-3xl overflow-hidden shadow-2xl mt-20 md:mt-0">
         {/* Left Side - Sign Up Form */}
-        <div className="w-1/2 p-12 flex flex-col justify-center">
-          <h1 className="text-4xl font-bold text-black mb-2">Create Account</h1>
-          <p className="text-gray-600 mb-8">Join SmartShield to protect your browsing</p>
+        <div className="w-full md:w-1/2 p-6 md:p-12 flex flex-col justify-center">
+          <h1 className="text-2xl md:text-4xl font-bold text-black mb-2">Create Account</h1>
+          <p className="text-sm md:text-base text-gray-600 mb-6 md:mb-8">Join SmartShield to protect your browsing</p>
           
           {error && (
             <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
@@ -260,19 +263,19 @@ export default function SignUpPage() {
         </div>
 
         {/* Right Side - Image/Illustration */}
-        <div className="w-1/2 bg-gradient-to-br from-[#545BFF] to-[#7B83FF] flex items-center justify-center p-12">
+        <div className="hidden md:flex w-full md:w-1/2 bg-gradient-to-br from-[#545BFF] to-[#7B83FF] items-center justify-center p-8 md:p-12">
           <div className="text-center text-white">
-            <div className="mb-8">
+            <div className="mb-6 md:mb-8">
               <Image 
                 src="/images/light-logo.png" 
                 alt="SmartShield Logo" 
-                width={120} 
-                height={120}
-                className="mx-auto filter brightness-0 invert"
+                width={100} 
+                height={100}
+                className="mx-auto filter brightness-0 invert md:w-[120px] md:h-[120px]"
               />
             </div>
-            <h2 className="text-3xl font-bold mb-4">Join SmartShield</h2>
-            <p className="text-lg opacity-90 max-w-sm mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">Join SmartShield</h2>
+            <p className="text-base md:text-lg opacity-90 max-w-sm mx-auto">
               Protect your browsing with AI-powered phishing detection. Scan websites instantly and browse safely.
             </p>
             <div className="mt-12 space-y-4 text-left max-w-sm mx-auto">

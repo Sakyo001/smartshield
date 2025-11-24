@@ -12,31 +12,30 @@ type ThemeContextType = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light")
-  const [mounted, setMounted] = useState(false)
-
-  // Load theme from localStorage on mount
-  useEffect(() => {
-    setMounted(true)
-    const savedTheme = localStorage.getItem("theme") as Theme | null
-    if (savedTheme) {
-      setTheme(savedTheme)
-    } else {
-      // Check system preference
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
-      setTheme(prefersDark ? "dark" : "light")
+  const [theme, setTheme] = useState<Theme>(() => {
+    // This won't run on server, only on client after hydration
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("theme") as Theme | null
+      if (saved) return saved
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
     }
+    return "light"
+  })
+
+  // Only run on mount to sync with initial theme
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.remove("light", "dark")
+    root.classList.add(theme)
   }, [])
 
-  // Apply theme to document
+  // Apply theme changes
   useEffect(() => {
-    if (!mounted) return
-    
     const root = document.documentElement
     root.classList.remove("light", "dark")
     root.classList.add(theme)
     localStorage.setItem("theme", theme)
-  }, [theme, mounted])
+  }, [theme])
 
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"))

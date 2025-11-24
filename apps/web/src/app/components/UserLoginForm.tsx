@@ -57,14 +57,14 @@ export default function UserLoginForm() {
   }
 
   return (
-    <div className="min-h-screen bg-[#141414] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#141414] flex items-center justify-center p-4 pt-24 md:pt-4">
       {/* Header */}
-      <header className="absolute top-0 left-0 right-0 flex items-center justify-between px-8 py-6">
+      <header className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 md:px-8 py-4 md:py-6 z-50 bg-[#141414]/80 backdrop-blur-sm">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/images/light-logo.png" alt="SmartShield" width={40} height={40} />
-          <span className="text-white text-xl font-semibold">SmartShield</span>
+          <Image src="/images/light-logo.png" alt="SmartShield" width={32} height={32} className="md:w-10 md:h-10" />
+          <span className="text-white text-lg md:text-xl font-semibold">SmartShield</span>
         </Link>
-        <nav className="flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-8">
           <Link href="/" className="text-white hover:text-gray-300">Home</Link>
           <Link href="/#scan" className="text-white hover:text-gray-300">Scan</Link>
           <Link href="/#about" className="text-white hover:text-gray-300">About</Link>
@@ -76,13 +76,16 @@ export default function UserLoginForm() {
             </svg>
           </Link>
         </nav>
+        <Link href="/signup" className="md:hidden text-white text-sm border border-white rounded-full px-4 py-1.5 hover:bg-white hover:text-black transition">
+          Sign Up
+        </Link>
       </header>
 
       {/* Main Login Container */}
-      <div className="flex w-full max-w-5xl bg-white rounded-3xl overflow-hidden shadow-2xl">
+      <div className="flex flex-col md:flex-row w-full max-w-5xl bg-white rounded-3xl overflow-hidden shadow-2xl mt-20 md:mt-0">
         {/* Left Side - Login Form */}
-        <div className="w-1/2 p-12 flex flex-col justify-center">
-          <h1 className="text-4xl font-bold text-black mb-8">Welcome!</h1>
+        <div className="w-full md:w-1/2 p-6 md:p-12 flex flex-col justify-center">
+          <h1 className="text-2xl md:text-4xl font-bold text-black mb-6 md:mb-8">Welcome!</h1>
           
           {error && (
             <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
@@ -164,7 +167,7 @@ export default function UserLoginForm() {
         </div>
 
         {/* Right Side - Blue Section */}
-        <div className="w-1/2 bg-[#545BFF] p-12 flex flex-col items-center justify-center text-white relative overflow-hidden">
+        <div className="hidden md:flex w-full md:w-1/2 bg-[#545BFF] p-8 md:p-12 flex-col items-center justify-center text-white relative overflow-hidden">
           {/* Background Ellipse */}
           <div className="absolute inset-0 flex items-center justify-center opacity-20">
             <Image 
