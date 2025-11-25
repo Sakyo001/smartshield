@@ -36,7 +36,7 @@ export default function UserDashboard() {
   const [loadingHistory, setLoadingHistory] = useState(false)
 
   // API URL - uses environment variable for production, falls back to localhost for development
-  const WHOIS_API_URL = process.env.NEXT_PUBLIC_WHOIS_API_URL || "http://localhost:5001"
+  const WHOIS_API_URL = process.env.NEXT_PUBLIC_WHOIS_API_URL || "https://smartshield-whois-api.onrender.com"
 
   const loadingStates = [
     { text: "Initializing phishing detection system..." },
