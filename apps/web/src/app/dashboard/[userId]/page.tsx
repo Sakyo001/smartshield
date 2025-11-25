@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { saveScanResult, getTodaysScans, addToWhitelist, addToBlacklist, addToPhishingSites } from "@lib/supabase"
+import { MultiStepLoader } from "../../components/ui/multi-step-loader";
 
 interface ScanResult {
   url: string
@@ -33,6 +34,16 @@ export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState<"detection" | "details" | "relations" | "community">("detection")
   const [historicalData, setHistoricalData] = useState<any>(null)
   const [loadingHistory, setLoadingHistory] = useState(false)
+
+  const loadingStates = [
+    { text: "Initializing phishing detection system..." },
+    { text: "Analyzing URL structure and patterns..." },
+    { text: "Checking against threat intelligence databases..." },
+    { text: "Fetching WHOIS and DNS records..." },
+    { text: "Examining SSL certificates..." },
+    { text: "Running AI-powered risk assessment..." },
+    { text: "Finalizing security analysis..." },
+  ]
 
   useEffect(() => {
     if (!loading && !user) {
@@ -283,6 +294,7 @@ export default function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
+      <MultiStepLoader loadingStates={loadingStates} loading={scanning} duration={1500} />
       {/* Navbar */}
       <nav className="border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">

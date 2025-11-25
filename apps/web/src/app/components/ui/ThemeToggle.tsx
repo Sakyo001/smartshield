@@ -1,10 +1,31 @@
 "use client"
 
 import { useTheme } from "@lib/theme-context"
+import { useState, useEffect } from "react"
 
 export default function ThemeToggle() {
   const { theme, toggleTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const isDark = theme === "dark"
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return (
+      <button
+        className="relative inline-flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        aria-label="Toggle theme"
+        disabled
+      >
+        <div className="relative w-14 h-7 bg-gray-300 dark:bg-gray-700 rounded-full transition-colors">
+          <div className="absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md" />
+        </div>
+      </button>
+    )
+  }
 
   return (
     <button
