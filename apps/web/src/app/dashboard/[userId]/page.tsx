@@ -35,6 +35,9 @@ export default function UserDashboard() {
   const [historicalData, setHistoricalData] = useState<any>(null)
   const [loadingHistory, setLoadingHistory] = useState(false)
 
+  // API URL - uses environment variable for production, falls back to localhost for development
+  const WHOIS_API_URL = process.env.NEXT_PUBLIC_WHOIS_API_URL || "http://localhost:5001"
+
   const loadingStates = [
     { text: "Initializing phishing detection system..." },
     { text: "Analyzing URL structure and patterns..." },
@@ -57,7 +60,7 @@ export default function UserDashboard() {
       if (activeTab === "relations" && currentScan && !historicalData && !loadingHistory) {
         setLoadingHistory(true)
         try {
-          const response = await fetch("http://localhost:5001/api/domain-history", {
+          const response = await fetch(`${WHOIS_API_URL}/api/domain-history`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ url: currentScan.url })
@@ -182,7 +185,7 @@ export default function UserDashboard() {
       let sslInfo = null
       
       try {
-        const domainInfoResponse = await fetch("http://localhost:5001/api/domain-info", {
+        const domainInfoResponse = await fetch(`${WHOIS_API_URL}/api/domain-info`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

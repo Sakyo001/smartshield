@@ -474,5 +474,6 @@ def health():
     return jsonify({'status': 'ok', 'service': 'whois-dns-api'})
 
 if __name__ == '__main__':
-    print("🚀 Starting WHOIS & DNS Lookup API on http://localhost:5001")
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    port = int(os.getenv('PORT', 5001))
+    print(f"🚀 Starting WHOIS & DNS Lookup API on port {port}")
+    app.run(host='0.0.0.0', port=port, debug=False)
