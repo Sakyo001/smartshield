@@ -24,6 +24,28 @@ interface ScanResult {
   }
 }
 
+// Utility for fetch with timeout
+async function fetchWithTimeout(resource: RequestInfo, options: any = {}) {
+  const { timeout = 30000 } = options; // 30 seconds default
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const response = await fetch(resource, { 
+      ...options, 
+      signal: controller.signal 
+    });
+    clearTimeout(id);
+    return response;
+  } catch (error: any) {
+    clearTimeout(id);
+    if (error.name === 'AbortError') {
+      throw new Error('Request timeout - API is taking too long to respond');
+    }
+    throw error;
+  }
+}
+
 export default function UserDashboard() {
   const { user, loading, signOut } = useAuth()
   const [urlInput, setUrlInput] = useState("")
@@ -34,6 +56,8 @@ export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState<"detection" | "details" | "relations" | "community">("detection")
   const [historicalData, setHistoricalData] = useState<any>(null)
   const [loadingHistory, setLoadingHistory] = useState(false)
+  const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking')
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   // API URL - uses environment variable for production, falls back to localhost for development
   const WHOIS_API_URL = process.env.NEXT_PUBLIC_WHOIS_API_URL || "https://smartshield-whois-api.onrender.com"
@@ -54,16 +78,35 @@ export default function UserDashboard() {
     }
   }, [user, loading])
 
+  // Check API health on mount
+  useEffect(() => {
+    const checkApiHealth = async () => {
+      try {
+        await fetchWithTimeout("https://phishguard-api-kwpg.onrender.com/health", { 
+          timeout: 5000,
+          method: "GET"
+        });
+        setApiStatus('online');
+      } catch (error) {
+        console.warn('API health check failed:', error);
+        setApiStatus('offline');
+      }
+    };
+    
+    checkApiHealth();
+  }, [])
+
   // Load historical data when Relations tab is clicked
   useEffect(() => {
     const loadHistoricalData = async () => {
       if (activeTab === "relations" && currentScan && !historicalData && !loadingHistory) {
         setLoadingHistory(true)
         try {
-          const response = await fetch(`${WHOIS_API_URL}/api/domain-history`, {
+          const response = await fetchWithTimeout(`${WHOIS_API_URL}/api/domain-history`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url: currentScan.url })
+            body: JSON.stringify({ url: currentScan.url }),
+            timeout: 15000 // 15 seconds for history
           })
           if (response.ok) {
             const data = await response.json()
@@ -126,12 +169,13 @@ export default function UserDashboard() {
     setCurrentScan(null)
     
     try {
-      const response = await fetch("https://phishguard-api-kwpg.onrender.com/api/scan", {
+      const response = await fetchWithTimeout("https://phishguard-api-kwpg.onrender.com/api/scan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ url: urlInput })
+        body: JSON.stringify({ url: urlInput }),
+        timeout: 30000 // 30 seconds
       })
 
       if (!response.ok) {
@@ -185,12 +229,13 @@ export default function UserDashboard() {
       let sslInfo = null
       
       try {
-        const domainInfoResponse = await fetch(`${WHOIS_API_URL}/api/domain-info`, {
+        const domainInfoResponse = await fetchWithTimeout(`${WHOIS_API_URL}/api/domain-info`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ url: urlInput })
+          body: JSON.stringify({ url: urlInput }),
+          timeout: 25000 // 25 seconds for WHOIS/DNS/SSL
         })
         
         if (domainInfoResponse.ok) {
@@ -314,16 +359,15 @@ export default function UserDashboard() {
           </div>
 
           <button 
-            onClick={async () => {
-              await signOut()
-              redirect("/login")
-            }}
-            className="text-white border border-white rounded-full px-3 md:px-5 py-1.5 md:py-2 hover:bg-white hover:text-[#0a0a0f] transition flex items-center gap-1 md:gap-2 text-xs md:text-sm"
+            onClick={() => setShowLogoutModal(true)}
+            className="relative group text-white border border-gray-700 rounded-lg px-3 md:px-4 py-2 hover:border-[#7B83FF] hover:bg-[#7B83FF]/10 transition-all flex items-center gap-2 text-xs md:text-sm"
           >
-            Logout
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="md:w-3.5 md:h-3.5">
-              <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4">
+              <path d="M6 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V3.33333C2 2.97971 2.14048 2.64057 2.39052 2.39052C2.64057 2.14048 2.97971 2 3.33333 2H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M10.6667 11.3333L14 8L10.6667 4.66667" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M14 8H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
+            <span className="hidden sm:inline">Logout</span>
           </button>
         </div>
       </nav>
@@ -374,6 +418,12 @@ export default function UserDashboard() {
             {" "}and{" "}
             <Link href="/privacy" className="text-[#7B83FF] hover:underline">privacy policy</Link>.
           </p>
+
+          {apiStatus === 'offline' && (
+            <div className="mt-4 p-4 bg-yellow-900/20 border border-yellow-500 rounded-lg text-yellow-300 text-sm">
+              ⚠️ Phishing detection API may be experiencing downtime. First scan may take 30-60 seconds to wake up the service.
+            </div>
+          )}
 
           {error && (
             <div className="mt-4 p-4 bg-red-900/20 border border-red-500 rounded-lg text-red-300 text-sm">
@@ -834,6 +884,52 @@ export default function UserDashboard() {
           </div>
         </div>
       </footer>
+
+      {/* Logout Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#0f0f1e] border border-gray-800 rounded-xl p-6 md:p-8 max-w-md w-full shadow-2xl">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="p-3 bg-[#7B83FF]/10 border border-[#7B83FF]/30 rounded-lg">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#7B83FF]">
+                  <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M16 17L21 12L16 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M21 12H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-white mb-2">Confirm Logout</h3>
+                <p className="text-gray-400 text-sm">
+                  Are you sure you want to log out of SmartShield? Your scan history will be saved.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="flex-1 px-4 py-2.5 bg-[#1a1a2e] border border-gray-700 text-white rounded-lg hover:bg-[#252540] hover:border-gray-600 transition font-medium text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  await signOut()
+                  redirect("/login")
+                }}
+                className="flex-1 px-4 py-2.5 bg-[#7B83FF] text-white rounded-lg hover:bg-[#6B73E8] transition font-medium text-sm flex items-center justify-center gap-2"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V3.33333C2 2.97971 2.14048 2.64057 2.39052 2.39052C2.64057 2.14048 2.97971 2 3.33333 2H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M10.6667 11.3333L14 8L10.6667 4.66667" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M14 8H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
