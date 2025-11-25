@@ -5,9 +5,9 @@ services:
     region: oregon
     plan: free
     branch: user-dashboard
-    rootDir: packages/ml
-    buildCommand: cd packages/ml && pip install -r requirements.txt
-    startCommand: cd packages/ml && gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 wsgi:app
+    rootDir: ./packages/ml
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 wsgi:app
     envVars:
       - key: SUPABASE_URL
         sync: false
