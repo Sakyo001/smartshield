@@ -2,10 +2,12 @@
 
 ## Step 1: Push Your Code
 ```bash
-git add packages/ml/
+git add .
 git commit -m "Add Render deployment configuration"
 git push origin user-dashboard
 ```
+
+**Important**: The `render.yaml` must be in the repository root (not in packages/ml).
 
 ## Step 2: Create Render Account
 1. Go to https://render.com
