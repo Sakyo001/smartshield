@@ -19,10 +19,11 @@ This API provides WHOIS, DNS, and SSL certificate information for domain analysi
 1. Go to [Render Dashboard](https://dashboard.render.com/)
 2. Click "New +" → "Blueprint"
 3. Connect your GitHub repository
-4. Select the `smartshield` repository
-5. Render will automatically detect the `render.yaml` file
-6. Set the root directory to `packages/ml`
-7. Click "Apply"
+4. Select the `smartshield` repository and branch `user-dashboard`
+5. Render will automatically detect the `render.yaml` file in the root
+6. Click "Apply"
+
+**Note**: The `render.yaml` file must be in the repository root, not in a subdirectory.
 
 #### Option B: Manual Setup
 1. Go to [Render Dashboard](https://dashboard.render.com/)
