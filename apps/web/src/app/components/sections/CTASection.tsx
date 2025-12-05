@@ -30,11 +30,10 @@ export default function CTASection() {
         {/* Shield illustration */}
         <div className="relative inline-block">
           <Image
-            src="/images/Group 36.png"
+            src="/images/Group52.png"
             alt="Protected"
-            width={350}
-            height={350}
-            className="mx-auto"
+            width={550}
+            height={550}
           />
         </div>
       </div>
