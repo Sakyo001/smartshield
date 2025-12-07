@@ -6,7 +6,7 @@ export default function CTASection() {
     <section className="py-20 px-6 bg-gray-50 dark:bg-[#0a0a0f] relative overflow-hidden transition-colors">
       {/* Background glow effect */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-[600px] h-[600px] bg-[#545BFF]/10 dark:bg-[#545BFF]/20 rounded-full blur-[150px]"></div>
+        <div className="w-[600px] h-[600px] bg-[#545BFF]/10 dark:bg-[#141414]/20 rounded-full blur-[150px]"></div>
       </div>
 
       <div className="max-w-5xl mx-auto text-center relative z-10">
