@@ -24,9 +24,18 @@
   "engines": {
     "node": ">=18"
   },
-  "keywords": ["phishing", "security", "browser-extension", "web-app", "ai"],
+  "keywords": [
+    "phishing",
+    "security",
+    "browser-extension",
+    "web-app",
+    "ai"
+  ],
   "repository": {
     "type": "git",
     "url": "your-repo-url"
+  },
+  "dependencies": {
+    "ogl": "^1.0.11"
   }
 }

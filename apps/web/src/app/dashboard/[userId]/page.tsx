@@ -343,19 +343,39 @@ export default function UserDashboard() {
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
       <MultiStepLoader loadingStates={loadingStates} loading={scanning} duration={1500} />
+
       {/* Navbar */}
       <nav className="border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <Image src="/images/light-logo.png" alt="SmartShield" width={32} height={32} className="md:w-9 md:h-9" />
-            <span className="text-white text-base md:text-lg font-semibold">SmartShield</span>
-          </Link>
+            <Link href="/" className="flex items-center gap-3">
+
+  {/* 1. The Logo - stays on the left */}
+  <Image 
+    src="/images/light-logo.png"  alt="SmartShield" width={32} height={32} className="md:w-15 md:h-15" 
+  />
+
+  {/* 2. Text Container - stacks the Title and Tagline vertically */}
+  <div className="flex flex-col justify-center">
+    
+    {/* Title */}
+    <span className="text-white text-base md:text-2xl font-semibold leading-none">
+      SmartShield
+    </span>
+
+    {/* Tagline */}
+    <span className="text-[10px] font-medium text-[#5667FF] tracking-wide mt-0.5">
+      AI-Powered Phishing Detector
+    </span>
+    
+  </div>
+</Link>
           
           <div className="hidden md:flex items-center gap-8">
             <Link href="/" className="text-gray-300 hover:text-white transition text-sm">Home</Link>
             <Link href="#scan" className="text-gray-300 hover:text-white transition text-sm">Scan</Link>
             <Link href="#about" className="text-gray-300 hover:text-white transition text-sm">About</Link>
             <Link href="#faq" className="text-gray-300 hover:text-white transition text-sm">FAQ</Link>
+             <Link href="#faq" className="text-gray-300 hover:text-white transition text-sm">Sign In</Link>
           </div>
 
           <button 
@@ -382,9 +402,9 @@ export default function UserDashboard() {
         {/* Scan Box */}
         <div className="max-w-3xl mx-auto mb-20">
           <div className="flex items-start gap-3 mb-6">
-            <Image src="/images/light-logo.png" alt="SmartShield" width={40} height={40} />
+            <Image src="/images/logo 1.png" alt="SmartShield" width={54} height={54} />
             <div>
-              <h3 className="text-white font-semibold mb-1">SmartShield</h3>
+              <h3 className="text-white text-lg font-semibold mb-1">SmartShield</h3>
               <p className="text-gray-400 text-sm">
                 Scan any website link and instantly detect phishing threats with AI-powered accuracy.
               </p>
@@ -412,7 +432,7 @@ export default function UserDashboard() {
             </button>
           </form>
 
-          <p className="text-gray-500 text-xs text-center">
+         <p className="text-gray-500 text-[15px] text-center mt-4">
             By entering a URL, you agree to our{" "}
             <Link href="/terms" className="text-[#7B83FF] hover:underline">terms of service</Link>
             {" "}and{" "}

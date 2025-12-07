@@ -8,7 +8,7 @@ export default function FAQSection() {
   const faqs = [
     {
       question: "Lorem ipsum dolor sit amet, consectetur adipiscing elit?",
-      answer: ""
+      answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam."
     },
     {
       question: "Lorem ipsum dolor sit amet, consectetur adipiscing elit consectetur?",
@@ -16,23 +16,23 @@ export default function FAQSection() {
     },
     {
       question: "Lorem ipsum dolor sit amet, consectetur adipiscing elit adipiscing elit consectetur?",
-      answer: ""
+      answer: " Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam."
     },
     {
       question: "Lorem ipsum dolor sit amet, consectetur adipiscing elit  ipsum dolor sit amet,?",
-      answer: ""
+      answer: " Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam."
     },
     {
       question: "Lorem ipsum dolor sit amet, consectetur adipiscing tempor incididunt ut labore et dolore magnelit?",
-      answer: ""
+      answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam."
     },
     {
       question: "Lorem ipsum dolor sit amet, consectetur adipiscing tempor incidelit?",
-      answer: ""
+      answer: " Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam."
     },
     {
       question: "Lorem ipsum dolor sit amet, consectetur adipiscing elitelit, sed do eiusmod ?",
-      answer: ""
+      answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam."
     }
   ]
 

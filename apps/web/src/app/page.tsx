@@ -1,3 +1,5 @@
+'use client';
+import React, { useEffect, useRef } from 'react';
 import Navbar from "@components/layout/Navbar"
 import Footer from "@components/layout/Footer"
 import HeroSection from "@components/sections/HeroSection"
@@ -9,15 +11,19 @@ import CTASection from "@components/sections/CTASection"
 
 export default function Home() {
   return (
+   
     <div className="min-h-screen">
+      
       <Navbar />
-      <HeroSection />
+      <HeroSection /> 
       <FeatureGrid />
       <HowItWorks />
       <AIBanner />
       <FAQSection />
       <CTASection />
-      <Footer />
+      <Footer /> 
     </div>
+    
+
   )
 }
