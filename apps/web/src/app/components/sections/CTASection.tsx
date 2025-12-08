@@ -1,7 +1,37 @@
-import Image from "next/image"
-import Link from "next/link"
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 
 export default function CTASection() {
+  const [isVisible, setIsVisible] = useState(false);
+  const shieldRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        } else {
+          setIsVisible(false);
+        }
+      },
+      {
+        threshold: 0.5,
+        rootMargin: "0px 0px -50px 0px",
+      }
+    );
+
+    if (shieldRef.current) {
+      observer.observe(shieldRef.current);
+    }
+
+    return () => {
+      if (shieldRef.current) {
+        observer.unobserve(shieldRef.current);
+      }
+    };
+  }, []);
+
   return (
     <section className="py-20 px-6 bg-gray-50 dark:bg-[#0a0a0f] relative overflow-hidden transition-colors">
       {/* Background glow effect */}
@@ -11,32 +41,48 @@ export default function CTASection() {
 
       <div className="max-w-5xl mx-auto text-center relative z-10">
         <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-8 transition-colors">
-          Browse Safe.<br />
+          Browse Safe.
+          <br />
           Stay Smart.
         </h2>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
           <Link
             href="/login"
-            className="bg-[#6B73FF] text-white px-7 py-3 rounded-lg hover:bg-[#5A62E8] transition font-medium shadow-lg shadow-[#6B73FF]/30"
+            style={{ width: "194.39px", height: "41px" }}
+            className="flex items-center justify-center bg-[#545BFF] hover:bg-[#4349CC] text-white rounded-full transition-all duration-300 font-medium shadow-[0_0_15px_rgba(84,91,255,0.4)]"
           >
             Get the Extension
           </Link>
-          <button className="text-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 px-7 py-3 rounded-lg hover:border-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 transition font-medium">
+
+          <button
+            style={{ width: "194.39px", height: "41px" }}
+            className="flex items-center justify-center text-gray-700 dark:text-white border border-gray-300 dark:border-white/20 hover:border-gray-400 dark:hover:border-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-full transition-all duration-300 font-medium"
+          >
             Scan Website
           </button>
         </div>
 
-        {/* Shield illustration */}
-        <div className="relative inline-block">
+        {/* Shield illustration with VERY Slow (5s) Fade-in & Floating Hover */}
+        <div
+          ref={shieldRef}
+          className={`relative inline-block transition-all duration-[5000ms] ease-[cubic-bezier(0.22,1,0.36,1)] 
+            cursor-pointer hover:-translate-y-4 hover:scale-105 hover:drop-shadow-[0_0_90px_rgba(84,91,255,0.8)] 
+            ${
+              isVisible
+                ? "opacity-100 translate-y-0 scale-100 blur-0 drop-shadow-[0_0_60px_rgba(84,91,255,0.6)]" // End State
+                : "opacity-0 translate-y-32 scale-50 blur-xl drop-shadow-none" // Start State
+            }`}
+        >
           <Image
-            src="/images/Group52.png"
+            src="/images/logo 1 (1).png"
             alt="Protected"
-            width={550}
-            height={550}
+            width={500}
+            height={500}
+            priority
           />
         </div>
       </div>
     </section>
-  )
+  );
 }
