@@ -1,87 +1,115 @@
-"use client"
+import ThemeToggle from "@components/ui/ThemeToggle";
 
-import Image from "next/image"
-import Link from "next/link"
-import ThemeToggle from "@components/ui/ThemeToggle"
-import Aurora from "../ui/Aurora"
-import { useState, useEffect } from "react"
+import Image from "next/image";
+
+import Link from "next/link";
+
+import { useEffect, useState } from "react";
+
+import Aurora from "../ui/Aurora";
+
+// 1. Remove Nico_Moji from here. Only keep Poppins.
+
+import { Poppins } from "next/font/google";
+
+// 2. Configure Poppins (This works fine)
+
+const poppins = Poppins({
+  weight: ["400", "500", "600"],
+
+  subsets: ["latin"],
+
+  display: "swap",
+});
 
 export default function Navbar() {
-  const [isScrolled, setIsScrolled] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
-    }
+      setIsScrolled(window.scrollY > 10);
+    };
 
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+    window.addEventListener("scroll", handleScroll);
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <nav className={`fixed z-50 transition-all duration-300 left-1/2 -translate-x-1/2 overflow-hidden ${
-      isScrolled 
-        ? "top-6 w-1/2 rounded-full bg-white/70 dark:bg-[#0a0a0f]/70 py-2" 
-        : "top-0 w-full bg-white/95 dark:bg-[#0a0a0f]/95 py-4 rounded-none"
-    } backdrop-blur-md dark:border-gray-800`}>
-      {/* Aurora Background */}
-      <div className={`absolute inset-0 h-full w-full dark:block hidden transition-opacity duration-300 ${isScrolled ? "opacity-40" : "opacity-100"} ${isScrolled ? "rounded-full" : "rounded-none"}`}>
-        <Aurora 
+    <nav
+      className={`fixed top-0 left-0 z-50 w-full transition-all duration-300 ${
+        isScrolled
+          ? "bg-gray-50/90 dark:bg-[#141414]/90 backdrop-blur-md shadow-sm dark:border-b dark:border-white/5"
+          : "bg-transparent border-transparent"
+      }`}
+    >
+      <div
+        className={`absolute inset-0 h-full w-full pointer-events-none transition-opacity duration-300 ${
+          isScrolled ? "opacity-40" : "opacity-0"
+        }`}
+      >
+        <Aurora
           colorStops={["#545BFF", "#b19eef", "#545BFF"]}
           amplitude={1.5}
           blend={0.6}
         />
       </div>
-      <div className="w-full mx-auto px-4 md:px-6 flex items-center justify-between relative z-10">
-      {/* Logo Section */}
-      <Link href="/" className="flex items-center gap-3 group transition-all duration-300">
 
-      {/* 1. The Logo Icon */}
-      <div className={`relative shrink-0 transition-all duration-300 ${isScrolled ? "w-10 h-10" : "w-15 h-15"}`}>
-     <Image 
-       src="/images/light-logo.png" 
-       alt="SmartShield Logo" fill
-       className="object-contain" 
-       priority/>
-  </div>
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between relative z-10">
+        {/* Logo Section */}
 
-  {/* 2. The Text Container - This is the key part */}
-  {/* 'flex-col' stacks the items vertically */}
-  <div className="flex flex-col justify-center">
-    {/* Title */}
-    <span className={`text-gray-900 dark:text-white font-bold leading-none tracking-wide transition-all duration-300 ${isScrolled ? "text-lg" : "text-2xl"}`}>
-      SmartShield
-    </span>
-    
-    {/* Tagline */}
-    <span className={`font-medium text-[#5667FF] tracking-wide transition-all duration-300 ${isScrolled ? "text-[9px] mt-0" : "text-[11px] mt-1"}`}>
-      AI-Powered Phishing Detector
-    </span>
-  </div>
-  </Link>
+        <Link
+          href="/"
+          className="flex items-center gap-3 group transition-opacity hover:opacity-80"
+        >
+          <div className="relative w-20 h-20 shrink-0">
+            <Image
+              src="/images/light-logo.png"
+              alt="SmartShield Logo"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
 
-        {/* Navigation Links */}
-        <div className="hidden md:flex items-center gap-8">
-          <Link href="#home" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition text-sm">
-            Home
-          </Link>
-          <Link href="#scan" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition text-sm">
-            Scan
-          </Link>
-          <Link href="#about" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition text-sm">
-            About
-          </Link>
-          <Link href="#faq" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition text-sm">
-          FAQ
-          </Link>
-          <Link href="#faq" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition text-sm">
-          Sign In
+          <div className="flex flex-col justify-center">
+            {/* 3. Use the CSS class 'font-nico' instead of the Next.js variable */}
+
+            <span className="font-nico text-gray-900 dark:text-white text-xl md:text-2xl tracking-wide">
+              SmartShield
+            </span>
+
+            <span className="font-medium text-[#5667FF] tracking-wide text-[11px] md:text-xs mt-1">
+              AI-Powered Phishing Detector
+            </span>
+          </div>
+        </Link>
+
+        {/* Navigation Links - Centered & Poppins Font */}
+
+        <div
+          className={`hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-8 ${poppins.className}`}
+        >
+          {["Home", "Scan", "About", "FAQ"].map((item) => (
+            <Link
+              key={item}
+              href={`#${item.toLowerCase()}`}
+              className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-[#5667FF] dark:hover:text-[#5667FF] transition-colors"
+            >
+              {item}
+            </Link>
+          ))}
+
+          <Link
+            href="/signin"
+            className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-[#5667FF] dark:hover:text-[#5667FF] transition-colors"
+          >
+            Sign In
           </Link>
         </div>
 
-        {/* Theme Toggle Button */}
         <ThemeToggle />
       </div>
     </nav>
-  )
+  );
 }

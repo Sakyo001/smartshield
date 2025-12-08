@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { useTheme } from "@lib/theme-context"
-import { useState, useEffect } from "react"
+import { useTheme } from "@lib/theme-context";
+import { useEffect, useState } from "react";
 
 export default function ThemeToggle() {
-  const { theme, toggleTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  const isDark = theme === "dark"
+  const { theme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  const isDark = theme === "dark";
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   // Prevent hydration mismatch by not rendering until mounted
   if (!mounted) {
@@ -24,7 +24,7 @@ export default function ThemeToggle() {
           <div className="absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md" />
         </div>
       </button>
-    )
+    );
   }
 
   return (
@@ -41,7 +41,7 @@ export default function ThemeToggle() {
             isDark ? "translate-x-7" : "translate-x-0"
           }`}
         />
-        
+
         {/* Sun Icon (Light Mode) */}
         <svg
           className={`absolute left-1.5 top-1.5 w-4 h-4 transition-opacity ${
@@ -76,5 +76,5 @@ export default function ThemeToggle() {
         </svg>
       </div>
     </button>
-  )
+  );
 }

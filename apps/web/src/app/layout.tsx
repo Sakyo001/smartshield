@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
-import {Providers} from "./providers"
+import { Providers } from "./providers";
 
-const poppins = Poppins({ 
+const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-poppins", 
+  variable: "--font-poppins",
 });
 
 export const metadata: Metadata = {
@@ -38,9 +38,7 @@ export default function RootLayout({
         />
       </head>
       <body suppressHydrationWarning>
-        <Providers>
-            {children}
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

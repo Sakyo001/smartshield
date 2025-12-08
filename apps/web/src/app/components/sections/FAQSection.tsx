@@ -1,86 +1,227 @@
-"use client"
+"use client";
 
-import { useState } from "react"
+import { useState } from "react";
 
 export default function FAQSection() {
-  const [openIndex, setOpenIndex] = useState<number | null>(1)
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const faqs = [
     {
       question: "Lorem ipsum dolor sit amet, consectetur adipiscing elit?",
-      answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam."
+      answer:
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
     },
     {
-      question: "Lorem ipsum dolor sit amet, consectetur adipiscing elit consectetur?",
-      answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam."
+      question:
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit consectetur?",
+      answer:
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
     },
     {
-      question: "Lorem ipsum dolor sit amet, consectetur adipiscing elit adipiscing elit consectetur?",
-      answer: " Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam."
+      question:
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit adipiscing elit consectetur?",
+      answer:
+        " Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
     },
     {
-      question: "Lorem ipsum dolor sit amet, consectetur adipiscing elit  ipsum dolor sit amet,?",
-      answer: " Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam."
+      question:
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit  ipsum dolor sit amet,?",
+      answer:
+        " Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
     },
     {
-      question: "Lorem ipsum dolor sit amet, consectetur adipiscing tempor incididunt ut labore et dolore magnelit?",
-      answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam."
+      question:
+        "Lorem ipsum dolor sit amet, consectetur adipiscing tempor incididunt ut labore et dolore magnelit?",
+      answer:
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
     },
     {
-      question: "Lorem ipsum dolor sit amet, consectetur adipiscing tempor incidelit?",
-      answer: " Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam."
+      question:
+        "Lorem ipsum dolor sit amet, consectetur adipiscing tempor incidelit?",
+      answer:
+        " Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
     },
     {
-      question: "Lorem ipsum dolor sit amet, consectetur adipiscing elitelit, sed do eiusmod ?",
-      answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam."
-    }
-  ]
+      question:
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elitelit, sed do eiusmod ?",
+      answer:
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
+    },
+  ];
 
   return (
-    <section className="py-20 px-6 bg-white dark:bg-white transition-colors">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-16">
+    // Added 'mb-24' here for margin bottom
+    <section className="py-12 px-6 bg-white dark:bg-white transition-colors relative overflow-hidden mb-">
+      {/* Subtle background gradient effect */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#6B73FF]/5 to-transparent pointer-events-none"></div>
+
+      <style>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            max-height: 0;
+            transform: translateY(-10px);
+            overflow: hidden;
+          }
+          to {
+            opacity: 1;
+            max-height: 500px;
+            transform: translateY(0);
+            overflow: visible;
+          }
+        }
+        
+        @keyframes slideUp {
+          from {
+            opacity: 1;
+            max-height: 500px;
+            transform: translateY(0);
+            overflow: hidden;
+          }
+          to {
+            opacity: 0;
+            max-height: 0;
+            transform: translateY(-10px);
+            overflow: hidden;
+          }
+        }
+
+        @keyframes fadeInScale {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        @keyframes pulse-glow {
+          0%, 100% {
+            box-shadow: 0 0 0 0 rgba(107, 115, 255, 0.4);
+          }
+          50% {
+            box-shadow: 0 0 0 8px rgba(107, 115, 255, 0);
+          }
+        }
+
+        .faq-answer {
+          animation: slideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .faq-closing {
+          animation: slideUp 0.3s ease-in forwards;
+        }
+
+        .faq-button {
+          position: relative;
+          overflow: hidden;
+        }
+
+        .faq-button::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(107, 115, 255, 0.1), transparent);
+          transition: left 0.5s ease;
+        }
+
+        .faq-button:hover::before {
+          left: 100%;
+        }
+
+        .faq-button:hover {
+          background-color: rgba(107, 115, 255, 0.08);
+        }
+
+        .faq-icon {
+          transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .faq-item {
+          animation: fadeInScale 0.5s ease-out backwards;
+        }
+
+        @keyframes shimmer {
+          0% {
+            background-position: -1000px 0;
+          }
+          100% {
+            background-position: 1000px 0;
+          }
+        }
+
+        .question-text {
+          transition: color 0.3s ease, letter-spacing 0.3s ease;
+        }
+
+        .faq-button:hover .question-text {
+          color: #6B73FF;
+          letter-spacing: 0.3px;
+        }
+      `}</style>
+      <div className="max-w-4xl mx-auto relative z-10">
+        <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-black mb-4 transition-colors">
-            Answers To<br />
+            Answers To
+            <br />
             Common <span className="text-[#6B73FF]">Questions</span>
           </h2>
           <p className="text-gray-600 dark:text-gray-600 text-base transition-colors">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+            eiusmod tempor incididunt ut labore et
           </p>
         </div>
 
-        <div className="space-y-1">
+        <div className="space-y-2">
           {faqs.map((faq, index) => (
             <div
               key={index}
-              className="border-b border-gray-300 dark:border-gray-300"
+              className="faq-item border border-gray-200 dark:border-gray-200 transition-all duration-300 rounded-lg hover:border-[#6B73FF]/30 hover:shadow-lg hover:shadow-[#6B73FF]/10"
+              style={{ animationDelay: `${index * 0.05}s` }}
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full px-0 py-5 flex items-center justify-between text-left"
+                className="faq-button w-full px-6 py-3 flex items-center justify-between text-left transition-all duration-300"
               >
-                <span className="text-gray-900 dark:text-black font-normal pr-4 text-sm transition-colors">{faq.question}</span>
-                <div className="shrink-0 w-6 h-6 rounded-full bg-gray-900 dark:bg-black flex items-center justify-center transition-colors">
+                <span className="question-text text-gray-900 dark:text-black font-medium pr-4 text-base transition-colors flex-1">
+                  {faq.question}
+                </span>
+                <div
+                  className="shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-[#6B73FF] to-[#5A62E8] flex items-center justify-center transition-all duration-300 hover:shadow-lg hover:shadow-[#6B73FF]/40 faq-icon flex-shrink-0"
+                  style={{
+                    transform:
+                      openIndex === index
+                        ? "rotate(180deg) scale(1.1)"
+                        : "rotate(0deg) scale(1)",
+                  }}
+                >
                   <svg
-                    width="12"
-                    height="12"
+                    width="16"
+                    height="16"
                     viewBox="0 0 12 12"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
-                    className={`transition-transform ${openIndex === index ? 'rotate-180' : ''}`}
                   >
                     <path
                       d="M6 2V10M2 6H10"
                       stroke="white"
                       strokeWidth="1.5"
                       strokeLinecap="round"
+                      strokeLinejoin="round"
                     />
                   </svg>
                 </div>
               </button>
               {openIndex === index && faq.answer && (
-                <div className="pb-5">
-                  <p className="text-gray-600 dark:text-gray-600 text-sm leading-relaxed transition-colors">{faq.answer}</p>
+                <div className="faq-answer px-6 py-3 border-t border-gray-100 dark:border-gray-100 mt-2">
+                  <p className="text-gray-600 dark:text-gray-600 text-base leading-relaxed transition-colors">
+                    {faq.answer}
+                  </p>
                 </div>
               )}
             </div>
@@ -88,5 +229,5 @@ export default function FAQSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }
