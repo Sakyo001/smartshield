@@ -53,11 +53,13 @@ export default function UserDashboard() {
   const [currentScan, setCurrentScan] = useState<ScanResult | null>(null)
   const [recentScans, setRecentScans] = useState<ScanResult[]>([])
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<"detection" | "details" | "relations" | "community">("detection")
+  const [activeTab, setActiveTab] = useState<"detection" | "details" | "relations" | "explanation" | "community">("detection")
   const [historicalData, setHistoricalData] = useState<any>(null)
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking')
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [xaiExplanation, setXaiExplanation] = useState<any>(null)
+  const [loadingXAI, setLoadingXAI] = useState(false)
 
   // Community comments state
   const [communityComments, setCommunityComments] = useState<any[]>([])
@@ -67,6 +69,42 @@ export default function UserDashboard() {
   const [commentError, setCommentError] = useState<string | null>(null)
   const [commentSuccess, setCommentSuccess] = useState(false)
   const [selectedFlag, setSelectedFlag] = useState<'legitimate' | 'phishing' | 'neutral'>('neutral')
+
+  // Load XAI explanation when scan result is available
+  useEffect(() => {
+    const fetchXAIExplanation = async () => {
+      if (currentScan) {
+        setLoadingXAI(true)
+        try {
+          const response = await fetch(`${WHOIS_API_URL}/api/explain`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              url: currentScan.url,
+              scan_result: {
+                riskScore: currentScan.riskScore,
+                decision: currentScan.status,
+                detections: currentScan.details?.detections || []
+              },
+              whois_info: currentScan.details?.whoisInfo || {},
+              dns_info: currentScan.details?.dnsRecords || {},
+              ssl_info: currentScan.details?.sslCertificates || {}
+            })
+          })
+          if (response.ok) {
+            const data = await response.json()
+            setXaiExplanation(data)
+          }
+        } catch (error) {
+          console.error("Error fetching XAI explanation:", error)
+        } finally {
+          setLoadingXAI(false)
+        }
+      }
+    }
+    
+    fetchXAIExplanation()
+  }, [currentScan])
 
   // Fetch comments for current scan
   useEffect(() => {
@@ -680,6 +718,16 @@ export default function UserDashboard() {
                   Detection
                 </button>
                 <button
+                  onClick={() => setActiveTab("explanation")}
+                  className={`px-4 md:px-6 py-3 text-xs md:text-sm font-medium transition whitespace-nowrap ${
+                    activeTab === "explanation"
+                      ? "text-[#7B83FF] border-b-2 border-[#7B83FF]"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  Explanation
+                </button>
+                <button
                   onClick={() => setActiveTab("details")}
                   className={`px-4 md:px-6 py-3 text-xs md:text-sm font-medium transition whitespace-nowrap ${
                     activeTab === "details"
@@ -766,6 +814,114 @@ export default function UserDashboard() {
                         )}
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {activeTab === "explanation" && (
+                  <div className="space-y-6">
+                    {loadingXAI ? (
+                      <div className="text-center py-12">
+                        <p className="text-gray-400">Generating AI-powered explanation...</p>
+                      </div>
+                    ) : xaiExplanation ? (
+                      <>
+                        {/* Summary Section */}
+                        <div className="bg-gradient-to-r from-[#1a1a2e] to-[#252540] border border-gray-700 rounded-lg p-6">
+                          <h3 className="text-xl font-bold text-white mb-3">AI Analysis Summary</h3>
+                          <p className="text-gray-200 leading-relaxed text-sm md:text-base">
+                            {xaiExplanation.summary}
+                          </p>
+                        </div>
+
+                        {/* Recommendation Section */}
+                        <div className={`border-l-4 rounded-lg p-6 ${
+                          currentScan.riskScore >= 70
+                            ? 'border-red-500 bg-red-500/5'
+                            : currentScan.riskScore >= 40
+                            ? 'border-yellow-500 bg-yellow-500/5'
+                            : 'border-green-500 bg-green-500/5'
+                        }`}>
+                          <h4 className={`font-bold text-lg mb-2 ${
+                            currentScan.riskScore >= 70
+                              ? 'text-red-400'
+                              : currentScan.riskScore >= 40
+                              ? 'text-yellow-400'
+                              : 'text-green-400'
+                          }`}>
+                            Recommendation
+                          </h4>
+                          <p className="text-gray-200 text-sm md:text-base">
+                            {xaiExplanation.recommendation}
+                          </p>
+                        </div>
+
+                        {/* Risk Factors */}
+                        {xaiExplanation.risk_factors && xaiExplanation.risk_factors.length > 0 && (
+                          <div>
+                            <h4 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-red-500">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                              </svg>
+                              Warning Signs ({xaiExplanation.risk_factors.length})
+                            </h4>
+                            <div className="space-y-3">
+                              {xaiExplanation.risk_factors.map((factor: any, idx: number) => (
+                                <div key={idx} className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                                  <div className="flex items-start gap-3">
+                                    <div className="flex-shrink-0 mt-1">
+                                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <h5 className="text-red-300 font-semibold text-sm md:text-base">
+                                        {factor.title}
+                                      </h5>
+                                      <p className="text-red-200/80 text-xs md:text-sm mt-1">
+                                        {factor.description}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Positive Factors */}
+                        {xaiExplanation.positive_factors && xaiExplanation.positive_factors.length > 0 && (
+                          <div>
+                            <h4 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-green-500">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+                              </svg>
+                              Positive Indicators ({xaiExplanation.positive_factors.length})
+                            </h4>
+                            <div className="space-y-3">
+                              {xaiExplanation.positive_factors.map((factor: any, idx: number) => (
+                                <div key={idx} className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+                                  <div className="flex items-start gap-3">
+                                    <div className="flex-shrink-0 mt-1">
+                                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <h5 className="text-green-300 font-semibold text-sm md:text-base">
+                                        {factor.title}
+                                      </h5>
+                                      <p className="text-green-200/80 text-xs md:text-sm mt-1">
+                                        {factor.description}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-center py-12">
+                        <p className="text-gray-400">Unable to generate explanation. Please try again.</p>
+                      </div>
+                    )}
                   </div>
                 )}
 
