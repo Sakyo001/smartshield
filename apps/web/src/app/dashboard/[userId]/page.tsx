@@ -66,6 +66,7 @@ export default function UserDashboard() {
   const [submittingComment, setSubmittingComment] = useState(false)
   const [commentError, setCommentError] = useState<string | null>(null)
   const [commentSuccess, setCommentSuccess] = useState(false)
+  const [selectedFlag, setSelectedFlag] = useState<'legitimate' | 'phishing' | 'neutral'>('neutral')
 
   // Fetch comments for current scan
   useEffect(() => {
@@ -105,13 +106,15 @@ export default function UserDashboard() {
         body: JSON.stringify({
           url: currentScan.url,
           user_id: user.id,
-          description: commentInput.trim()
+          description: commentInput.trim(),
+          flag: selectedFlag
         })
       })
       if (response.ok) {
         const data = await response.json()
         setCommunityComments(data.reports || [])
         setCommentInput("")
+        setSelectedFlag('neutral')
         setCommentSuccess(true)
         // Clear success message after 3 seconds
         setTimeout(() => setCommentSuccess(false), 3000)
@@ -903,24 +906,45 @@ export default function UserDashboard() {
                 )}
 
                 {activeTab === "community" && (
-                  <div className="py-12 max-w-xl mx-auto">
-                    <h3 className="text-white font-semibold mb-4 text-center">Community Comments</h3>
+                  <div className="py-12 max-w-2xl mx-auto">
+                    <h3 className="text-white font-semibold mb-4 text-center">Community Feedback</h3>
                     {loadingComments ? (
-                      <div className="text-gray-400 text-center mb-6">Loading comments...</div>
+                      <div className="text-gray-400 text-center mb-6">Loading feedback...</div>
                     ) : (
                       <>
                         {communityComments.length === 0 ? (
-                          <div className="text-gray-400 text-center mb-6">No feedback yet. Be the first to share your thoughts!</div>
+                          <div className="text-gray-400 text-center mb-6">No feedback yet. Be the first to share your assessment!</div>
                         ) : (
                           <ul className="mb-6 space-y-4">
                             {communityComments.map((cmt, idx) => (
                               <li key={idx} className="bg-[#1a1a2e] border border-gray-700 rounded-lg p-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-[#7B83FF]">
-                                    <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="2" />
-                                  </svg>
-                                  <span className="text-xs text-gray-400">{cmt.user_id ? `User: ${cmt.user_id}` : "Anonymous"}</span>
-                                  <span className="text-xs text-gray-500 ml-auto">{cmt.created_at ? new Date(cmt.created_at).toLocaleString() : ""}</span>
+                                <div className="flex items-start justify-between mb-3">
+                                  <div className="flex items-center gap-2">
+                                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-[#7B83FF]">
+                                      <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="2" />
+                                    </svg>
+                                    <span className="text-xs text-gray-400">{cmt.user_id ? `User: ${cmt.user_id.substring(0, 8)}...` : "Anonymous"}</span>
+                                    <span className="text-xs text-gray-500">{cmt.created_at ? new Date(cmt.created_at).toLocaleString() : ""}</span>
+                                  </div>
+                                  {cmt.flag && cmt.flag !== 'neutral' && (
+                                    <div className="flex items-center gap-1">
+                                      {cmt.flag === 'legitimate' ? (
+                                        <>
+                                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-green-500">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+                                          </svg>
+                                          <span className="text-xs text-green-400 font-medium">Legitimate</span>
+                                        </>
+                                      ) : cmt.flag === 'phishing' ? (
+                                        <>
+                                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-red-500">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                                          </svg>
+                                          <span className="text-xs text-red-400 font-medium">Phishing</span>
+                                        </>
+                                      ) : null}
+                                    </div>
+                                  )}
                                 </div>
                                 <div className="text-sm text-gray-200">{cmt.description}</div>
                               </li>
@@ -938,25 +962,78 @@ export default function UserDashboard() {
                     
                     {commentSuccess && (
                       <div className="mb-4 p-4 bg-green-900/20 border border-green-500 rounded-lg text-green-300 text-sm">
-                        Comment submitted successfully!
+                        Thank you! Your feedback has been recorded.
                       </div>
                     )}
                     
-                    <div className="mt-6">
+                    <div className="mt-8 pt-6 border-t border-gray-700">
+                      <label className="text-white font-semibold text-sm mb-4 block">Share Your Assessment</label>
                       <textarea
-                        placeholder="Enter a comment"
+                        placeholder="Share your experience with this site..."
                         className="w-full bg-[#1a1a2e] border border-gray-700 rounded-lg p-4 text-white placeholder-gray-500 focus:outline-none focus:border-[#7B83FF] mb-4"
                         rows={4}
                         value={commentInput}
                         onChange={e => setCommentInput(e.target.value)}
                         disabled={submittingComment}
                       />
+                      
+                      <div className="mb-4">
+                        <label className="text-gray-300 text-sm font-medium mb-3 block">Mark as:</label>
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => setSelectedFlag('legitimate')}
+                            disabled={submittingComment}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 transition font-medium text-sm ${
+                              selectedFlag === 'legitimate'
+                                ? 'border-green-500 bg-green-500/10 text-green-400'
+                                : 'border-gray-600 text-gray-400 hover:border-green-500/50 hover:text-green-400/70'
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+                            </svg>
+                            Legitimate
+                          </button>
+                          
+                          <button
+                            onClick={() => setSelectedFlag('phishing')}
+                            disabled={submittingComment}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 transition font-medium text-sm ${
+                              selectedFlag === 'phishing'
+                                ? 'border-red-500 bg-red-500/10 text-red-400'
+                                : 'border-gray-600 text-gray-400 hover:border-red-500/50 hover:text-red-400/70'
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                            </svg>
+                            Phishing
+                          </button>
+                          
+                          <button
+                            onClick={() => setSelectedFlag('neutral')}
+                            disabled={submittingComment}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 transition font-medium text-sm ${
+                              selectedFlag === 'neutral'
+                                ? 'border-gray-500 bg-gray-500/10 text-gray-300'
+                                : 'border-gray-600 text-gray-400 hover:border-gray-500/50 hover:text-gray-300/70'
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4">
+                              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
+                              <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                            </svg>
+                            Unsure
+                          </button>
+                        </div>
+                      </div>
+                      
                       <button
-                        className="bg-[#6B73FF] text-white px-6 py-2 rounded-lg hover:bg-[#5A62E8] transition w-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-[#6B73FF] text-white px-6 py-2.5 rounded-lg hover:bg-[#5A62E8] transition w-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={handleSubmitComment}
                         disabled={submittingComment || !commentInput.trim()}
                       >
-                        {submittingComment ? "Submitting..." : "Submit"}
+                        {submittingComment ? "Submitting..." : "Submit Feedback"}
                       </button>
                     </div>
                   </div>

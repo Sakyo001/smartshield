@@ -493,15 +493,21 @@ def reports():
             url = data.get('url', '')
             user_id = data.get('user_id', '')
             description = data.get('description', '')
+            flag = data.get('flag', 'neutral')  # 'legitimate', 'phishing', or 'neutral'
             
             if not url or not user_id or not description:
                 return jsonify({'error': 'URL, user_id, and description are required'}), 400
+            
+            # Validate flag value
+            if flag not in ['legitimate', 'phishing', 'neutral']:
+                flag = 'neutral'
             
             # Insert report into Supabase
             report_data = {
                 'url': url,
                 'user_id': user_id,
-                'description': description
+                'description': description,
+                'flag': flag
             }
             
             result = supabase_request('POST', 'reports', report_data)
