@@ -59,6 +59,73 @@ export default function UserDashboard() {
   const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking')
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
+  // Community comments state
+  const [communityComments, setCommunityComments] = useState<any[]>([])
+  const [commentInput, setCommentInput] = useState("")
+  const [loadingComments, setLoadingComments] = useState(false)
+  const [submittingComment, setSubmittingComment] = useState(false)
+  const [commentError, setCommentError] = useState<string | null>(null)
+  const [commentSuccess, setCommentSuccess] = useState(false)
+
+  // Fetch comments for current scan
+  useEffect(() => {
+    const fetchComments = async () => {
+      if (activeTab === "community" && currentScan) {
+        setLoadingComments(true)
+        try {
+          // Fetch feedback from reports table
+          const response = await fetch(`${WHOIS_API_URL}/api/reports?url=${encodeURIComponent(currentScan.url)}`)
+          if (response.ok) {
+            const data = await response.json()
+            setCommunityComments(data.reports || [])
+          } else {
+            setCommunityComments([])
+          }
+        } catch (err) {
+          setCommunityComments([])
+        } finally {
+          setLoadingComments(false)
+        }
+      }
+    }
+    fetchComments()
+  }, [activeTab, currentScan])
+
+  // Submit a new comment
+  const handleSubmitComment = async () => {
+    if (!commentInput.trim() || !currentScan || !user) return
+    setSubmittingComment(true)
+    setCommentError(null)
+    setCommentSuccess(false)
+    try {
+      // Submit feedback to reports table
+      const response = await fetch(`${WHOIS_API_URL}/api/reports`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: currentScan.url,
+          user_id: user.id,
+          description: commentInput.trim()
+        })
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setCommunityComments(data.reports || [])
+        setCommentInput("")
+        setCommentSuccess(true)
+        // Clear success message after 3 seconds
+        setTimeout(() => setCommentSuccess(false), 3000)
+      } else {
+        const errorData = await response.json()
+        setCommentError(errorData.error || "Failed to submit comment")
+      }
+    } catch (err) {
+      setCommentError(err instanceof Error ? err.message : "Failed to submit comment")
+    } finally {
+      setSubmittingComment(false)
+    }
+  }
+
   // API URL - uses environment variable for production, falls back to localhost for development
   const WHOIS_API_URL = process.env.NEXT_PUBLIC_WHOIS_API_URL || "https://smartshield-whois-api.onrender.com"
 
@@ -439,11 +506,24 @@ export default function UserDashboard() {
             <Link href="/privacy" className="text-[#7B83FF] hover:underline">privacy policy</Link>.
           </p>
 
-          {apiStatus === 'offline' && (
-            <div className="mt-4 p-4 bg-yellow-900/20 border border-yellow-500 rounded-lg text-yellow-300 text-sm">
-              ⚠️ Phishing detection API may be experiencing downtime. First scan may take 30-60 seconds to wake up the service.
+
+          {/* API Status Button */}
+          <div className="mt-4 flex justify-center">
+            <div className="flex items-center gap-2">
+              {apiStatus === 'online' ? (
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="9" cy="9" r="8" fill="#22c55e" stroke="#22c55e" strokeWidth="2" />
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="9" cy="9" r="8" fill="#ef4444" stroke="#ef4444" strokeWidth="2" />
+                </svg>
+              )}
+              <span className={`font-semibold text-sm ${apiStatus === 'online' ? 'text-green-500' : 'text-red-500'}`}>
+                Phishing Detection API: {apiStatus === 'online' ? 'Online' : 'Offline'}
+              </span>
             </div>
-          )}
+          </div>
 
           {error && (
             <div className="mt-4 p-4 bg-red-900/20 border border-red-500 rounded-lg text-red-300 text-sm">
@@ -523,6 +603,22 @@ export default function UserDashboard() {
                         : `This website appears safe based on our analysis.`}
                     </span>
                   </div>
+
+                  {/* Reason for Phishing flag */}
+                  {currentScan.status === "Dangerous" && currentScan.details?.detections && currentScan.details.detections.length > 0 && (
+                    <div className="mb-3 md:mb-4">
+                      <div className="text-xs md:text-sm font-semibold text-red-400 mb-1">Why flagged as phishing:</div>
+                      <ul className="list-disc list-inside text-xs md:text-sm text-red-300">
+                        {currentScan.details.detections.map((det, idx) => (
+                          <li key={idx}>
+                            {det.service ? <span className="font-bold">{det.service}: </span> : null}
+                            {det.result}
+                            {det.category ? <span className="text-gray-400"> ({det.category})</span> : null}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
                   <div className="space-y-2 text-xs md:text-sm text-gray-700 dark:text-gray-400">
                     <div className="flex items-center gap-2 md:gap-3">
@@ -807,20 +903,62 @@ export default function UserDashboard() {
                 )}
 
                 {activeTab === "community" && (
-                  <div className="text-center py-12">
-                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" className="mx-auto mb-4 opacity-50">
-                      <path d="M32 8L16 16V28C16 38 24 46 32 50C40 46 48 38 48 28V16L32 8Z" stroke="currentColor" strokeWidth="2"/>
-                    </svg>
-                    <h3 className="text-white font-semibold mb-2">No Comments Found</h3>
-                    <p className="text-gray-400 mb-6">Write a comment</p>
-                    <textarea
-                      placeholder="Enter a comment"
-                      className="w-full bg-[#1a1a2e] border border-gray-700 rounded-lg p-4 text-white placeholder-gray-500 focus:outline-none focus:border-[#7B83FF] mb-4"
-                      rows={4}
-                    />
-                    <button className="bg-[#6B73FF] text-white px-6 py-2 rounded-lg hover:bg-[#5A62E8] transition">
-                      Submit
-                    </button>
+                  <div className="py-12 max-w-xl mx-auto">
+                    <h3 className="text-white font-semibold mb-4 text-center">Community Comments</h3>
+                    {loadingComments ? (
+                      <div className="text-gray-400 text-center mb-6">Loading comments...</div>
+                    ) : (
+                      <>
+                        {communityComments.length === 0 ? (
+                          <div className="text-gray-400 text-center mb-6">No feedback yet. Be the first to share your thoughts!</div>
+                        ) : (
+                          <ul className="mb-6 space-y-4">
+                            {communityComments.map((cmt, idx) => (
+                              <li key={idx} className="bg-[#1a1a2e] border border-gray-700 rounded-lg p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-[#7B83FF]">
+                                    <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="2" />
+                                  </svg>
+                                  <span className="text-xs text-gray-400">{cmt.user_id ? `User: ${cmt.user_id}` : "Anonymous"}</span>
+                                  <span className="text-xs text-gray-500 ml-auto">{cmt.created_at ? new Date(cmt.created_at).toLocaleString() : ""}</span>
+                                </div>
+                                <div className="text-sm text-gray-200">{cmt.description}</div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </>
+                    )}
+                    
+                    {commentError && (
+                      <div className="mb-4 p-4 bg-red-900/20 border border-red-500 rounded-lg text-red-300 text-sm">
+                        {commentError}
+                      </div>
+                    )}
+                    
+                    {commentSuccess && (
+                      <div className="mb-4 p-4 bg-green-900/20 border border-green-500 rounded-lg text-green-300 text-sm">
+                        Comment submitted successfully!
+                      </div>
+                    )}
+                    
+                    <div className="mt-6">
+                      <textarea
+                        placeholder="Enter a comment"
+                        className="w-full bg-[#1a1a2e] border border-gray-700 rounded-lg p-4 text-white placeholder-gray-500 focus:outline-none focus:border-[#7B83FF] mb-4"
+                        rows={4}
+                        value={commentInput}
+                        onChange={e => setCommentInput(e.target.value)}
+                        disabled={submittingComment}
+                      />
+                      <button
+                        className="bg-[#6B73FF] text-white px-6 py-2 rounded-lg hover:bg-[#5A62E8] transition w-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={handleSubmitComment}
+                        disabled={submittingComment || !commentInput.trim()}
+                      >
+                        {submittingComment ? "Submitting..." : "Submit"}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
