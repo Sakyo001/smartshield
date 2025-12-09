@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { createClient } from "@lib/supabase";
 import Aurora from "@components/ui/Aurora";
 import ThemeToggle from "@components/ui/ThemeToggle";
 
@@ -13,27 +14,197 @@ export default function AdminDashboardClient() {
   const [adminEmail, setAdminEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [scanData, setScanData] = useState<any[]>([]);
+  const [stats, setStats] = useState({ phishing: 0, suspicious: 0, legitimate: 0 });
+  const [activeUsers, setActiveUsers] = useState(0);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalScans, setTotalScans] = useState(0);
+  const [dailyScanData, setDailyScanData] = useState<{ [key: string]: number }>({});
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [selectedFeedback, setSelectedFeedback] = useState<any>(null);
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
 
-  // Authentication Check
+  // Authentication Check with Supabase
   useEffect(() => {
-    const session = localStorage.getItem("adminSession");
-    if (session) {
+    const checkAdmin = async () => {
       try {
-        const data = JSON.parse(session);
-        if (data.isAdmin) {
-          setAdminEmail(data.email);
-          setIsAuthenticated(true);
-        } else {
+        const supabase = createClient();
+        
+        // Get current user session
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !user) {
+          // Check localStorage fallback for hardcoded admin
+          const session = localStorage.getItem("adminSession");
+          if (session) {
+            try {
+              const data = JSON.parse(session);
+              if (data.isAdmin) {
+                setAdminEmail(data.email);
+                setIsAuthenticated(true);
+                // Fetch reports after auth
+                await fetchReports(supabase);
+                setLoading(false);
+                return;
+              }
+            } catch (err) {
+              console.error("Error parsing session:", err);
+            }
+          }
           router.push("/admin/login");
+          return;
         }
+
+        // Check if user exists in admin_users table
+        const { data: adminUser, error: adminError } = await supabase
+          .from("admin_users")
+          .select("email, display_name")
+          .eq("email", user.email)
+          .maybeSingle();
+
+        if (adminError || !adminUser) {
+          console.error("User is not an admin");
+          router.push("/admin/login");
+          return;
+        }
+
+        // User is authenticated and is an admin
+        setAdminEmail(adminUser.email);
+        setIsAuthenticated(true);
+        // Fetch reports after auth
+        await fetchReports(supabase);
+        setLoading(false);
       } catch (err) {
+        console.error("Error checking admin status:", err);
         router.push("/admin/login");
       }
-    } else {
-      router.push("/admin/login");
-    }
-    setLoading(false);
+    };
+
+    checkAdmin();
   }, [router]);
+
+  // Fetch reports from Supabase
+  const fetchReports = async (supabase: any) => {
+    try {
+      // Fetch recent scan activity without join (limit 10 for table display)
+      const { data: reports, error } = await supabase
+        .from("extension_activity")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error("Error fetching reports:", error.message || JSON.stringify(error));
+        return;
+      }
+
+      if (reports && reports.length > 0) {
+        // Get user emails for the reports
+        const userIds = [...new Set(reports.map((r: any) => r.user_id))];
+        const { data: users } = await supabase
+          .from("users")
+          .select("id, email")
+          .in("id", userIds);
+
+        const userMap = new Map(users?.map((u: any) => [u.id, u.email]) || []);
+
+        // Format data for display
+        const formattedData = reports.map((report: any) => ({
+          id: report.id,
+          email: userMap.get(report.user_id) || "Unknown",
+          date: new Date(report.created_at).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }),
+          url: report.url,
+          risk: report.decision === "dangerous" ? "Phishing" : report.decision === "safe" ? "Legitimate" : "Suspicious",
+          feedback: true,
+        }));
+
+        setScanData(formattedData);
+      }
+
+      // Fetch all reports for stats calculation
+      const { data: allReports, error: reportsError } = await supabase
+        .from("extension_activity")
+        .select("decision");
+
+      if (reportsError) {
+        console.error("Error fetching all reports:", reportsError.message || JSON.stringify(reportsError));
+        return;
+      }
+
+      if (allReports) {
+        const phishingCount = allReports.filter((r: any) => r.decision === "dangerous").length;
+        const legitimateCount = allReports.filter((r: any) => r.decision === "safe").length;
+        const suspiciousCount = allReports.filter((r: any) => r.decision === "warning").length;
+
+        setStats({
+          phishing: phishingCount,
+          suspicious: suspiciousCount,
+          legitimate: legitimateCount,
+        });
+        setTotalScans(allReports.length);
+      }
+
+      // Fetch all users
+      const { data: allUsers, error: usersError } = await supabase
+        .from("users")
+        .select("id, email, last_login");
+
+      if (usersError) {
+        console.error("Error fetching users:", usersError.message || JSON.stringify(usersError));
+        return;
+      }
+
+      if (allUsers) {
+        setTotalUsers(allUsers.length);
+
+      // Count active users (those with scans in the last 7 days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const { data: recentScans, error: scansError } = await supabase
+          .from("extension_activity")
+          .select("user_id, created_at")
+          .gte("created_at", sevenDaysAgo.toISOString());
+
+        if (scansError) {
+          console.error("Error fetching recent scans:", scansError.message || JSON.stringify(scansError));
+          return;
+        }
+
+        if (recentScans) {
+          // Count unique users from last 7 days
+          const uniqueUsers = new Set(recentScans.map((scan: any) => scan.user_id));
+          setActiveUsers(uniqueUsers.size);
+
+          // Calculate daily scan counts for last 7 days
+          const dailyData: { [key: string]: number } = {};
+          
+          for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+            dailyData[dateStr] = 0;
+          }
+
+          recentScans.forEach((scan: any) => {
+            const dateStr = new Date(scan.created_at).toISOString().split('T')[0];
+            if (dailyData.hasOwnProperty(dateStr)) {
+              dailyData[dateStr]++;
+            }
+          });
+
+          setDailyScanData(dailyData);
+        }
+      }
+    } catch (err: any) {
+      console.error("Error in fetchReports:", err?.message || err);
+    }
+  };
 
   // Scroll effect listener
   useEffect(() => {
@@ -45,9 +216,88 @@ export default function AdminDashboardClient() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("Error signing out:", err);
+    }
     localStorage.removeItem("adminSession");
     router.push("/admin/login");
+  };
+
+  const fetchComments = async (url: string) => {
+    setCommentsLoading(true);
+    try {
+      const supabase = createClient();
+      
+      // First, try to fetch reports with user data
+      const { data: reports, error } = await supabase
+        .from("reports")
+        .select("id, description, flag, created_at, user_id")
+        .eq("url", url)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching reports - Full error object:", {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+        });
+        setComments([]);
+        return;
+      }
+
+      if (!reports || reports.length === 0) {
+        setComments([]);
+        return;
+      }
+
+      // Fetch user info separately
+      const userIds = [...new Set(reports.map((r: any) => r.user_id))];
+      const { data: users, error: usersError } = await supabase
+        .from("users")
+        .select("id, email, display_name")
+        .in("id", userIds);
+
+      if (usersError) {
+        console.error("Error fetching users:", usersError);
+      }
+
+      const userMap = new Map(users?.map((u: any) => [u.id, { email: u.email, display_name: u.display_name }]) || []);
+
+      // Format comments with user data
+      const formattedComments = reports.map((r: any) => {
+        const user = userMap.get(r.user_id) || { email: "Unknown", display_name: "Anonymous" };
+        return {
+          id: r.id,
+          author: user.display_name || user.email || "Anonymous",
+          comment: r.description,
+          flag: r.flag,
+          date: new Date(r.created_at).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        };
+      });
+
+      setComments(formattedComments);
+    } catch (err: any) {
+      console.error("Error in fetchComments:", err?.message || err);
+      setComments([]);
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  const handleFeedbackClick = async (item: any) => {
+    setSelectedFeedback(item);
+    await fetchComments(item.url);
   };
 
   if (loading) {
@@ -62,89 +312,13 @@ export default function AdminDashboardClient() {
     return null;
   }
 
-  // Mock Data matching your reference
-  const scanData = [
-    {
-      email: "user@example.com",
-      date: "October 31, 2022",
-      url: "http://example.com",
-      risk: "Suspicious",
-      feedback: true,
-    },
-    {
-      email: "test@example.com",
-      date: "February 11, 2023",
-      url: "http://example.io",
-      risk: "Infected",
-      feedback: true,
-    },
-    {
-      email: "admin@example.com",
-      date: "May 11, 2023",
-      url: "https://example-site.ai",
-      risk: "Clean",
-      feedback: true,
-    },
-    {
-      email: "user@example.com",
-      date: "December 11, 2023",
-      url: "http://verification.com",
-      risk: "Dangerous",
-      feedback: true,
-    },
-    {
-      email: "test@example.com",
-      date: "March 15, 2023",
-      url: "http://suspicious-site.net",
-      risk: "Suspicious",
-      feedback: true,
-    },
-    {
-      email: "user@example.com",
-      date: "April 01, 2023",
-      url: "http://phishing-alert.org",
-      risk: "Infected",
-      feedback: true,
-    },
-    {
-      email: "admin@example.com",
-      date: "June 25, 2023",
-      url: "http://secure-portal.io",
-      risk: "Clean",
-      feedback: true,
-    },
-    {
-      email: "user@example.com",
-      date: "July 14, 2023",
-      url: "http://verify-account.us",
-      risk: "Dangerous",
-      feedback: true,
-    },
-    {
-      email: "test@example.com",
-      date: "August 19, 2023",
-      url: "http://risky-deal.com",
-      risk: "Suspicious",
-      feedback: true,
-    },
-    {
-      email: "admin@example.com",
-      date: "November 18, 2023",
-      url: "http://security-check.site",
-      risk: "Clean",
-      feedback: true,
-    },
-  ];
-
   const getRiskColor = (risk: string) => {
     switch (risk) {
-      case "Dangerous":
+      case "Phishing":
         return "bg-red-500";
-      case "Infected":
-        return "bg-red-400";
       case "Suspicious":
         return "bg-yellow-500";
-      case "Clean":
+      case "Legitimate":
         return "bg-green-500";
       default:
         return "bg-gray-500";
@@ -301,29 +475,29 @@ export default function AdminDashboardClient() {
           {[
             {
               label: "Total Scans",
-              value: "12,543",
-              sub: "+2.5% from last month",
+              value: totalScans.toLocaleString(),
+              sub: "All security scans",
               color: "text-white",
-              subColor: "text-green-400",
+              subColor: "text-blue-400",
             },
             {
               label: "Threats Detected",
-              value: "342",
-              sub: "Blocked malicious URLs",
+              value: stats.phishing.toLocaleString(),
+              sub: "Phishing URLs blocked",
               color: "text-red-400",
               subColor: "text-red-400",
             },
             {
-              label: "Users Protected",
-              value: "1,234",
-              sub: "Active users",
+              label: "Active Users",
+              value: activeUsers.toLocaleString(),
+              sub: `of ${totalUsers.toLocaleString()} total users`,
               color: "text-blue-400",
               subColor: "text-blue-400",
             },
             {
-              label: "Detection Rate",
-              value: "98.7%",
-              sub: "Accuracy improved",
+              label: "Detection Accuracy",
+              value: "97.7%",
+              sub: "Phishing detection rate",
               color: "text-green-400",
               subColor: "text-green-400",
             },
@@ -348,15 +522,37 @@ export default function AdminDashboardClient() {
               Scan Activity (Last 7 Days)
             </h2>
             <div className="h-64 flex items-end justify-around gap-2 bg-gray-950/50 rounded p-4">
-              {[60, 45, 75, 90, 55, 70, 85].map((height, idx) => (
-                <div key={idx} className="flex flex-col items-center gap-2">
-                  <div
-                    className="w-8 rounded bg-gradient-to-t from-blue-600 to-blue-400"
-                    style={{ height: `${height}px` }}
-                  ></div>
-                  <span className="text-xs text-gray-400">{idx + 1}</span>
-                </div>
-              ))}
+              {(() => {
+                const dates = [];
+                for (let i = 6; i >= 0; i--) {
+                  const date = new Date();
+                  date.setDate(date.getDate() - i);
+                  dates.push(date);
+                }
+
+                const maxScans = Math.max(...dates.map(d => dailyScanData[d.toISOString().split('T')[0]] || 0), 1);
+
+                return dates.map((date, idx) => {
+                  const dateStr = date.toISOString().split('T')[0];
+                  const scans = dailyScanData[dateStr] || 0;
+                  const heightPercent = maxScans > 0 ? (scans / maxScans) * 100 : 0;
+
+                  return (
+                    <div key={idx} className="flex flex-col items-center gap-2 flex-1">
+                      <div
+                        className="w-full rounded bg-gradient-to-t from-blue-600 to-blue-400 hover:from-blue-500 hover:to-blue-300 transition-all relative group"
+                        style={{ height: `${heightPercent}px` || "20px" }}
+                        title={`${dateStr}: ${scans} scans`}
+                      >
+                        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                          {scans} scans
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-400">{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
 
@@ -364,22 +560,32 @@ export default function AdminDashboardClient() {
           <div className="bg-gradient-to-br from-gray-900/50 to-gray-800/30 border border-gray-800/50 rounded-lg p-6 backdrop-blur-sm hover:border-[#6B73FF]/30 transition-all duration-300">
             <h2 className="text-white font-semibold mb-4">Total Scan</h2>
             <div className="flex flex-col items-center gap-4">
-              <div
-                className="w-40 h-40 rounded-full border-8 border-gray-800 flex items-center justify-center relative hover:scale-105 transition-transform duration-300"
-                style={{
-                  background:
-                    "conic-gradient(#ef4444 0deg 120deg, #f97316 120deg 240deg, #22c55e 240deg)",
-                }}
-              >
-                <div className="w-32 h-32 rounded-full bg-gray-900 flex items-center justify-center z-10">
-                  <span className="text-xl font-bold text-white">85.6%</span>
-                </div>
-              </div>
-              <div className="text-sm text-gray-400 text-center space-y-1">
-                <div className="hover:text-white transition-colors">🔴 Dangerous: {Math.round(12543 * 0.4)}</div>
-                <div className="hover:text-white transition-colors">🟠 Suspicious: {Math.round(12543 * 0.35)}</div>
-                <div className="hover:text-white transition-colors">🟢 Clean: {Math.round(12543 * 0.25)}</div>
-              </div>
+              {(() => {
+                const total = stats.phishing + stats.suspicious + stats.legitimate;
+                const phishingPercent = total > 0 ? (stats.phishing / total) * 100 : 0;
+                const suspiciousPercent = total > 0 ? (stats.suspicious / total) * 100 : 0;
+                const legitimatePercent = total > 0 ? (stats.legitimate / total) * 100 : 0;
+
+                return (
+                  <>
+                    <div
+                      className="w-40 h-40 rounded-full border-8 border-gray-800 flex items-center justify-center relative hover:scale-105 transition-transform duration-300"
+                      style={{
+                        background: `conic-gradient(#ef4444 0deg ${phishingPercent * 3.6}deg, #f97316 ${phishingPercent * 3.6}deg ${(phishingPercent + suspiciousPercent) * 3.6}deg, #22c55e ${(phishingPercent + suspiciousPercent) * 3.6}deg)`,
+                      }}
+                    >
+                      <div className="w-32 h-32 rounded-full bg-gray-900 flex items-center justify-center z-10">
+                        <span className="text-xl font-bold text-white">{total > 0 ? ((stats.phishing / total) * 100).toFixed(1) : 0}%</span>
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-400 text-center space-y-1">
+                      <div className="hover:text-white transition-colors">🔴 Phishing: {stats.phishing}</div>
+                      <div className="hover:text-white transition-colors">🟠 Suspicious: {stats.suspicious}</div>
+                      <div className="hover:text-white transition-colors">🟢 Legitimate: {stats.legitimate}</div>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -429,8 +635,9 @@ export default function AdminDashboardClient() {
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <button
+                        onClick={() => handleFeedbackClick(item)}
                         className="p-2 bg-gradient-to-r from-[#6B73FF]/20 to-[#5A62E8]/20 hover:from-[#6B73FF]/40 hover:to-[#5A62E8]/40 border border-[#6B73FF]/30 rounded-lg transition-all duration-300 hover:scale-110"
-                        title="Send Feedback"
+                        title="View Comments"
                       >
                         <svg
                           width="18"
@@ -451,6 +658,93 @@ export default function AdminDashboardClient() {
             </table>
           </div>
         </div>
+
+        {/* Feedback Modal */}
+        {selectedFeedback && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700/50 rounded-lg p-8 max-w-md w-full animate-in fade-in zoom-in duration-200">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-white">Scan Details</h3>
+                <button
+                  onClick={() => setSelectedFeedback(null)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <p className="text-gray-400 text-sm">Email</p>
+                  <p className="text-white font-medium">{selectedFeedback.email}</p>
+                </div>
+
+                <div>
+                  <p className="text-gray-400 text-sm">URL</p>
+                  <p className="text-white font-mono text-sm break-all">{selectedFeedback.url}</p>
+                </div>
+
+                <div>
+                  <p className="text-gray-400 text-sm">Date</p>
+                  <p className="text-white font-medium">{selectedFeedback.date}</p>
+                </div>
+
+                <div>
+                  <p className="text-gray-400 text-sm">Risk Status</p>
+                  <span
+                    className={`inline-block px-3 py-1 rounded text-xs font-medium text-white mt-2 ${getRiskColor(selectedFeedback.risk)}`}
+                  >
+                    {selectedFeedback.risk}
+                  </span>
+                </div>
+
+                <div className="border-t border-gray-700/50 pt-4">
+                  <p className="text-gray-400 text-sm mb-2">Scan Summary</p>
+                  <div className="bg-gray-950/50 rounded p-3 text-gray-300 text-sm">
+                    <p>User <span className="text-white font-medium">{selectedFeedback.email}</span> scanned</p>
+                    <p className="mt-1">URL: <span className="text-blue-400 break-all">{selectedFeedback.url}</span></p>
+                    <p className="mt-1">Result: <span className={`font-medium ${selectedFeedback.risk === 'Phishing' ? 'text-red-400' : selectedFeedback.risk === 'Legitimate' ? 'text-green-400' : 'text-yellow-400'}`}>{selectedFeedback.risk}</span></p>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-700/50 pt-4 mt-4">
+                  <p className="text-gray-400 text-sm mb-3">Community Reports</p>
+                  <div className="space-y-3 max-h-48 overflow-y-auto">
+                    {commentsLoading ? (
+                      <p className="text-gray-500 text-sm">Loading reports...</p>
+                    ) : comments.length > 0 ? (
+                      comments.map((c: any) => (
+                        <div key={c.id} className="bg-gray-950/50 rounded p-3 border border-gray-800/50">
+                          <div className="flex items-start justify-between mb-2">
+                            <p className="text-white text-sm font-medium">{c.author}</p>
+                            <span className={`text-xs px-2 py-1 rounded ${
+                              c.flag === 'phishing' ? 'bg-red-500/20 text-red-400' :
+                              c.flag === 'legitimate' ? 'bg-green-500/20 text-green-400' :
+                              'bg-yellow-500/20 text-yellow-400'
+                            }`}>
+                              {c.flag?.charAt(0).toUpperCase() + c.flag?.slice(1) || 'Neutral'}
+                            </span>
+                          </div>
+                          <p className="text-gray-300 text-sm mb-1">{c.comment}</p>
+                          <p className="text-gray-500 text-xs">{c.date}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-sm italic">No community reports yet</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedFeedback(null)}
+                className="w-full mt-6 px-4 py-2 bg-gradient-to-r from-[#6B73FF]/20 to-[#5A62E8]/20 hover:from-[#6B73FF]/40 hover:to-[#5A62E8]/40 border border-[#6B73FF]/30 text-white rounded-lg transition-all duration-300"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Footer */}

@@ -1,5 +1,14 @@
--- USERS TABLE (unchanged)
+-- USERS TABLE (with role-based access control)
 CREATE TABLE users (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email varchar NOT NULL UNIQUE,
+  display_name varchar,
+  created_at timestamptz DEFAULT now(),
+  last_login timestamptz
+);
+
+-- ADMIN USERS TABLE
+CREATE TABLE admin_users (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   email varchar NOT NULL UNIQUE,
   password_hash varchar NOT NULL,

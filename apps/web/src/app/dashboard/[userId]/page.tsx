@@ -168,7 +168,7 @@ export default function UserDashboard() {
   }
 
   // API URL - uses environment variable for production, falls back to localhost for development
-  const WHOIS_API_URL = process.env.NEXT_PUBLIC_WHOIS_API_URL || "https://smartshield-whois-api.onrender.com"
+  const WHOIS_API_URL = process.env.NEXT_PUBLIC_WHOIS_API_URL || "http://localhost:5001"
 
   const loadingStates = [
     { text: "Initializing phishing detection system..." },
@@ -483,7 +483,6 @@ export default function UserDashboard() {
             <Link href="#scan" className="text-gray-300 hover:text-white transition text-sm">Scan</Link>
             <Link href="#about" className="text-gray-300 hover:text-white transition text-sm">About</Link>
             <Link href="#faq" className="text-gray-300 hover:text-white transition text-sm">FAQ</Link>
-             <Link href="#faq" className="text-gray-300 hover:text-white transition text-sm">Sign In</Link>
           </div>
 
           <button 

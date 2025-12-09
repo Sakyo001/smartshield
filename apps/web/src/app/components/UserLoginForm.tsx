@@ -1,6 +1,7 @@
 "use client";
 import { useAuth } from "@lib/auth-context";
 import { createClient } from "@lib/supabase";
+import { syncUserToDatabase, linkSocialAccount } from "@lib/supabase";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -52,6 +53,8 @@ export default function UserLoginForm() {
       setError(error.message);
       setLoading(false);
     } else if (data.user) {
+      // Sync user to users table on login
+      await syncUserToDatabase(data.user.id, email);
       router.push(`/dashboard/${data.user.id}`);
     }
   };

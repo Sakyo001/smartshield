@@ -1,0 +1,2496 @@
+{
+  "timestamp": "2025-12-09T05:16:56.328Z",
+  "totalSamples": 500,
+  "samplesEvaluated": 500,
+  "apiCallStats": {
+    "successful": 491,
+    "failed": 9,
+    "timeout": 9,
+    "successRate": "98.20%"
+  },
+  "metrics": {
+    "accuracy": 58.8,
+    "precision": 0.9411764705882353,
+    "recall": 0.19123505976095617,
+    "fMeasure": 0.3178807947019867
+  },
+  "confusionMatrix": {
+    "truePositives": 48,
+    "trueNegatives": 246,
+    "falsePositives": 3,
+    "falseNegatives": 203
+  },
+  "perClassAccuracy": {
+    "phishing": 19.12350597609562,
+    "legitimate": 98.79518072289156
+  },
+  "samplePredictions": [
+    {
+      "url": "http://www.crestonwood.com/router.php",
+      "actual": "LEGITIMATE",
+      "mlDecision": "PHISHING",
+      "apiDecision": "PHISHING",
+      "correct": false,
+      "mlScore": 3,
+      "apiData": null,
+      "xaiExplanation": null
+    },
+    {
+      "url": "http://batvrms.net/deliver/D2017HL/u.php",
+      "actual": "PHISHING",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": false,
+      "mlScore": 1,
+      "apiData": null,
+      "xaiExplanation": null
+    },
+    {
+      "url": "https://grassform-my.sharepoint.com/:b:/g/personal/accounts_grassform_co_uk/EYsmX_DhwSVAlooW1ETKf50BIChCl1rrAfmqvTLvySTLQQ?e=UbjoWA",
+      "actual": "PHISHING",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": false,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 1,
+        "whoisAge": "1998-08-10 04:00:00",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with NOM-IQ Ltd dba Com Laude, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 27 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 5 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "https://grassform-my.sharepoint.com/:b:/g/personal/accounts_grassform_co_uk/EYsmX_DhwSVAlooW1ETKf50BIChCl1rrAfmqvTLvySTLQQ?e=UbjoWA"
+      }
+    },
+    {
+      "url": "http://www.flaticon.com/free-icons/parking_403",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 1,
+        "whoisAge": "2013-05-10 00:59:14",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with IONOS SE, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 12 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 5 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://www.flaticon.com/free-icons/parking_403"
+      }
+    },
+    {
+      "url": "http://hidayat.uz/928375602332311ochttp3A2F2F2Fws2FISAPIdllFM2MContact26item3B14276952031324requestePPd3DwolandgioielliPPP26qidQ-jlc@amahousse.com.html",
+      "actual": "PHISHING",
+      "mlDecision": "PHISHING",
+      "apiDecision": "LEGITIMATE",
+      "correct": false,
+      "mlScore": 2,
+      "apiData": {
+        "mlScore": 2,
+        "mlDecision": "PHISHING",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": false,
+        "hasDNS": true,
+        "infraScore": 2,
+        "combinedScore": 2,
+        "whoisAge": "unknown",
+        "sslValid": "no"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 2%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [
+          {
+            "description": "Website does not use HTTPS/SSL encryption - data is transmitted in plain text",
+            "severity": "high",
+            "title": "No SSL Certificate"
+          }
+        ],
+        "summary": "This website appears legitimate with 1 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://hidayat.uz/928375602332311ochttp3A2F2F2Fws2FISAPIdllFM2MContact26item3B14276952031324requestePPd3DwolandgioielliPPP26qidQ-jlc@amahousse.com.html"
+      }
+    },
+    {
+      "url": "http://www.wealthdaily.com/articles/nokia-stock/2147",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 1,
+        "whoisAge": "2006-11-22 19:42:11",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with ENOM, INC., indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 19 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Domain has MX records configured for email, indicating established infrastructure",
+            "severity": "positive",
+            "title": "Email Configuration"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 6 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://www.wealthdaily.com/articles/nokia-stock/2147"
+      }
+    },
+    {
+      "url": "http://artemisbetguncel.blogspot.com",
+      "actual": "PHISHING",
+      "mlDecision": "PHISHING",
+      "apiDecision": "LEGITIMATE",
+      "correct": false,
+      "mlScore": 4,
+      "apiData": {
+        "mlScore": 4,
+        "mlDecision": "PHISHING",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": false,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 2,
+        "combinedScore": 4,
+        "whoisAge": "unknown",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 4%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [
+          {
+            "description": "Could not retrieve WHOIS data - unable to verify domain registration",
+            "severity": "medium",
+            "title": "WHOIS Information Unavailable"
+          }
+        ],
+        "summary": "This website appears legitimate with 3 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://artemisbetguncel.blogspot.com"
+      }
+    },
+    {
+      "url": "https://3u8kstpg-97iuu3sdu.vercel.app/",
+      "actual": "PHISHING",
+      "mlDecision": "PHISHING",
+      "apiDecision": "LEGITIMATE",
+      "correct": false,
+      "mlScore": 3,
+      "apiData": {
+        "mlScore": 3,
+        "mlDecision": "PHISHING",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 3,
+        "whoisAge": "unknown",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 3%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 3 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "https://3u8kstpg-97iuu3sdu.vercel.app/"
+      }
+    },
+    {
+      "url": "http://m.hf695.com/",
+      "actual": "PHISHING",
+      "mlDecision": "PHISHING",
+      "apiDecision": "LEGITIMATE",
+      "correct": false,
+      "mlScore": 4,
+      "apiData": {
+        "mlScore": 4,
+        "mlDecision": "PHISHING",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": false,
+        "hasDNS": true,
+        "infraScore": 2,
+        "combinedScore": 4,
+        "whoisAge": "2024-11-05 00:11:39",
+        "sslValid": "no"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 4%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with GMO Internet, Inc., indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [
+          {
+            "description": "Website does not use HTTPS/SSL encryption - data is transmitted in plain text",
+            "severity": "high",
+            "title": "No SSL Certificate"
+          }
+        ],
+        "summary": "This website appears legitimate with 3 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://m.hf695.com/"
+      }
+    },
+    {
+      "url": "http://energo-investment.hu",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 1,
+        "whoisAge": "unknown",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Domain has MX records configured for email, indicating established infrastructure",
+            "severity": "positive",
+            "title": "Email Configuration"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 4 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://energo-investment.hu"
+      }
+    },
+    {
+      "url": "https://www.alterego.gr/",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 0,
+      "apiData": {
+        "mlScore": 0,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 0,
+        "whoisAge": "unknown",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 0%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 3 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "https://www.alterego.gr/"
+      }
+    },
+    {
+      "url": "https://instagramnotice-security.com/username.php",
+      "actual": "PHISHING",
+      "mlDecision": "PHISHING",
+      "apiDecision": "LEGITIMATE",
+      "correct": false,
+      "mlScore": 2,
+      "apiData": {
+        "mlScore": 2,
+        "mlDecision": "PHISHING",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": false,
+        "hasSSL": false,
+        "hasDNS": true,
+        "infraScore": 1,
+        "combinedScore": 2,
+        "whoisAge": "unknown",
+        "sslValid": "no"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 2%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [
+          {
+            "description": "Could not retrieve WHOIS data - unable to verify domain registration",
+            "severity": "medium",
+            "title": "WHOIS Information Unavailable"
+          },
+          {
+            "description": "Website does not use HTTPS/SSL encryption - data is transmitted in plain text",
+            "severity": "high",
+            "title": "No SSL Certificate"
+          }
+        ],
+        "summary": "This website appears legitimate with 1 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "https://instagramnotice-security.com/username.php"
+      }
+    },
+    {
+      "url": "http://201.163.98.162/crm/jssource/src_files/modules/Project/home/de102cc29dbc05509b7f97227/r1.php",
+      "actual": "PHISHING",
+      "mlDecision": "PHISHING",
+      "apiDecision": "PHISHING",
+      "correct": true,
+      "mlScore": 11,
+      "apiData": {
+        "mlScore": 11,
+        "mlDecision": "PHISHING",
+        "apiDecision": "PHISHING",
+        "hasWhois": true,
+        "hasSSL": false,
+        "hasDNS": true,
+        "infraScore": 2,
+        "combinedScore": 11,
+        "whoisAge": "1998-03-11 00:00:00",
+        "sslValid": "no"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 11%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with Axtel, S.A.B. de C.V., indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 27 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [
+          {
+            "description": "Website does not use HTTPS/SSL encryption - data is transmitted in plain text",
+            "severity": "high",
+            "title": "No SSL Certificate"
+          }
+        ],
+        "summary": "This website appears legitimate with 4 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://201.163.98.162/crm/jssource/src_files/modules/Project/home/de102cc29dbc05509b7f97227/r1.php"
+      }
+    },
+    {
+      "url": "http://www.linfo.org/osi_model.html",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 1,
+        "whoisAge": "2005-04-19 18:11:56",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with IONOS SE, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 20 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 5 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://www.linfo.org/osi_model.html"
+      }
+    },
+    {
+      "url": "https://www.lifewire.com/free-memory-test-programs-2626178",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 0,
+      "apiData": {
+        "mlScore": 0,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 0,
+        "whoisAge": "1998-11-26 05:00:00",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 0%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with MarkMonitor, Inc., indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 27 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 5 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "https://www.lifewire.com/free-memory-test-programs-2626178"
+      }
+    },
+    {
+      "url": "http://www.gaudi.ch/GaudiLabs/?page_id=19",
+      "actual": "LEGITIMATE",
+      "mlDecision": "PHISHING",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 3,
+      "apiData": {
+        "mlScore": 3,
+        "mlDecision": "PHISHING",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 3,
+        "whoisAge": "unknown",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 3%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 3 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://www.gaudi.ch/GaudiLabs/?page_id=19"
+      }
+    },
+    {
+      "url": "http://www.atmi.gr/",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 1,
+        "whoisAge": "unknown",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Domain has MX records configured for email, indicating established infrastructure",
+            "severity": "positive",
+            "title": "Email Configuration"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 4 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://www.atmi.gr/"
+      }
+    },
+    {
+      "url": "http://whatsappchat.zyns.com/",
+      "actual": "PHISHING",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": false,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": false,
+        "hasDNS": true,
+        "infraScore": 2,
+        "combinedScore": 1,
+        "whoisAge": "2001-03-21 19:02:28",
+        "sslValid": "no"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with PDR Ltd. d/b/a PublicDomainRegistry.com, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 24 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [
+          {
+            "description": "Website does not use HTTPS/SSL encryption - data is transmitted in plain text",
+            "severity": "high",
+            "title": "No SSL Certificate"
+          }
+        ],
+        "summary": "This website appears legitimate with 4 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://whatsappchat.zyns.com/"
+      }
+    },
+    {
+      "url": "http://paypal-support-help-inc.blogspot.com/?REDACTED",
+      "actual": "PHISHING",
+      "mlDecision": "PHISHING",
+      "apiDecision": "PHISHING",
+      "correct": true,
+      "mlScore": 7,
+      "apiData": {
+        "mlScore": 7,
+        "mlDecision": "PHISHING",
+        "apiDecision": "PHISHING",
+        "hasWhois": false,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 2,
+        "combinedScore": 7,
+        "whoisAge": "unknown",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 7%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [
+          {
+            "description": "Could not retrieve WHOIS data - unable to verify domain registration",
+            "severity": "medium",
+            "title": "WHOIS Information Unavailable"
+          }
+        ],
+        "summary": "This website appears legitimate with 3 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://paypal-support-help-inc.blogspot.com/?REDACTED"
+      }
+    },
+    {
+      "url": "http://www.internetserviceproviders.org/in/seattle/",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 1,
+        "whoisAge": "2010-05-08 14:30:21",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with GoDaddy Corporate Domains, LLC, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 15 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 5 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://www.internetserviceproviders.org/in/seattle/"
+      }
+    },
+    {
+      "url": "https://www.facebook.com/savers",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 0,
+      "apiData": {
+        "mlScore": 0,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 0,
+        "whoisAge": "1997-03-29 05:00:00",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 0%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with RegistrarSafe, LLC, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 28 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 5 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "https://www.facebook.com/savers"
+      }
+    },
+    {
+      "url": "http://z80-heaven.wikidot.com",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 1,
+        "whoisAge": "2006-04-28 12:00:17",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with NAMECHEAP INC, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 19 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 5 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://z80-heaven.wikidot.com"
+      }
+    },
+    {
+      "url": "http://www.mahoraisedeseaux.com/",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 1,
+        "whoisAge": "2013-11-12 10:46:14",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with GANDI SAS, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 12 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Domain has MX records configured for email, indicating established infrastructure",
+            "severity": "positive",
+            "title": "Email Configuration"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 6 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://www.mahoraisedeseaux.com/"
+      }
+    },
+    {
+      "url": "https://life4news.ru:443/",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 0,
+      "apiData": {
+        "mlScore": 0,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 0,
+        "whoisAge": "2022-01-11 14:05:51",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 0%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with REGRU-RU, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 3 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Domain has MX records configured for email, indicating established infrastructure",
+            "severity": "positive",
+            "title": "Email Configuration"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 6 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "https://life4news.ru:443/"
+      }
+    },
+    {
+      "url": "https://patriothost.net/wp-includes/sodium_compat/namespaced/Core/tables/?Ct83VE45PxD=5K97LTNab&amp;4TCMDFE6cx=L7QxzR65Aj&amp;govn=Z2lic29uc2FAdm9kYW1haWwuY28uemE=",
+      "actual": "PHISHING",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": false,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": false,
+        "hasSSL": false,
+        "hasDNS": true,
+        "infraScore": 1,
+        "combinedScore": 1,
+        "whoisAge": "unknown",
+        "sslValid": "no"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [
+          {
+            "description": "Could not retrieve WHOIS data - unable to verify domain registration",
+            "severity": "medium",
+            "title": "WHOIS Information Unavailable"
+          },
+          {
+            "description": "Website does not use HTTPS/SSL encryption - data is transmitted in plain text",
+            "severity": "high",
+            "title": "No SSL Certificate"
+          }
+        ],
+        "summary": "This website appears legitimate with 1 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "https://patriothost.net/wp-includes/sodium_compat/namespaced/Core/tables/?Ct83VE45PxD=5K97LTNab&amp;4TCMDFE6cx=L7QxzR65Aj&amp;govn=Z2lic29uc2FAdm9kYW1haWwuY28uemE="
+      }
+    },
+    {
+      "url": "https://www.openhardware.io/",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 0,
+      "apiData": {
+        "mlScore": 0,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 0,
+        "whoisAge": "2014-11-20 23:05:35",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 0%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with OVH SAS, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 11 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 5 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "https://www.openhardware.io/"
+      }
+    },
+    {
+      "url": "http://shadetreetechnology.com/V4/validation/bbf68373797343e6c8d357b9c6a4823e",
+      "actual": "PHISHING",
+      "mlDecision": "PHISHING",
+      "apiDecision": "LEGITIMATE",
+      "correct": false,
+      "mlScore": 2,
+      "apiData": {
+        "mlScore": 2,
+        "mlDecision": "PHISHING",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 2,
+        "whoisAge": "2004-10-20 20:36:37",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 2%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with GoDaddy.com, LLC, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 21 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Domain has MX records configured for email, indicating established infrastructure",
+            "severity": "positive",
+            "title": "Email Configuration"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 6 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://shadetreetechnology.com/V4/validation/bbf68373797343e6c8d357b9c6a4823e"
+      }
+    },
+    {
+      "url": "http://elexbetgir1.blogspot.com",
+      "actual": "PHISHING",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": false,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": false,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 2,
+        "combinedScore": 1,
+        "whoisAge": "unknown",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [
+          {
+            "description": "Could not retrieve WHOIS data - unable to verify domain registration",
+            "severity": "medium",
+            "title": "WHOIS Information Unavailable"
+          }
+        ],
+        "summary": "This website appears legitimate with 3 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://elexbetgir1.blogspot.com"
+      }
+    },
+    {
+      "url": "https://gist.github.com/lunatilia/ff0d888dc65479fb9905",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 0,
+      "apiData": {
+        "mlScore": 0,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 0,
+        "whoisAge": "2007-10-09 18:20:50",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 0%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with MarkMonitor, Inc., indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 18 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Domain has MX records configured for email, indicating established infrastructure",
+            "severity": "positive",
+            "title": "Email Configuration"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 6 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "https://gist.github.com/lunatilia/ff0d888dc65479fb9905"
+      }
+    },
+    {
+      "url": "https://izzylogz.nn.r.appspot.com/home.html",
+      "actual": "PHISHING",
+      "mlDecision": "PHISHING",
+      "apiDecision": "LEGITIMATE",
+      "correct": false,
+      "mlScore": 3,
+      "apiData": {
+        "mlScore": 3,
+        "mlDecision": "PHISHING",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": false,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 2,
+        "combinedScore": 3,
+        "whoisAge": "unknown",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 3%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Domain has MX records configured for email, indicating established infrastructure",
+            "severity": "positive",
+            "title": "Email Configuration"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [
+          {
+            "description": "Could not retrieve WHOIS data - unable to verify domain registration",
+            "severity": "medium",
+            "title": "WHOIS Information Unavailable"
+          }
+        ],
+        "summary": "This website appears legitimate with 4 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "https://izzylogz.nn.r.appspot.com/home.html"
+      }
+    },
+    {
+      "url": "https://dpqlhwdclpvxddsghcaztkqbtalxnwgrswpp-dot-gl494903049.wl.r.appspot.com/",
+      "actual": "PHISHING",
+      "mlDecision": "PHISHING",
+      "apiDecision": "PHISHING",
+      "correct": true,
+      "mlScore": 7,
+      "apiData": {
+        "mlScore": 7,
+        "mlDecision": "PHISHING",
+        "apiDecision": "PHISHING",
+        "hasWhois": false,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 2,
+        "combinedScore": 7,
+        "whoisAge": "unknown",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 7%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Domain has MX records configured for email, indicating established infrastructure",
+            "severity": "positive",
+            "title": "Email Configuration"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [
+          {
+            "description": "Could not retrieve WHOIS data - unable to verify domain registration",
+            "severity": "medium",
+            "title": "WHOIS Information Unavailable"
+          }
+        ],
+        "summary": "This website appears legitimate with 4 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "https://dpqlhwdclpvxddsghcaztkqbtalxnwgrswpp-dot-gl494903049.wl.r.appspot.com/"
+      }
+    },
+    {
+      "url": "http://www.larapedia.com/definition_and_meaning_of/portable_document_format_definition_and_meaning.html",
+      "actual": "LEGITIMATE",
+      "mlDecision": "PHISHING",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 2,
+      "apiData": {
+        "mlScore": 2,
+        "mlDecision": "PHISHING",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 2,
+        "whoisAge": "2011-02-07 19:49:43",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 2%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with TUCOWS DOMAINS, INC., indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 14 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 5 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://www.larapedia.com/definition_and_meaning_of/portable_document_format_definition_and_meaning.html"
+      }
+    },
+    {
+      "url": "https://www.alaskausa.org/verify/update",
+      "actual": "PHISHING",
+      "mlDecision": "PHISHING",
+      "apiDecision": "LEGITIMATE",
+      "correct": false,
+      "mlScore": 2,
+      "apiData": {
+        "mlScore": 2,
+        "mlDecision": "PHISHING",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 2,
+        "whoisAge": "1996-12-05 05:00:00",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 2%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with Network Solutions, LLC, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 29 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 5 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "https://www.alaskausa.org/verify/update"
+      }
+    },
+    {
+      "url": "https://themoscowtimes.com/articles/controversial-lenin-death-mask-for-sale-in-us-36443",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 1,
+        "whoisAge": "2000-02-03 08:18:24",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with NAMECHEAP INC, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 25 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Domain has MX records configured for email, indicating established infrastructure",
+            "severity": "positive",
+            "title": "Email Configuration"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 6 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "https://themoscowtimes.com/articles/controversial-lenin-death-mask-for-sale-in-us-36443"
+      }
+    },
+    {
+      "url": "http://vevobahiss1.blogspot.com",
+      "actual": "PHISHING",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": false,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": false,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 2,
+        "combinedScore": 1,
+        "whoisAge": "unknown",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [
+          {
+            "description": "Could not retrieve WHOIS data - unable to verify domain registration",
+            "severity": "medium",
+            "title": "WHOIS Information Unavailable"
+          }
+        ],
+        "summary": "This website appears legitimate with 3 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://vevobahiss1.blogspot.com"
+      }
+    },
+    {
+      "url": "http://editurauranus.ro/marketing-online/admiin/",
+      "actual": "PHISHING",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": false,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 1,
+        "whoisAge": "2006-06-06 00:00:00",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with VIVA Telecom SRL, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 19 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Domain has MX records configured for email, indicating established infrastructure",
+            "severity": "positive",
+            "title": "Email Configuration"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 6 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://editurauranus.ro/marketing-online/admiin/"
+      }
+    },
+    {
+      "url": "http://chat.whatscpp.com/3HGATtKvRwtRw2ot7vRwp/",
+      "actual": "PHISHING",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": false,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": false,
+        "hasDNS": true,
+        "infraScore": 2,
+        "combinedScore": 1,
+        "whoisAge": "2025-11-12 06:37:42",
+        "sslValid": "no"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with NameSilo, LLC, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [
+          {
+            "description": "Website does not use HTTPS/SSL encryption - data is transmitted in plain text",
+            "severity": "high",
+            "title": "No SSL Certificate"
+          }
+        ],
+        "summary": "This website appears legitimate with 2 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://chat.whatscpp.com/3HGATtKvRwtRw2ot7vRwp/"
+      }
+    },
+    {
+      "url": "http://www.globalsecurity.org/military/facility/pacom.htm",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 1,
+        "whoisAge": "1999-04-30 09:15:44",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with Network Solutions, LLC, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 26 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 5 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://www.globalsecurity.org/military/facility/pacom.htm"
+      }
+    },
+    {
+      "url": "http://20200728140702.res4po1ns5ive.rj.r.appspot.com/sw/index.html",
+      "actual": "PHISHING",
+      "mlDecision": "PHISHING",
+      "apiDecision": "PHISHING",
+      "correct": true,
+      "mlScore": 6,
+      "apiData": {
+        "mlScore": 6,
+        "mlDecision": "PHISHING",
+        "apiDecision": "PHISHING",
+        "hasWhois": false,
+        "hasSSL": false,
+        "hasDNS": true,
+        "infraScore": 1,
+        "combinedScore": 6,
+        "whoisAge": "unknown",
+        "sslValid": "no"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 6%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Domain has MX records configured for email, indicating established infrastructure",
+            "severity": "positive",
+            "title": "Email Configuration"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [
+          {
+            "description": "Could not retrieve WHOIS data - unable to verify domain registration",
+            "severity": "medium",
+            "title": "WHOIS Information Unavailable"
+          },
+          {
+            "description": "Website does not use HTTPS/SSL encryption - data is transmitted in plain text",
+            "severity": "high",
+            "title": "No SSL Certificate"
+          }
+        ],
+        "summary": "This website appears legitimate with 3 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://20200728140702.res4po1ns5ive.rj.r.appspot.com/sw/index.html"
+      }
+    },
+    {
+      "url": "http://www.wisegeek.com/what-is-insecticidal-soap.htm",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 1,
+        "whoisAge": "2003-10-06 22:59:06",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with GoDaddy.com, LLC, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 22 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 5 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://www.wisegeek.com/what-is-insecticidal-soap.htm"
+      }
+    },
+    {
+      "url": "http://searchsecurity.techtarget.com/definition/firewall",
+      "actual": "LEGITIMATE",
+      "mlDecision": "PHISHING",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 4,
+      "apiData": {
+        "mlScore": 4,
+        "mlDecision": "PHISHING",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 4,
+        "whoisAge": "1999-09-15 15:55:30",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 4%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with DNC Holdings, Inc, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 26 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 5 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://searchsecurity.techtarget.com/definition/firewall"
+      }
+    },
+    {
+      "url": "http://blog.dabbleofdevops.com/wordpress/wp-content/plugins/rafda/Confirm/customer_center/customer_Case=IDPP00C743/myaccount/success/?cmd=_session=&amp;b716addf4d89825d0f361663d4c23890&amp;dispatch=ac5535a47e5c2fcf54aa14ac4cf32debef5f6c93",
+      "actual": "PHISHING",
+      "mlDecision": "PHISHING",
+      "apiDecision": "LEGITIMATE",
+      "correct": false,
+      "mlScore": 4,
+      "apiData": {
+        "mlScore": 4,
+        "mlDecision": "PHISHING",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": false,
+        "hasDNS": true,
+        "infraScore": 2,
+        "combinedScore": 4,
+        "whoisAge": "2019-02-05 04:26:22",
+        "sslValid": "no"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 4%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with GoDaddy.com, LLC, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 6 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [
+          {
+            "description": "Website does not use HTTPS/SSL encryption - data is transmitted in plain text",
+            "severity": "high",
+            "title": "No SSL Certificate"
+          }
+        ],
+        "summary": "This website appears legitimate with 3 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://blog.dabbleofdevops.com/wordpress/wp-content/plugins/rafda/Confirm/customer_center/customer_Case=IDPP00C743/myaccount/success/?cmd=_session=&amp;b716addf4d89825d0f361663d4c23890&amp;dispatch=ac5535a47e5c2fcf54aa14ac4cf32debef5f6c93"
+      }
+    },
+    {
+      "url": "https://www.xhkzv.com/",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 0,
+      "apiData": {
+        "mlScore": 0,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 0,
+        "whoisAge": "2017-05-23 20:26:52",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 0%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with GoDaddy.com, LLC, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 8 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 5 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "https://www.xhkzv.com/"
+      }
+    },
+    {
+      "url": "http://shodhganga.inflibnet.ac.in/bitstream/10603/9835/10/10_chapter%202.pdf",
+      "actual": "LEGITIMATE",
+      "mlDecision": "PHISHING",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 2,
+      "apiData": {
+        "mlScore": 2,
+        "mlDecision": "PHISHING",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 2,
+        "whoisAge": "unknown",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 2%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 3 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://shodhganga.inflibnet.ac.in/bitstream/10603/9835/10/10_chapter%202.pdf"
+      }
+    },
+    {
+      "url": "http://dlakupujacych.allegro.secfence.lesavik.net",
+      "actual": "PHISHING",
+      "mlDecision": "PHISHING",
+      "apiDecision": "LEGITIMATE",
+      "correct": false,
+      "mlScore": 4,
+      "apiData": {
+        "mlScore": 4,
+        "mlDecision": "PHISHING",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": false,
+        "hasDNS": true,
+        "infraScore": 2,
+        "combinedScore": 4,
+        "whoisAge": "2009-01-21 17:27:34",
+        "sslValid": "no"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 4%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with Spaceship, Inc., indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 16 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [
+          {
+            "description": "Website does not use HTTPS/SSL encryption - data is transmitted in plain text",
+            "severity": "high",
+            "title": "No SSL Certificate"
+          }
+        ],
+        "summary": "This website appears legitimate with 3 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://dlakupujacych.allegro.secfence.lesavik.net"
+      }
+    },
+    {
+      "url": "http://www.fm-arena.de/",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 1,
+        "whoisAge": "unknown",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 3 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://www.fm-arena.de/"
+      }
+    },
+    {
+      "url": "https://www.universonline.it/",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 0,
+      "apiData": {
+        "mlScore": 0,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 0,
+        "whoisAge": "2004-01-21 00:00:00",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 0%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with Aruba s.p.a., indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 21 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 5 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "https://www.universonline.it/"
+      }
+    },
+    {
+      "url": "http://www.historyvshollywood.com/reelfaces/bridge-of-spies/",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": true,
+        "hasDNS": true,
+        "infraScore": 3,
+        "combinedScore": 1,
+        "whoisAge": "2004-08-13 05:20:14",
+        "sslValid": "yes"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with GoDaddy.com, LLC, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 21 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          },
+          {
+            "description": "Website has a valid SSL certificate, encrypting data in transit",
+            "severity": "positive",
+            "title": "SSL Certificate"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [],
+        "summary": "This website appears legitimate with 5 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://www.historyvshollywood.com/reelfaces/bridge-of-spies/"
+      }
+    },
+    {
+      "url": "https://www.strong.tv/en/Home",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 0,
+      "apiData": {
+        "mlScore": 0,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": false,
+        "hasDNS": true,
+        "infraScore": 2,
+        "combinedScore": 0,
+        "whoisAge": "unknown",
+        "sslValid": "no"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 0%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [
+          {
+            "description": "Website does not use HTTPS/SSL encryption - data is transmitted in plain text",
+            "severity": "high",
+            "title": "No SSL Certificate"
+          }
+        ],
+        "summary": "This website appears legitimate with 2 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "https://www.strong.tv/en/Home"
+      }
+    },
+    {
+      "url": "http://www.iscriba.com/",
+      "actual": "LEGITIMATE",
+      "mlDecision": "LEGITIMATE",
+      "apiDecision": "LEGITIMATE",
+      "correct": true,
+      "mlScore": 1,
+      "apiData": {
+        "mlScore": 1,
+        "mlDecision": "LEGITIMATE",
+        "apiDecision": "LEGITIMATE",
+        "hasWhois": true,
+        "hasSSL": false,
+        "hasDNS": true,
+        "infraScore": 2,
+        "combinedScore": 1,
+        "whoisAge": "2008-06-07 11:50:45",
+        "sslValid": "no"
+      },
+      "xaiExplanation": {
+        "positive_factors": [
+          {
+            "description": "The site appears safe with a risk score of only 1%",
+            "severity": "low",
+            "title": "Low Risk Score"
+          },
+          {
+            "description": "Domain is registered with OVH, SAS, indicating legitimate ownership",
+            "severity": "positive",
+            "title": "Registered Domain"
+          },
+          {
+            "description": "Domain has been registered for 17 years, suggesting legitimacy",
+            "severity": "positive",
+            "title": "Established Domain"
+          },
+          {
+            "description": "Domain has proper DNS A records pointing to a valid server",
+            "severity": "positive",
+            "title": "Valid DNS Records"
+          }
+        ],
+        "recommendation": "This site appears safe to use based on our analysis.",
+        "risk_factors": [
+          {
+            "description": "Website does not use HTTPS/SSL encryption - data is transmitted in plain text",
+            "severity": "high",
+            "title": "No SSL Certificate"
+          }
+        ],
+        "summary": "This website appears legitimate with 4 positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure.",
+        "url": "http://www.iscriba.com/"
+      }
+    }
+  ]
+}
