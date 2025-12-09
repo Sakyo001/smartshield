@@ -572,12 +572,7 @@ export default function UserDashboard() {
             </div>
           )}
 
-          <div className="flex items-center gap-2 mt-4 text-gray-400 text-sm">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8 1L10 5L14 6L11 9L12 13L8 11L4 13L5 9L2 6L6 5L8 1Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span>Try example</span>
-          </div>
+     
         </div>
 
         {/* Scan Results */}
