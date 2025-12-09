@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { createClient } from "@lib/supabase"
+import { syncUserToDatabase, linkSocialAccount } from "@lib/supabase"
 import { useAuth } from "@lib/auth-context"
 
 export default function SignUpPage() {
@@ -80,6 +81,13 @@ export default function SignUpPage() {
       if (signUpError) throw signUpError
 
       if (data.user) {
+        // Sync user to users table
+        await syncUserToDatabase(
+          data.user.id,
+          email,
+          displayName || email.split('@')[0]
+        )
+        
         setSuccess(true)
         // Redirect after 2 seconds
         setTimeout(() => {

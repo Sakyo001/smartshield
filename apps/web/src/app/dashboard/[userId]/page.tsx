@@ -168,7 +168,7 @@ export default function UserDashboard() {
   }
 
   // API URL - uses environment variable for production, falls back to localhost for development
-  const WHOIS_API_URL = process.env.NEXT_PUBLIC_WHOIS_API_URL || "https://smartshield-whois-api.onrender.com"
+  const WHOIS_API_URL = process.env.NEXT_PUBLIC_WHOIS_API_URL || "http://localhost:5001"
 
   const loadingStates = [
     { text: "Initializing phishing detection system..." },
@@ -483,7 +483,6 @@ export default function UserDashboard() {
             <Link href="#scan" className="text-gray-300 hover:text-white transition text-sm">Scan</Link>
             <Link href="#about" className="text-gray-300 hover:text-white transition text-sm">About</Link>
             <Link href="#faq" className="text-gray-300 hover:text-white transition text-sm">FAQ</Link>
-             <Link href="#faq" className="text-gray-300 hover:text-white transition text-sm">Sign In</Link>
           </div>
 
           <button 
@@ -572,12 +571,7 @@ export default function UserDashboard() {
             </div>
           )}
 
-          <div className="flex items-center gap-2 mt-4 text-gray-400 text-sm">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8 1L10 5L14 6L11 9L12 13L8 11L4 13L5 9L2 6L6 5L8 1Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span>Try example</span>
-          </div>
+     
         </div>
 
         {/* Scan Results */}

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { createClient } from "@lib/supabase";
 
 export function AdminLoginForm() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export function AdminLoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,16 +22,41 @@ export function AdminLoginForm() {
     setLoading(true);
 
     try {
-      // Hardcoded admin credentials for demonstration
-      const ADMIN_EMAIL = "admin@smartshield.com";
-      const ADMIN_PASSWORD = "AdminSecure123!";
+      // Try Supabase auth first
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-        // Store admin session in localStorage
+      if (authError) {
+        setError("Invalid email or password");
+        setLoading(false);
+        return;
+      }
+
+      if (data.user) {
+        // Check if user exists in admin_users table
+        const { data: adminUser, error: adminError } = await supabase
+          .from("admin_users")
+          .select("email, display_name")
+          .eq("email", data.user.email)
+          .maybeSingle();
+
+        if (adminError || !adminUser) {
+          // User authenticated but not an admin
+          await supabase.auth.signOut();
+          setError("You do not have admin access");
+          setLoading(false);
+          return;
+        }
+
+        // User is authenticated and is an admin
         localStorage.setItem(
           "adminSession",
           JSON.stringify({
-            email,
+            email: data.user.email,
+            userId: data.user.id,
+            displayName: adminUser.display_name,
             loginTime: new Date().toISOString(),
             isAdmin: true,
           })
@@ -41,13 +68,12 @@ export function AdminLoginForm() {
     } catch (err) {
       setError("An error occurred. Please try again.");
       console.error(err);
-    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-gray-900 to-black flex items-center justify-center px-6 py-12">
+    <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-gray-900 to-black flex items-center justify-center px-3 sm:px-6 py-4 sm:py-12 overflow-auto">
       <style>{`
         @keyframes fadeIn {
           from {
@@ -97,11 +123,11 @@ export function AdminLoginForm() {
         }
       `}</style>
 
-      <div className="admin-card w-full max-w-md">
+      <div className="admin-card w-full max-w-xs sm:max-w-sm md:max-w-md my-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="relative w-10 h-10">
+        <div className="text-center mb-4 sm:mb-8">
+          <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4">
+            <div className="relative w-8 h-8 sm:w-10 sm:h-10">
               <Image
                 src="/images/light-logo.png"
                 alt="SmartShield"
@@ -109,18 +135,18 @@ export function AdminLoginForm() {
                 className="object-contain"
               />
             </div>
-            <span className="text-white text-2xl font-bold">SmartShield</span>
+            <span className="text-white text-lg sm:text-2xl font-bold">SmartShield</span>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Admin Portal</h1>
-          <p className="text-gray-400">Sign in to access the admin dashboard</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">Admin Portal</h1>
+          <p className="text-gray-400 text-sm sm:text-base">Sign in to access the admin dashboard</p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700 rounded-xl p-8 shadow-2xl">
-          <form onSubmit={handleLogin} className="space-y-6">
+        <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700 rounded-xl p-5 sm:p-8 shadow-2xl">
+          <form onSubmit={handleLogin} className="space-y-4 sm:space-y-6">
             {/* Email Input */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-300">
+            <div className="space-y-1.5 sm:space-y-2">
+              <label className="block text-xs sm:text-sm font-medium text-gray-300">
                 Email Address
               </label>
               <input
@@ -128,14 +154,14 @@ export function AdminLoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@smartshield.com"
-                className="form-input w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#6B73FF] focus:ring-1 focus:ring-[#6B73FF]"
+                className="form-input w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-900/50 border border-gray-600 rounded-lg text-white placeholder-gray-500 text-sm sm:text-base focus:outline-none focus:border-[#6B73FF] focus:ring-1 focus:ring-[#6B73FF]"
                 required
               />
             </div>
 
             {/* Password Input */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-300">
+            <div className="space-y-1.5 sm:space-y-2">
+              <label className="block text-xs sm:text-sm font-medium text-gray-300">
                 Password
               </label>
               <div className="relative">
@@ -144,18 +170,18 @@ export function AdminLoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="form-input w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#6B73FF] focus:ring-1 focus:ring-[#6B73FF]"
+                  className="form-input w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-900/50 border border-gray-600 rounded-lg text-white placeholder-gray-500 text-sm sm:text-base focus:outline-none focus:border-[#6B73FF] focus:ring-1 focus:ring-[#6B73FF]"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="password-toggle absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+                  className="password-toggle absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-gray-400"
                 >
                   {showPassword ? (
                     <svg
-                      width="20"
-                      height="20"
+                      width="18"
+                      height="18"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -166,8 +192,8 @@ export function AdminLoginForm() {
                     </svg>
                   ) : (
                     <svg
-                      width="20"
-                      height="20"
+                      width="18"
+                      height="18"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -183,13 +209,13 @@ export function AdminLoginForm() {
 
             {/* Error Message */}
             {error && (
-              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-                <p className="text-sm text-red-400">{error}</p>
+              <div className="p-2.5 sm:p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <p className="text-xs sm:text-sm text-red-400">{error}</p>
               </div>
             )}
 
             {/* Demo Credentials Info */}
-            <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+            <div className="p-2.5 sm:p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
               <p className="text-xs text-blue-300">
                 <span className="font-semibold">Demo Credentials:</span>
                 <br />
@@ -203,11 +229,11 @@ export function AdminLoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="login-button w-full px-4 py-3 bg-gradient-to-r from-[#6B73FF] to-[#5A62E8] text-white font-semibold rounded-lg hover:shadow-lg disabled:opacity-50 transition-all duration-300"
+              className="login-button w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gradient-to-r from-[#6B73FF] to-[#5A62E8] text-white font-semibold rounded-lg text-sm sm:text-base hover:shadow-lg disabled:opacity-50 transition-all duration-300"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  <span className="inline-block w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                   Signing in...
                 </span>
               ) : (
@@ -216,12 +242,12 @@ export function AdminLoginForm() {
             </button>
 
             {/* Divider */}
-            <div className="relative py-4">
+            <div className="relative py-2 sm:py-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-700"></div>
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="px-2 bg-gray-800/50 text-gray-400">
+                <span className="px-2 bg-gray-800/50 text-gray-400 text-xs sm:text-sm">
                   Or continue with
                 </span>
               </div>
@@ -230,11 +256,11 @@ export function AdminLoginForm() {
             {/* OAuth Button */}
             <button
               type="button"
-              className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 text-white font-semibold rounded-lg hover:bg-gray-800 hover:border-gray-500 transition-all duration-300 flex items-center justify-center gap-2"
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-900/50 border border-gray-600 text-white font-semibold rounded-lg text-sm sm:text-base hover:bg-gray-800 hover:border-gray-500 transition-all duration-300 flex items-center justify-center gap-2"
             >
               <svg
-                width="20"
-                height="20"
+                width="18"
+                height="18"
                 viewBox="0 0 24 24"
                 fill="currentColor"
               >
@@ -255,13 +281,14 @@ export function AdminLoginForm() {
                   fill="#EA4335"
                 />
               </svg>
-              Sign in with Google
+              <span className="hidden sm:inline">Sign in with Google</span>
+              <span className="sm:hidden">Google</span>
             </button>
           </form>
         </div>
 
         {/* Footer */}
-        <div className="mt-6 text-center text-sm text-gray-400">
+        <div className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-gray-400">
           <p>
             Need help?{" "}
             <Link

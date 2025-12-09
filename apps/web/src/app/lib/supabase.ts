@@ -9,6 +9,124 @@ export function createClient() {
   )
 }
 
+// Sync user to users table when they authenticate
+export async function syncUserToDatabase(userId: string, email: string, displayName?: string, role: string = 'user') {
+  const supabase = createClient()
+  
+  try {
+    // Check if user already exists in users table
+    const { data: existingUser, error: checkError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle()
+    
+    if (checkError && checkError.code !== 'PGRST116') {
+      console.error('Error checking user:', checkError)
+      return null
+    }
+    
+    // If user already exists, just update last_login
+    if (existingUser) {
+      const { data, error } = await supabase
+        .from('users')
+        .update({
+          last_login: new Date().toISOString()
+        })
+        .eq('id', userId)
+        .select()
+        .single()
+      
+      if (error) {
+        console.error('Error updating user last_login:', error)
+        return null
+      }
+      return data
+    }
+    
+    // Create new user in users table
+    const { data, error } = await supabase
+      .from('users')
+      .insert({
+        id: userId,
+        email: email,
+        display_name: displayName || email.split('@')[0],
+        role: role,
+        created_at: new Date().toISOString(),
+        last_login: new Date().toISOString()
+      })
+      .select()
+      .single()
+    
+    if (error) {
+      console.error('Error creating user in database:', error)
+      return null
+    }
+    
+    return data
+  } catch (err) {
+    console.error('Error syncing user:', err)
+    return null
+  }
+}
+
+// Add social account link to user
+export async function linkSocialAccount(userId: string, provider: string, providerUserId: string, email?: string, username?: string, avatarUrl?: string) {
+  const supabase = createClient()
+  
+  try {
+    const { data, error } = await supabase
+      .from('user_social_accounts')
+      .insert({
+        user_id: userId,
+        provider: provider,
+        provider_user_id: providerUserId,
+        email: email,
+        username: username,
+        avatar_url: avatarUrl
+      })
+      .select()
+      .single()
+    
+    if (error) {
+      // Ignore duplicate errors
+      if (error.code === '23505') {
+        return null
+      }
+      console.error('Error linking social account:', error)
+      return null
+    }
+    
+    return data
+  } catch (err) {
+    console.error('Error linking social account:', err)
+    return null
+  }
+}
+
+// Get user role
+export async function getUserRole(userId: string) {
+  const supabase = createClient()
+  
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .single()
+    
+    if (error) {
+      console.error('Error getting user role:', error)
+      return 'user' // Default to user role
+    }
+    
+    return data?.role || 'user'
+  } catch (err) {
+    console.error('Error fetching user role:', err)
+    return 'user'
+  }
+}
+
 // Add to src/app/lib/supabase.ts or create new file
 
 export async function getUserProfile(userId: string) {
