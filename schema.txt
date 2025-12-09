@@ -53,6 +53,7 @@ CREATE TABLE reports (
   user_id uuid NOT NULL,
   url text NOT NULL,
   description text,
+  flag varchar DEFAULT 'neutral',  -- 'legitimate', 'phishing', or 'neutral'
   created_at timestamptz DEFAULT now(),
   reviewed_by uuid,
   reviewed_at timestamptz,
