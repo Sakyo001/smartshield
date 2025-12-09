@@ -530,6 +530,175 @@ def reports():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/explain', methods=['POST'])
+def explain_analysis():
+    """Generate XAI (Explainable AI) summary of scan results"""
+    try:
+        data = request.get_json()
+        url = data.get('url', '')
+        scan_result = data.get('scan_result', {})
+        whois_info = data.get('whois_info', {})
+        dns_info = data.get('dns_info', {})
+        ssl_info = data.get('ssl_info', {})
+        
+        if not url:
+            return jsonify({'error': 'URL is required'}), 400
+        
+        explanation = {
+            'url': url,
+            'risk_factors': [],
+            'positive_factors': [],
+            'summary': '',
+            'recommendation': ''
+        }
+        
+        # Analyze risk factors
+        risk_score = scan_result.get('riskScore', 0)
+        decision = scan_result.get('decision', 'UNKNOWN')
+        detections = scan_result.get('detections', [])
+        
+        # Check for phishing indicators
+        if risk_score >= 70:
+            explanation['risk_factors'].append({
+                'title': 'High Risk Score',
+                'description': f'The AI model detected strong phishing indicators with a risk score of {risk_score}%',
+                'severity': 'high'
+            })
+        elif risk_score >= 40:
+            explanation['risk_factors'].append({
+                'title': 'Medium Risk Score',
+                'description': f'Some suspicious patterns detected. Risk score: {risk_score}%',
+                'severity': 'medium'
+            })
+        else:
+            explanation['positive_factors'].append({
+                'title': 'Low Risk Score',
+                'description': f'The site appears safe with a risk score of only {risk_score}%',
+                'severity': 'low'
+            })
+        
+        # Analyze WHOIS data
+        if whois_info and not whois_info.get('error'):
+            registrar = whois_info.get('registrar', '')
+            creation_date = whois_info.get('creation_date', '')
+            expiration_date = whois_info.get('expiration_date', '')
+            
+            if registrar:
+                explanation['positive_factors'].append({
+                    'title': 'Registered Domain',
+                    'description': f'Domain is registered with {registrar}, indicating legitimate ownership',
+                    'severity': 'positive'
+                })
+            
+            if creation_date:
+                try:
+                    from datetime import datetime as dt
+                    created = dt.strptime(str(creation_date)[:10], '%Y-%m-%d')
+                    age_days = (dt.now() - created).days
+                    age_years = age_days / 365
+                    
+                    if age_years > 3:
+                        explanation['positive_factors'].append({
+                            'title': 'Established Domain',
+                            'description': f'Domain has been registered for {int(age_years)} years, suggesting legitimacy',
+                            'severity': 'positive'
+                        })
+                    elif age_days < 7:
+                        explanation['risk_factors'].append({
+                            'title': 'Very New Domain',
+                            'description': 'Domain was created less than a week ago - phishing sites often use new domains',
+                            'severity': 'high'
+                        })
+                except:
+                    pass
+        else:
+            explanation['risk_factors'].append({
+                'title': 'WHOIS Information Unavailable',
+                'description': 'Could not retrieve WHOIS data - unable to verify domain registration',
+                'severity': 'medium'
+            })
+        
+        # Analyze DNS records
+        if dns_info and not dns_info.get('error'):
+            has_a_record = bool(dns_info.get('A', []))
+            has_mx_record = bool(dns_info.get('MX', []))
+            
+            if has_a_record:
+                explanation['positive_factors'].append({
+                    'title': 'Valid DNS Records',
+                    'description': 'Domain has proper DNS A records pointing to a valid server',
+                    'severity': 'positive'
+                })
+            
+            if has_mx_record:
+                explanation['positive_factors'].append({
+                    'title': 'Email Configuration',
+                    'description': 'Domain has MX records configured for email, indicating established infrastructure',
+                    'severity': 'positive'
+                })
+        
+        # Analyze SSL certificate
+        if ssl_info and not ssl_info.get('error'):
+            issuer = ssl_info.get('issuer', {})
+            validity = ssl_info.get('not_after', '')
+            
+            if issuer:
+                explanation['positive_factors'].append({
+                    'title': 'SSL Certificate',
+                    'description': 'Website has a valid SSL certificate, encrypting data in transit',
+                    'severity': 'positive'
+                })
+            
+            try:
+                cert_valid_until = dt.strptime(validity[:10], '%Y-%m-%d')
+                if cert_valid_until < dt.now():
+                    explanation['risk_factors'].append({
+                        'title': 'Expired SSL Certificate',
+                        'description': 'SSL certificate has expired - be cautious with sensitive information',
+                        'severity': 'medium'
+                    })
+            except:
+                pass
+        else:
+            explanation['risk_factors'].append({
+                'title': 'No SSL Certificate',
+                'description': 'Website does not use HTTPS/SSL encryption - data is transmitted in plain text',
+                'severity': 'high'
+            })
+        
+        # Analyze detection results
+        if detections:
+            for detection in detections:
+                service = detection.get('service', 'Unknown')
+                result = detection.get('result', '')
+                explanation['risk_factors'].append({
+                    'title': f'Detection: {service}',
+                    'description': f'{service} flagged this site as: {result}',
+                    'severity': 'high'
+                })
+        
+        # Generate summary
+        high_risk_count = len([f for f in explanation['risk_factors'] if f.get('severity') == 'high'])
+        positive_count = len(explanation['positive_factors'])
+        
+        if risk_score >= 70:
+            explanation['summary'] = f"This website shows {high_risk_count} critical warning signs and appears to be a phishing attempt or malicious site. Multiple indicators suggest it may be trying to deceive users or steal information."
+            explanation['recommendation'] = "Do NOT enter any personal or financial information on this site. Consider reporting it to relevant authorities."
+        elif risk_score >= 40:
+            explanation['summary'] = f"This website has {high_risk_count} warning signs worth investigating. While not definitively malicious, it has some suspicious characteristics."
+            explanation['recommendation'] = "Proceed with caution. Verify the site's legitimacy before entering sensitive information."
+        else:
+            explanation['summary'] = f"This website appears legitimate with {positive_count} positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure."
+            explanation['recommendation'] = "This site appears safe to use based on our analysis."
+        
+        return jsonify(explanation), 200
+        
+    except Exception as e:
+        print(f"ERROR in explain_analysis: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/health', methods=['GET'])
 def health():
     """Health check endpoint"""
