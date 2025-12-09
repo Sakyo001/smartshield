@@ -60,172 +60,200 @@ export default function UserLoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* Main Login Container */}
-      <div className="flex-1 flex items-center justify-center px-4">
-        <div className="flex w-full max-w-5xl gap-0">
-          {/* Left Side - Blue Section with Shield */}
-          <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-[#6366F1] to-[#4F46E5] rounded-2xl p-12 flex-col items-center justify-center text-white relative overflow-hidden">
-            {/* Heading */}
-            <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">
-              Securely manage your system and operations.
-            </h2>
+    // Changed background to a soft gray for better contrast with the white card
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+      {/* Main Card Container - Increased roundedness and shadow for a premium feel */}
+      <div className="flex w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden min-h-[600px]">
+        {/* Left Side - Blue Section */}
+        <div className="hidden lg:flex w-1/2 relative bg-gradient-to-br from-[#545BFF] to-[#4338ca] p-12 flex-col items-center justify-center text-white overflow-hidden">
+          {/* Subtle Background Pattern for texture */}
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
+              backgroundSize: "40px 40px",
+            }}
+          ></div>
 
-            {/* Shield Icon */}
-            <div className="relative mb-12 ">
-              <Image
-                src="/images/loginlogo.png"
-                alt="SmartShield Shield"
-                width={400}
-                height={400}
-                className="drop-shadow-2xl"
-              />
-            </div>
+          {/* Ambient Glow behind the shield */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white/20 blur-[100px] rounded-full pointer-events-none"></div>
 
-            {/* Bottom Text */}
-            <p className="text-center text-white/80 max-w-sm">
-              Log in to access your tools and keep everything running smoothly.
-            </p>
+          {/* Heading */}
+          <h2 className="text-3xl font-bold mb-8 text-center relative z-10 leading-tight">
+            Securely manage your <br /> system and operations.
+          </h2>
+
+          {/* Shield Icon */}
+          <div className="relative mb-10 z-10 transform hover:scale-105 transition-transform duration-500">
+            <Image
+              src="/images/loginlogo.png"
+              alt="SmartShield Shield"
+              width={320}
+              height={320}
+              className="drop-shadow-2xl"
+              priority
+            />
           </div>
 
-          {/* Right Side - Login Form */}
-          <div className="w-full lg:w-1/2 p-8 md:p-12 flex flex-col justify-center lg:rounded-r-2xl rounded-2xl lg:rounded-l-none bg-white border lg:border-l-0 border-gray-200">
-            {/* Logo and Title */}
-            {/* Top Back Link */}
-            <div className="">
-              <Link href="/">
-                <button className="text-sm text-black hover:text-black flex items-center gap-1">
-                  ← Go back
-                </button>
-              </Link>
-            </div>
-            <div className="mb-8 flex justify-center ">
-              <div className="flex items-center gap-2 mb-2">
-                <Image
-                  src="/images/miniloginlogo.png"
-                  alt="SmartShield"
-                  width={55}
-                  height={55}
-                />
-                <span className="text-3xl font-bold text-gray-900">
+          {/* Bottom Text */}
+          <p className="text-center text-indigo-100 max-w-sm relative z-10 font-medium">
+            Log in to access your tools and keep everything running smoothly.
+          </p>
+        </div>
+
+        {/* Right Side - Login Form */}
+        <div className="w-full lg:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-white relative">
+          {/* Top Back Link */}
+          <div className="absolute top-8 left-8 md:left-12">
+            <Link
+              href="/"
+              className="group flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+            >
+              <span className="group-hover:-translate-x-1 transition-transform">
+                ←
+              </span>{" "}
+              Go back
+            </Link>
+          </div>
+
+          {/* Logo Header */}
+          <div className="mb-10 flex flex-col items-center mt-8 lg:mt-0">
+            <div className="flex items-center gap-3 mb-2">
+              <Image
+                src="/images/miniloginlogo.png"
+                alt="SmartShield"
+                width={48}
+                height={48}
+                className="object-contain"
+              />
+              <div className="flex flex-col justify-center">
+                <span className="text-black text-2xl font-bold tracking-wide leading-none">
                   SmartShield
+                </span>
+                <span className="font-medium text-[#5667FF] tracking-wide text-[10px] mt-1">
+                  AI-Powered Phishing Detector
                 </span>
               </div>
             </div>
+          </div>
 
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleEmailSignIn} className="space-y-5 mb-6">
-              {/* Email Input */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#545BFF] focus:border-transparent"
-                />
-              </div>
-
-              {/* Password Input */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#545BFF] focus:border-transparent"
-                />
-              </div>
-
-              {/* Remember Me Checkbox */}
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="remember"
-                  className="w-4 h-4 text-[#545BFF] rounded border-gray-300 focus:ring-[#545BFF]"
-                />
-                <label
-                  htmlFor="remember"
-                  className="ml-2 text-sm text-gray-600"
-                >
-                  Remember me
-                </label>
-              </div>
-
-              {/* Log In Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-2.5 bg-[#545BFF] text-white rounded-lg font-medium hover:bg-[#4349dd] transition disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl text-sm flex items-center gap-2 animate-pulse">
+              <svg
+                width="16"
+                height="16"
+                fill="currentColor"
+                viewBox="0 0 16 16"
               >
-                {loading ? "Signing in..." : "Log In"}
-              </button>
-            </form>
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z" />
+              </svg>
+              {error}
+            </div>
+          )}
 
-            {/* Divider */}
-            <div className="flex items-center gap-4 mb-6">
-              <div className="flex-1 h-px bg-gray-300"></div>
-              <span className="text-gray-400 text-sm">or</span>
-              <div className="flex-1 h-px bg-gray-300"></div>
+          <form onSubmit={handleEmailSignIn} className="space-y-5">
+            {/* Email Input */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2 ml-1">
+                Email Address
+              </label>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-4 focus:ring-[#545BFF]/10 focus:border-[#545BFF] transition-all duration-200"
+              />
             </div>
 
-            {/* Google Sign In */}
-            <button
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-              className="w-full py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M19.8 10.2273C19.8 9.51819 19.7364 8.83637 19.6182 8.18182H10V12.05H15.5818C15.3364 13.3 14.5636 14.3591 13.3864 15.0682V17.5773H16.7182C18.7091 15.8364 19.8 13.2727 19.8 10.2273Z"
-                  fill="#4285F4"
-                />
-                <path
-                  d="M10 20C12.7 20 14.9636 19.1045 16.7182 17.5773L13.3864 15.0682C12.3909 15.6682 11.1455 16.0227 10 16.0227C7.39545 16.0227 5.19091 14.2636 4.31364 11.9H0.863636V14.4909C2.60909 17.9591 6.07273 20 10 20Z"
-                  fill="#34A853"
-                />
-                <path
-                  d="M4.31364 11.9C4.10909 11.3 4 10.6591 4 10C4 9.34091 4.10909 8.7 4.31364 8.1V5.50909H0.863636C0.313636 6.59091 0 7.75909 0 10C0 12.2409 0.313636 13.4091 0.863636 14.4909L4.31364 11.9Z"
-                  fill="#FBBC04"
-                />
-                <path
-                  d="M10 3.97727C11.2636 3.97727 12.3909 4.38182 13.2909 5.23636L16.2409 2.28636C14.9545 1.08636 12.7 0 10 0C6.07273 0 2.60909 2.04091 0.863636 5.50909L4.31364 8.1C5.19091 5.73636 7.39545 3.97727 10 3.97727Z"
-                  fill="#EA4335"
-                />
-              </svg>
-              Sign in with Google
-            </button>
+            {/* Password Input */}
+            <div>
+              <div className="flex justify-between items-center mb-2 ml-1">
+                <label className="text-sm font-semibold text-gray-700">
+                  Password
+                </label>
+                <Link
+                  href="#"
+                  className="text-xs font-semibold text-[#545BFF] hover:text-[#4349dd]"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-4 focus:ring-[#545BFF]/10 focus:border-[#545BFF] transition-all duration-200"
+              />
+            </div>
 
-            {/* Sign Up Link */}
-            <p className="text-center text-gray-600 text-sm mt-8">
-              Don't have an account?{" "}
-              <Link
-                href="/signup"
-                className="text-[#545BFF] hover:underline font-semibold"
+            {/* Remember Me */}
+            <div className="flex items-center ml-1">
+              <input
+                type="checkbox"
+                id="remember"
+                className="w-4 h-4 text-[#545BFF] rounded border-gray-300 focus:ring-[#545BFF]"
+              />
+              <label
+                htmlFor="remember"
+                className="ml-2 text-sm text-gray-600 cursor-pointer select-none"
               >
-                Sign up
-              </Link>
-            </p>
+                Keep me signed in
+              </label>
+            </div>
+
+            {/* Log In Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-[#545BFF] text-white rounded-xl font-bold hover:bg-[#4349dd] hover:shadow-lg hover:shadow-[#545BFF]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+            >
+              {loading ? "Signing in..." : "Log In"}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white text-gray-500 font-medium">
+                Or continue with
+              </span>
+            </div>
           </div>
+
+          {/* Google Sign In */}
+          <button
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+            className="w-full py-3 border border-gray-200 bg-white text-gray-700 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-50"
+          >
+            <Image
+              src="https://www.svgrepo.com/show/475656/google-color.svg"
+              alt="Google"
+              width={20}
+              height={20}
+            />
+            Sign in with Google
+          </button>
+
+          {/* Sign Up Link */}
+          <p className="text-center text-gray-600 text-sm mt-8">
+            Don't have an account?{" "}
+            <Link
+              href="/signup"
+              className="text-[#545BFF] hover:text-[#4349dd] hover:underline font-bold transition-colors"
+            >
+              Sign up for free
+            </Link>
+          </p>
         </div>
       </div>
     </div>
