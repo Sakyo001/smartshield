@@ -468,6 +468,62 @@ def domain_history():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/reports', methods=['GET', 'POST'])
+def reports():
+    """Get or create reports (community comments) for a URL"""
+    try:
+        if request.method == 'GET':
+            # Get all reports for a URL
+            url = request.args.get('url', '')
+            if not url:
+                return jsonify({'error': 'URL is required'}), 400
+            
+            # Fetch reports from Supabase
+            result = supabase_request('GET', 'reports', 
+                params={'url': f'eq.{url}', 'order': 'created_at.desc'})
+            
+            if result is None:
+                return jsonify({'reports': []}), 200
+            
+            return jsonify({'reports': result}), 200
+        
+        elif request.method == 'POST':
+            # Create a new report (comment)
+            data = request.get_json()
+            url = data.get('url', '')
+            user_id = data.get('user_id', '')
+            description = data.get('description', '')
+            
+            if not url or not user_id or not description:
+                return jsonify({'error': 'URL, user_id, and description are required'}), 400
+            
+            # Insert report into Supabase
+            report_data = {
+                'url': url,
+                'user_id': user_id,
+                'description': description
+            }
+            
+            result = supabase_request('POST', 'reports', report_data)
+            
+            if result is None:
+                return jsonify({'error': 'Failed to save report'}), 500
+            
+            # Return updated list of reports for this URL
+            all_reports = supabase_request('GET', 'reports',
+                params={'url': f'eq.{url}', 'order': 'created_at.desc'})
+            
+            if all_reports is None:
+                all_reports = [result] if isinstance(result, dict) else result
+            
+            return jsonify({'reports': all_reports}), 201
+            
+    except Exception as e:
+        print(f"ERROR in reports: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/health', methods=['GET'])
 def health():
     """Health check endpoint"""
