@@ -10,7 +10,7 @@ export default function FeatureGrid() {
       color: "from-indigo-500 to-blue-500",
     },
     {
-      icon: "/images/geography.png",
+      icon: "/images/Geography.png",
       title: "Real-Time Defense",
       description:
         "Continuous 24/7 monitoring ensures your digital environment is protected against attacks as they happen, globally.",

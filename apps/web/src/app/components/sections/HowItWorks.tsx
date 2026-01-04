@@ -11,7 +11,7 @@ export default function HowItWorks() {
     },
     {
       number: "02",
-      icon: "/images/freepik--World--inject-1--inject-9.png",
+      icon: "/images/freepik--world--inject-1--inject-9.png",
       title: "Cross-Check Databases",
       description:
         "We verify the site against global threat intelligence networks and blacklists to ensure comprehensive coverage.",
