@@ -56,10 +56,21 @@ def supabase_request(method, endpoint, data=None, params=None):
 def extract_domain(url):
     """Extract domain from URL"""
     try:
+        # Remove query parameters and fragments
+        if '?' in url:
+            url = url.split('?')[0]
+        if '#' in url:
+            url = url.split('#')[0]
+        
         parsed = urlparse(url)
         domain = parsed.netloc or parsed.path
+        
         # Remove port if present
         domain = domain.split(':')[0]
+        
+        # Remove leading/trailing whitespace and slashes
+        domain = domain.strip().lstrip('/')
+        
         return domain
     except:
         return url
@@ -156,7 +167,16 @@ def get_whois_info(domain):
         return whois_data
         
     except Exception as e:
-        return {'error': str(e)}
+        error_msg = str(e).lower()
+        # Provide more specific error information
+        if 'timeout' in error_msg or 'connection' in error_msg:
+            return {'error': 'WHOIS service timeout - domain may use privacy protection', 'is_timeout': True}
+        elif 'no match' in error_msg or 'not found' in error_msg:
+            return {'error': 'Domain not registered or uses privacy protection', 'is_not_found': True}
+        elif 'query rate' in error_msg or 'rate limit' in error_msg:
+            return {'error': 'WHOIS service rate limited - try again later', 'is_rate_limited': True}
+        else:
+            return {'error': f'Could not retrieve WHOIS data - {str(e)}'}
 
 def parse_ssl_date(date_str):
     """Parse SSL certificate date from ASN.1 format to ISO format"""
@@ -173,12 +193,17 @@ def get_ssl_info(domain):
     try:
         # Create SSL context
         context = ssl.create_default_context()
+        context.check_hostname = True
+        context.verify_mode = ssl.CERT_REQUIRED
         
         # Connect to domain on port 443
         with socket.create_connection((domain, 443), timeout=10) as sock:
             with context.wrap_socket(sock, server_hostname=domain) as ssock:
                 # Get certificate
                 cert_der = ssock.getpeercert(binary_form=True)
+                if not cert_der:
+                    return {'error': 'No SSL certificate found on server'}
+                    
                 cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_ASN1, cert_der)
                 
                 # Parse dates properly
@@ -216,8 +241,22 @@ def get_ssl_info(domain):
                 
                 return ssl_data
                 
+    except socket.timeout:
+        return {'error': 'SSL connection timeout - server may be unreachable or blocking connections', 'is_timeout': True}
+    except socket.gaierror:
+        return {'error': 'Domain could not be resolved to an IP address', 'is_dns_error': True}
+    except socket.error as e:
+        if 'refused' in str(e).lower() or 'connection' in str(e).lower():
+            return {'error': 'SSL port (443) is not open or server is not accepting connections', 'is_connection_error': True}
+        return {'error': f'Connection error: {str(e)}'}
+    except ssl.SSLError as e:
+        if 'certificate verify failed' in str(e).lower():
+            return {'error': 'SSL certificate verification failed (may be self-signed or invalid)', 'is_ssl_verify_error': True}
+        elif 'unexpected eof' in str(e).lower() or 'tlsv1 alert' in str(e).lower():
+            return {'error': 'Server does not support SSL/TLS or has TLS configuration issues', 'is_ssl_config_error': True}
+        return {'error': f'SSL error: {str(e)}'}
     except Exception as e:
-        return {'error': str(e)}
+        return {'error': f'Could not retrieve SSL certificate - {str(e)}'}
 
 def save_whois_history(domain, whois_data):
     """Save WHOIS data to history table via Supabase API"""
@@ -612,9 +651,11 @@ def explain_analysis():
                 except:
                     pass
         else:
+            # WHOIS error - provide specific error message if available
+            whois_error = whois_info.get('error', 'Unknown error') if isinstance(whois_info, dict) else 'Unknown error'
             explanation['risk_factors'].append({
                 'title': 'WHOIS Information Unavailable',
-                'description': 'Could not retrieve WHOIS data - unable to verify domain registration',
+                'description': whois_error if 'Could not retrieve' in whois_error else f'Unable to verify domain registration: {whois_error}',
                 'severity': 'medium'
             })
         
@@ -660,10 +701,24 @@ def explain_analysis():
             except:
                 pass
         else:
+            # SSL error - provide specific error message if available
+            ssl_error = ssl_info.get('error', 'Unknown error') if isinstance(ssl_info, dict) else 'Unknown error'
+            
+            # Determine severity based on error type
+            severity = 'high'
+            if ssl_info.get('is_timeout'):
+                severity = 'medium'
+            elif ssl_info.get('is_dns_error'):
+                severity = 'high'
+            elif ssl_info.get('is_ssl_verify_error'):
+                severity = 'medium'
+            elif ssl_info.get('is_ssl_config_error'):
+                severity = 'medium'
+            
             explanation['risk_factors'].append({
-                'title': 'No SSL Certificate',
-                'description': 'Website does not use HTTPS/SSL encryption - data is transmitted in plain text',
-                'severity': 'high'
+                'title': 'SSL Certificate Issue',
+                'description': ssl_error if 'Could not' in ssl_error or 'SSL' in ssl_error else f'Website SSL/TLS issue: {ssl_error}',
+                'severity': severity
             })
         
         # Analyze detection results

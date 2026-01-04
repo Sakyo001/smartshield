@@ -57,6 +57,9 @@ importers:
       next:
         specifier: 15.5.7
         version: 15.5.7(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      ogl:
+        specifier: ^1.0.11
+        version: 1.0.11
       openssl:
         specifier: ^2.0.0
         version: 2.0.0

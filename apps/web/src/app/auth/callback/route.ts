@@ -45,17 +45,20 @@ export async function GET(request: Request) {
           
           // Link social account if OAuth provider
           if (user.app_metadata?.provider && user.app_metadata?.provider !== 'email') {
-            await supabase
-              .from('user_social_accounts')
-              .insert({
-                user_id: user.id,
-                provider: user.app_metadata.provider,
-                provider_user_id: user.id,
-                email: user.email,
-                avatar_url: user.user_metadata?.avatar_url
-              })
-              .then(() => null)
-              .catch(() => null) // Ignore duplicate errors
+            try {
+              await supabase
+                .from('user_social_accounts')
+                .insert({
+                  user_id: user.id,
+                  provider: user.app_metadata.provider,
+                  provider_user_id: user.id,
+                  email: user.email,
+                  avatar_url: user.user_metadata?.avatar_url
+                })
+            } catch (socialAccountError) {
+              // Ignore duplicate errors
+              console.debug('Social account link error (may be duplicate):', socialAccountError)
+            }
           }
         } catch (syncError) {
           console.error('Error syncing user:', syncError)
