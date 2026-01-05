@@ -1,0 +1,142 @@
+URL
+ ↓
+Layer 1: Deterministic Rules
+ ↓
+Layer 2: ML Probability Model
+ ↓
+Layer 3: Contextual Enrichment
+ ↓
+Layer 4: Risk Policy Engine
+ ↓
+Outcome Tier
+
+
+Layer 1: Deterministic Certainty Rules (100% Zone)
+
+These rules have near-zero false positives:
+
+Examples:
+
+IP-based URLs
+
+Unicode homograph detection
+
+Known phishing TLDs
+
+Excessive subdomain depth
+
+Encoded redirects
+
+Known malicious URL shorteners
+
+➡️ These do not need ML
+➡️ They anchor your system’s “certainty base”
+
+Layer 2: Probabilistic ML (Your Existing Model)
+
+Your model should output:
+P(phishing | URL)
+
+NOT:
+phishing / safe
+
+Key strategic change
+
+Stop thresholding at 0.5
+
+Use multiple thresholds
+
+Example:
+
+< 0.10 → Likely Safe
+
+0.10–0.40 → Low Risk
+
+0.40–0.70 → Suspicious
+
+0.70 → High Risk
+
+0.90 → Critical
+
+This alone reduces “wrong answers” dramatically.
+
+Layer 3: Contextual Enrichment (Without Page Content)
+
+You said URL-only — that’s fine. You still have huge signal:
+
+Domain age
+
+Registrar reputation
+
+DNS volatility
+
+Subdomain entropy
+
+Token semantic similarity (brand impersonation)
+
+Path randomness
+
+Query parameter count
+
+⚠️ These are orthogonal features
+Orthogonal features reduce correlated errors → higher real accuracy.
+
+Layer 4: Risk Policy Engine (This Is the Cheat Code)
+
+Instead of answering “Is it phishing?” you answer:
+
+“What should the user do?”
+Risk Tier	Action
+Likely Safe	Allow
+Low Risk	Warn (soft)
+Suspicious	Block or review
+High Risk	Block
+Critical	Block + alert
+
+This guarantees:
+
+No catastrophic false negatives
+
+False positives become warnings, not failures
+
+That’s how you “approach 100%” in outcome, not prediction.
+
+🧪 DATA STRATEGY (MOST PEOPLE FAIL HERE)
+You will NEVER label fast enough manually.
+
+So instead:
+
+✅ Active Learning Loop
+
+Only ask users to label uncertain cases
+
+Ignore confident ones
+
+Retrain weekly or monthly
+
+This improves accuracy faster than brute-force training.
+
+🚨 Zero-Day Strategy (This Is Mandatory)
+
+Zero-day phishing will bypass your model.
+
+So you must:
+
+Penalize novelty
+
+Penalize unseen token combinations
+
+Penalize low-frequency domains
+
+You’re not detecting phishing —
+you’re detecting deviation from normal web behavior.
+
+📉 How Close Can You REALLY Get?
+
+With this strategy:
+
+Precision on “Critical” tier → ~99.9%
+
+False negatives → rare and low impact
+
+User trust → very high
