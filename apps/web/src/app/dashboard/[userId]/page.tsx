@@ -335,6 +335,7 @@ export default function UserDashboard() {
       let whoisInfo = null
       let dnsRecords = null
       let sslInfo = null
+      let riskAdjustment = null
       
       try {
         const domainInfoResponse = await fetchWithTimeout(`${WHOIS_API_URL}/api/domain-info`, {
@@ -351,6 +352,36 @@ export default function UserDashboard() {
           whoisInfo = domainData.whois
           dnsRecords = domainData.dns
           sslInfo = domainData.ssl
+          riskAdjustment = domainData.risk_adjustment
+          
+          // MULTI-LAYER RISK ADJUSTMENT
+          // Layer 1: Deterministic rules increase risk for obvious phishing
+          // Layer 3: Contextual enrichment decreases risk for established domains
+          if (riskAdjustment) {
+            const originalRiskScore = riskScore
+            const deterministicIncrease = riskAdjustment.deterministic_increase || 0
+            const contextualReduction = riskAdjustment.reduction_percentage || 0
+            
+            // Apply both adjustments
+            riskScore = riskScore + deterministicIncrease - contextualReduction
+            riskScore = Math.max(0, Math.min(100, riskScore))
+            riskScore = Math.round(riskScore)
+            
+            console.log(`🔍 Multi-Layer Risk Assessment:`)
+            console.log(`  ML Model Score: ${originalRiskScore}%`)
+            console.log(`  Layer 1 (Deterministic): +${deterministicIncrease}% ${riskAdjustment.deterministic_flags?.join(', ') || ''}`)
+            console.log(`  Layer 3 (Contextual): -${contextualReduction}% ${riskAdjustment.indicators?.join(', ') || ''}`)
+            console.log(`  Final Adjusted Score: ${riskScore}%`)
+            
+            // Recalculate status based on adjusted risk score
+            if (riskScore >= 70) {
+              status = "Dangerous"
+            } else if (riskScore >= 40) {
+              status = "Warning"
+            } else {
+              status = "Safe"
+            }
+          }
         }
       } catch (domainError) {
         console.error("Error fetching domain info:", domainError)

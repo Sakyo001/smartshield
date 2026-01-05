@@ -336,6 +336,190 @@ def save_ssl_history(domain, ssl_data):
     except Exception as e:
         print(f"Error saving SSL history: {e}")
 
+def apply_deterministic_rules(url, domain):
+    """
+    Layer 1: Deterministic Certainty Rules (100% confidence)
+    Catch obvious phishing patterns that don't require ML
+    Returns: (risk_increase, flags)
+    """
+    import re
+    
+    risk_increase = 0
+    flags = []
+    
+    # Check for IP address instead of domain
+    ip_pattern = r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
+    if re.search(ip_pattern, domain):
+        risk_increase += 40
+        flags.append('IP-based URL (high risk)')
+    
+    # Check for no HTTPS
+    if not url.startswith('https://'):
+        risk_increase += 15
+        flags.append('No HTTPS encryption')
+    
+    # Check for suspicious TLDs
+    suspicious_tlds = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top', '.work', '.click']
+    if any(domain.endswith(tld) for tld in suspicious_tlds):
+        risk_increase += 25
+        flags.append('Suspicious TLD (common in phishing)')
+    
+    # Check for excessive subdomains (more than 3)
+    subdomain_count = domain.count('.')
+    if subdomain_count > 3:
+        risk_increase += 20
+        flags.append(f'Excessive subdomains ({subdomain_count} levels)')
+    
+    # Check for URL encoding or obfuscation in path
+    if '%' in url or url.count('/') > 5:
+        risk_increase += 10
+        flags.append('Suspicious URL path structure')
+    
+    # Check for suspicious path segments (common in phishing)
+    phishing_paths = ['deliver', 'verify', 'update', 'confirm', 'validate', 'secure', 
+                     'account', 'suspended', 'restore', 'recovery', 'billing', 'payment']
+    url_path = url.split('?')[0]  # Remove query params
+    path_lower = url_path.lower()
+    found_paths = [p for p in phishing_paths if f'/{p}/' in path_lower or path_lower.endswith(f'/{p}')]
+    if found_paths:
+        risk_increase += 15
+        flags.append(f'Suspicious path: /{found_paths[0]}/')
+    
+    # Check for suspicious keywords in URL
+    phishing_keywords = ['verify', 'account', 'suspended', 'login', 'update', 'confirm', 
+                        'secure', 'webscr', 'billing', 'banking', 'signin', 'paypal']
+    url_lower = url.lower()
+    found_keywords = [kw for kw in phishing_keywords if kw in url_lower]
+    if found_keywords:
+        risk_increase += len(found_keywords) * 5
+        flags.append(f'Phishing keywords: {", ".join(found_keywords[:3])}')
+    
+    # Check for random-looking path segments (mixed case + numbers)
+    if '/' in url:
+        path_segments = url.split('/')
+        for segment in path_segments[3:]:  # Skip protocol and domain parts
+            if len(segment) > 4 and segment.split('.')[0]:  # Check part before extension
+                main_part = segment.split('.')[0]
+                has_numbers = any(c.isdigit() for c in main_part)
+                has_upper = any(c.isupper() for c in main_part)
+                has_lower = any(c.islower() for c in main_part)
+                # Patterns like "D2017HL" or "aB3xY9"
+                if has_numbers and has_upper and has_lower and len(main_part) >= 5:
+                    risk_increase += 12
+                    flags.append(f'Random token in path: {main_part}')
+                    break
+    
+    # Check for suspiciously short filenames (like "u.php", "a.php", "index.html")
+    if '/' in url:
+        last_segment = url.split('/')[-1].split('?')[0]  # Get filename without query
+        if '.' in last_segment:
+            filename = last_segment.split('.')[0]
+            # Single letter or very short cryptic filenames
+            if len(filename) <= 2 and filename.isalpha():
+                risk_increase += 10
+                flags.append(f'Suspicious short filename: {last_segment}')
+    
+    # Check for URL shorteners (can hide real destination)
+    shortener_domains = ['bit.ly', 'tinyurl.com', 'goo.gl', 't.co', 'ow.ly', 'is.gd']
+    if any(shortener in domain for shortener in shortener_domains):
+        risk_increase += 15
+        flags.append('URL shortener (destination hidden)')
+    
+    return risk_increase, flags
+
+def calculate_contextual_risk_adjustment(whois_info, dns_records, ssl_info):
+    """
+    Multi-Layer Risk Assessment (Layer 3 - Contextual Enrichment)
+    Calculate risk adjustment based on domain reputation signals
+    Returns: (adjustment_value, positive_factor_count, risk_indicators)
+    """
+    from datetime import datetime as dt
+    
+    positive_factors = 0
+    risk_reduction = 0
+    risk_indicators = []
+    
+    # WHOIS Analysis
+    if whois_info and not whois_info.get('error'):
+        registrar = whois_info.get('registrar', '')
+        creation_date = whois_info.get('creation_date', '')
+        
+        # Registered domain with known registrar
+        if registrar:
+            positive_factors += 1
+            risk_reduction += 5
+            risk_indicators.append('Registered Domain')
+        
+        # Domain age analysis
+        if creation_date:
+            try:
+                created = dt.strptime(str(creation_date)[:10], '%Y-%m-%d')
+                age_days = (dt.now() - created).days
+                age_years = age_days / 365
+                
+                if age_years > 5:
+                    positive_factors += 3
+                    risk_reduction += 20  # Very established domain
+                    risk_indicators.append(f'Highly Established Domain ({int(age_years)} years)')
+                elif age_years > 3:
+                    positive_factors += 2
+                    risk_reduction += 15  # Established domain
+                    risk_indicators.append(f'Established Domain ({int(age_years)} years)')
+                elif age_years > 1:
+                    positive_factors += 1
+                    risk_reduction += 8  # Moderate age
+                    risk_indicators.append(f'Moderate Age Domain ({int(age_years)} years)')
+                elif age_days < 7:
+                    # Very new domain - high risk
+                    risk_reduction -= 10  # Actually increases risk
+                    risk_indicators.append('VERY NEW DOMAIN (High Risk)')
+                elif age_days < 30:
+                    # New domain - some risk
+                    risk_reduction -= 5
+                    risk_indicators.append('New Domain (Risk Factor)')
+            except:
+                pass
+    
+    # DNS Analysis
+    if dns_records and not dns_records.get('error'):
+        has_a_record = bool(dns_records.get('A', []))
+        has_mx_record = bool(dns_records.get('MX', []))
+        has_ns_record = bool(dns_records.get('NS', []))
+        
+        if has_a_record:
+            positive_factors += 1
+            risk_reduction += 5
+            risk_indicators.append('Valid DNS A Records')
+        
+        if has_mx_record:
+            positive_factors += 1
+            risk_reduction += 8  # Email infrastructure suggests established site
+            risk_indicators.append('Email Infrastructure Configured')
+        
+        if has_ns_record and len(dns_records.get('NS', [])) >= 2:
+            positive_factors += 1
+            risk_reduction += 5
+            risk_indicators.append('Multiple Name Servers')
+    
+    # SSL Analysis
+    if ssl_info and not ssl_info.get('error'):
+        issuer = ssl_info.get('issuer', {})
+        
+        if issuer:
+            positive_factors += 2
+            risk_reduction += 12  # SSL certificate is strong positive signal
+            risk_indicators.append('Valid SSL Certificate')
+            
+            # Check for trusted CA
+            issuer_org = issuer.get('O', '').lower()
+            trusted_cas = ['digicert', 'let\'s encrypt', 'sectigo', 'godaddy', 'amazon']
+            if any(ca in issuer_org for ca in trusted_cas):
+                positive_factors += 1
+                risk_reduction += 8
+                risk_indicators.append('Trusted Certificate Authority')
+    
+    return risk_reduction, positive_factors, risk_indicators
+
 @app.route('/api/domain-info', methods=['POST'])
 def domain_info():
     """Get WHOIS, DNS, and SSL information for a domain"""
@@ -355,26 +539,29 @@ def domain_info():
         print(f"Fetching info for domain: {domain}")
         
         # Get WHOIS, DNS, and SSL information
+        whois_info = {}
         try:
             whois_info = get_whois_info(domain)
             print(f"WHOIS info retrieved: {list(whois_info.keys())}")
         except Exception as e:
             print(f"Error getting WHOIS: {e}")
-            whois_info = {'error': str(e)}
+            whois_info = {'error': f'WHOIS lookup failed: {str(e)}'}
         
+        dns_records = {}
         try:
             dns_records = get_dns_records(domain)
             print(f"DNS records retrieved: {list(dns_records.keys())}")
         except Exception as e:
             print(f"Error getting DNS: {e}")
-            dns_records = {'error': str(e)}
+            dns_records = {'error': f'DNS lookup failed: {str(e)}'}
         
+        ssl_info = {}
         try:
             ssl_info = get_ssl_info(domain)
             print(f"SSL info retrieved: {list(ssl_info.keys())}")
         except Exception as e:
             print(f"Error getting SSL: {e}")
-            ssl_info = {'error': str(e)}
+            ssl_info = {'error': f'SSL lookup failed: {str(e)}'}
         
         # Save to history tables (non-blocking)
         try:
@@ -395,11 +582,30 @@ def domain_info():
         except Exception as e:
             print(f"Error saving SSL history: {e}")
         
+        # MULTI-LAYER RISK ASSESSMENT
+        
+        # Layer 1: Apply deterministic rules
+        deterministic_risk, deterministic_flags = apply_deterministic_rules(url, domain)
+        print(f"Layer 1 (Deterministic): +{deterministic_risk}% risk, flags: {deterministic_flags}")
+        
+        # Layer 3: Calculate contextual risk adjustment
+        risk_reduction, positive_count, risk_indicators = calculate_contextual_risk_adjustment(
+            whois_info, dns_records, ssl_info
+        )
+        print(f"Layer 3 (Contextual): -{risk_reduction}% risk, indicators: {risk_indicators}")
+        
         return jsonify({
             'domain': domain,
             'whois': whois_info,
             'dns': dns_records,
             'ssl': ssl_info,
+            'risk_adjustment': {
+                'reduction_percentage': risk_reduction,
+                'positive_factors': positive_count,
+                'indicators': risk_indicators,
+                'deterministic_increase': deterministic_risk,
+                'deterministic_flags': deterministic_flags
+            },
             'timestamp': datetime.now().isoformat()
         })
         
@@ -573,6 +779,8 @@ def reports():
 def explain_analysis():
     """Generate XAI (Explainable AI) summary of scan results"""
     try:
+        from datetime import datetime as dt
+        
         data = request.get_json()
         url = data.get('url', '')
         scan_result = data.get('scan_result', {})
@@ -596,6 +804,10 @@ def explain_analysis():
         decision = scan_result.get('decision', 'UNKNOWN')
         detections = scan_result.get('detections', [])
         
+        # Track positive factors for risk adjustment
+        positive_factor_count = 0
+        high_risk_indicator_count = 0
+        
         # Check for phishing indicators
         if risk_score >= 70:
             explanation['risk_factors'].append({
@@ -603,6 +815,7 @@ def explain_analysis():
                 'description': f'The AI model detected strong phishing indicators with a risk score of {risk_score}%',
                 'severity': 'high'
             })
+            high_risk_indicator_count += 1
         elif risk_score >= 40:
             explanation['risk_factors'].append({
                 'title': 'Medium Risk Score',
@@ -615,6 +828,7 @@ def explain_analysis():
                 'description': f'The site appears safe with a risk score of only {risk_score}%',
                 'severity': 'low'
             })
+            positive_factor_count += 1
         
         # Analyze WHOIS data
         if whois_info and not whois_info.get('error'):
@@ -628,10 +842,10 @@ def explain_analysis():
                     'description': f'Domain is registered with {registrar}, indicating legitimate ownership',
                     'severity': 'positive'
                 })
+                positive_factor_count += 1
             
             if creation_date:
                 try:
-                    from datetime import datetime as dt
                     created = dt.strptime(str(creation_date)[:10], '%Y-%m-%d')
                     age_days = (dt.now() - created).days
                     age_years = age_days / 365
@@ -642,13 +856,16 @@ def explain_analysis():
                             'description': f'Domain has been registered for {int(age_years)} years, suggesting legitimacy',
                             'severity': 'positive'
                         })
+                        positive_factor_count += 2  # Extra weight for established domains
                     elif age_days < 7:
                         explanation['risk_factors'].append({
                             'title': 'Very New Domain',
                             'description': 'Domain was created less than a week ago - phishing sites often use new domains',
                             'severity': 'high'
                         })
-                except:
+                        high_risk_indicator_count += 1
+                except Exception as e:
+                    print(f"Error parsing creation date: {e}")
                     pass
         else:
             # WHOIS error - provide specific error message if available
@@ -670,6 +887,7 @@ def explain_analysis():
                     'description': 'Domain has proper DNS A records pointing to a valid server',
                     'severity': 'positive'
                 })
+                positive_factor_count += 1
             
             if has_mx_record:
                 explanation['positive_factors'].append({
@@ -677,6 +895,7 @@ def explain_analysis():
                     'description': 'Domain has MX records configured for email, indicating established infrastructure',
                     'severity': 'positive'
                 })
+                positive_factor_count += 1
         
         # Analyze SSL certificate
         if ssl_info and not ssl_info.get('error'):
@@ -689,16 +908,19 @@ def explain_analysis():
                     'description': 'Website has a valid SSL certificate, encrypting data in transit',
                     'severity': 'positive'
                 })
+                positive_factor_count += 2  # Extra weight for SSL
             
             try:
-                cert_valid_until = dt.strptime(validity[:10], '%Y-%m-%d')
-                if cert_valid_until < dt.now():
-                    explanation['risk_factors'].append({
-                        'title': 'Expired SSL Certificate',
-                        'description': 'SSL certificate has expired - be cautious with sensitive information',
-                        'severity': 'medium'
-                    })
-            except:
+                if validity and len(validity) >= 10:
+                    cert_valid_until = dt.strptime(validity[:10], '%Y-%m-%d')
+                    if cert_valid_until < dt.now():
+                        explanation['risk_factors'].append({
+                            'title': 'Expired SSL Certificate',
+                            'description': 'SSL certificate has expired - be cautious with sensitive information',
+                            'severity': 'medium'
+                        })
+            except Exception as e:
+                print(f"Error parsing SSL certificate date: {e}")
                 pass
         else:
             # SSL error - provide specific error message if available
@@ -720,6 +942,8 @@ def explain_analysis():
                 'description': ssl_error if 'Could not' in ssl_error or 'SSL' in ssl_error else f'Website SSL/TLS issue: {ssl_error}',
                 'severity': severity
             })
+            if severity == 'high':
+                high_risk_indicator_count += 1
         
         # Analyze detection results
         if detections:
@@ -731,20 +955,58 @@ def explain_analysis():
                     'description': f'{service} flagged this site as: {result}',
                     'severity': 'high'
                 })
+                high_risk_indicator_count += 1
         
-        # Generate summary
-        high_risk_count = len([f for f in explanation['risk_factors'] if f.get('severity') == 'high'])
-        positive_count = len(explanation['positive_factors'])
+        # ADJUST RISK SCORE BASED ON POSITIVE/NEGATIVE FACTORS
+        # Strong positive factors should significantly reduce the risk score
+        adjusted_risk_score = risk_score
         
-        if risk_score >= 70:
-            explanation['summary'] = f"This website shows {high_risk_count} critical warning signs and appears to be a phishing attempt or malicious site. Multiple indicators suggest it may be trying to deceive users or steal information."
-            explanation['recommendation'] = "Do NOT enter any personal or financial information on this site. Consider reporting it to relevant authorities."
-        elif risk_score >= 40:
-            explanation['summary'] = f"This website has {high_risk_count} warning signs worth investigating. While not definitively malicious, it has some suspicious characteristics."
-            explanation['recommendation'] = "Proceed with caution. Verify the site's legitimacy before entering sensitive information."
-        else:
-            explanation['summary'] = f"This website appears legitimate with {positive_count} positive indicators. It has proper domain registration, valid SSL certificate, and established infrastructure."
-            explanation['recommendation'] = "This site appears safe to use based on our analysis."
+        # If we have strong positive indicators (established domain, valid SSL, proper DNS)
+        # reduce the risk score accordingly
+        if positive_factor_count >= 5:
+            # Excellent safety profile - reduce risk score by 40-50%
+            adjusted_risk_score = max(0, risk_score - 45)
+        elif positive_factor_count >= 4:
+            # Good safety profile - reduce risk score by 30-35%
+            adjusted_risk_score = max(0, risk_score - 35)
+        elif positive_factor_count >= 3:
+            # Moderate safety profile - reduce risk score by 20-25%
+            adjusted_risk_score = max(0, risk_score - 25)
+        elif positive_factor_count >= 2:
+            # Some safety indicators - reduce risk score by 10-15%
+            adjusted_risk_score = max(0, risk_score - 15)
+        
+        # But if we have multiple high-risk indicators, don't reduce too much
+        if high_risk_indicator_count > 2:
+            # Multiple serious concerns - override positive factors
+            adjusted_risk_score = max(risk_score * 0.8, 60)  # Keep at least 60% risk if multiple high-risk
+        
+        adjusted_risk_score = round(adjusted_risk_score)
+        
+        # Generate summary with ADJUSTED risk score
+        try:
+            high_risk_count = len([f for f in explanation['risk_factors'] if f.get('severity') == 'high'])
+            positive_count = len(explanation['positive_factors'])
+            
+            if adjusted_risk_score >= 70:
+                explanation['summary'] = f"This website shows {high_risk_count} critical warning signs and appears to be a phishing attempt or malicious site. Multiple indicators suggest it may be trying to deceive users or steal information."
+                explanation['recommendation'] = "Do NOT enter any personal or financial information on this site. Consider reporting it to relevant authorities."
+            elif adjusted_risk_score >= 40:
+                explanation['summary'] = f"This website has {high_risk_count} warning signs worth investigating. While not definitively malicious, it has some suspicious characteristics. However, it also has {positive_count} positive security indicators that suggest it may be legitimate."
+                explanation['recommendation'] = "Proceed with caution. Verify the site's legitimacy before entering sensitive information. Check if it matches what you expect from the organization."
+            else:
+                explanation['summary'] = f"This website appears legitimate with {positive_count} positive security indicators. It has proper domain registration, valid SSL certificate, and established infrastructure."
+                explanation['recommendation'] = "This site appears safe to use based on our analysis, but always practice good security habits."
+        except Exception as e:
+            print(f"Error generating summary: {e}")
+            explanation['summary'] = f"Analysis complete. Risk score: {adjusted_risk_score}%"
+            explanation['recommendation'] = "Review the risk and positive factors above for a detailed assessment."
+        
+        # Add adjusted risk score to response for frontend
+        explanation['adjusted_risk_score'] = adjusted_risk_score
+        explanation['original_risk_score'] = risk_score
+        explanation['positive_factors_count'] = positive_factor_count
+        explanation['high_risk_indicators_count'] = high_risk_indicator_count
         
         return jsonify(explanation), 200
         
