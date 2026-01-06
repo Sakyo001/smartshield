@@ -54,7 +54,7 @@ export default function HeroSection() {
               >
                 Our intelligent machine learning engine works around the clock
                 to scan every link you visit, detecting suspicious behavior,
-                fake pages, and phishing attempts before they can cause harm
+                fake pages, and phishing attempts before they can cause harm.
               </p>
 
               <div className="flex items-center gap-4">
