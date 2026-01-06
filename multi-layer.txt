@@ -2,7 +2,7 @@ URL
  ↓
 Layer 1: Deterministic Rules
  ↓
-Layer 2: ML Probability Model
+Layer 2: ML Probability Model.
  ↓
 Layer 3: Contextual Enrichment
  ↓
