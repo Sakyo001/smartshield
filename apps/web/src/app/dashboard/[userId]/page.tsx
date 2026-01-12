@@ -353,6 +353,7 @@ export default function UserDashboard() {
           dnsRecords = domainData.dns
           sslInfo = domainData.ssl
           riskAdjustment = domainData.risk_adjustment
+          console.log(`DEBUG: Full riskAdjustment object:`, JSON.stringify(riskAdjustment, null, 2))
           
           // MULTI-LAYER RISK ADJUSTMENT
           // Layer 1: Deterministic rules increase risk for obvious phishing
@@ -361,26 +362,60 @@ export default function UserDashboard() {
             const originalRiskScore = riskScore
             const deterministicIncrease = riskAdjustment.deterministic_increase || 0
             const contextualReduction = riskAdjustment.reduction_percentage || 0
+            const indicators = riskAdjustment.indicators || []
             
-            // Apply both adjustments
-            riskScore = riskScore + deterministicIncrease - contextualReduction
-            riskScore = Math.max(0, Math.min(100, riskScore))
-            riskScore = Math.round(riskScore)
+            console.log(`🔍 Risk Adjustment Data Received:`)
+            console.log(`  Original ML Score: ${originalRiskScore}%`)
+            console.log(`  Deterministic Increase: +${deterministicIncrease}%`)
+            console.log(`  Contextual Reduction: ${contextualReduction}%`)
+            console.log(`  Indicators Array:`, indicators)
+            console.log(`  Indicators Length:`, indicators.length)
             
-            console.log(`🔍 Multi-Layer Risk Assessment:`)
-            console.log(`  ML Model Score: ${originalRiskScore}%`)
-            console.log(`  Layer 1 (Deterministic): +${deterministicIncrease}% ${riskAdjustment.deterministic_flags?.join(', ') || ''}`)
-            console.log(`  Layer 3 (Contextual): -${contextualReduction}% ${riskAdjustment.indicators?.join(', ') || ''}`)
-            console.log(`  Final Adjusted Score: ${riskScore}%`)
+            // CHECK FOR CRITICAL INDICATORS FIRST - these override everything
+            const criticalIndicators = indicators && indicators.length > 0 
+              ? indicators.filter((indicator: string) => 
+                  typeof indicator === 'string' && (indicator.includes('CRITICAL') || indicator.includes('🚨'))
+                )
+              : []
             
-            // Recalculate status based on adjusted risk score
-            if (riskScore >= 70) {
+            console.log(`  Critical Indicators Found:`, criticalIndicators)
+            console.log(`  Critical Count:`, criticalIndicators.length)
+            
+            if (criticalIndicators.length > 0) {
+              // ANY critical security issue = instant 100% Dangerous
+              riskScore = 100
               status = "Dangerous"
-            } else if (riskScore >= 40) {
-              status = "Warning"
+              console.log(`🚨 CRITICAL SECURITY ISSUE DETECTED:`, criticalIndicators)
+              console.log(`🚨 Forcing 100% risk score and Dangerous status`)
             } else {
-              status = "Safe"
+              // No critical issues - apply normal multi-layer calculations
+              riskScore = riskScore + deterministicIncrease - contextualReduction
+              riskScore = Math.max(0, Math.min(100, riskScore))
+              riskScore = Math.round(riskScore)
+              
+              // SAFETY CHECK: If WHOIS info is unavailable, enforce minimum risk score
+              const hasWhoisWarning = indicators && indicators.some((indicator: string) => 
+                typeof indicator === 'string' && indicator.includes('WHOIS Information Unavailable') && !indicator.includes('CRITICAL')
+              )
+              if (hasWhoisWarning && riskScore < 45) {
+                riskScore = 45
+                console.log(`⚠️ WHOIS unavailable - enforcing minimum risk score of 45%`)
+              }
+              
+              // Recalculate status based on adjusted risk score
+              if (riskScore >= 70) {
+                status = "Dangerous"
+              } else if (riskScore >= 40) {
+                status = "Warning"
+              } else {
+                status = "Safe"
+              }
             }
+            
+            console.log(`🔍 Multi-Layer Risk Assessment Final:`)
+            console.log(`  Original Score: ${originalRiskScore}%`)
+            console.log(`  Final Score: ${riskScore}%`)
+            console.log(`  Status: ${status}`)
           }
         }
       } catch (domainError) {
