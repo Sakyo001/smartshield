@@ -68,16 +68,16 @@ export default function HowItWorks() {
 
               {/* Icon Container */}
               <div className="relative z-10 mb-8">
-                <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 relative overflow-hidden group-hover:border-[#6B73FF]/30 transition-colors duration-500">
+                <div className="w-40 h-40 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 relative overflow-hidden group-hover:border-[#6B73FF]/30 transition-colors duration-500">
                   {/* Icon Glow Background */}
                   <div className="absolute inset-0 bg-[#6B73FF]/0 group-hover:bg-[#6B73FF]/5 transition-colors duration-500"></div>
 
                   <Image
                     src={step.icon}
                     alt={step.title}
-                    width={56}
-                    height={56}
-                    className="w-12 h-12 object-contain transition-transform duration-500 group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_rgba(84,91,255,0.5)]"
+                    width={88}
+                    height={88}
+                    className="w-20 h-20 object-contain transition-transform duration-500 group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_rgba(84,91,255,0.5)]"
                   />
                 </div>
                 {/* Connecting Dot (Desktop) */}
