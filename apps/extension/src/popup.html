@@ -2,94 +2,306 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <title>SmartShield</title>
     <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --text-color: #ededed;
+            --primary-color: #3b82f6; 
+            --input-bg: rgba(255, 255, 255, 0.05);
+            --input-border: rgba(255, 255, 255, 0.1);
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
         body {
-            width: 320px;
-            padding: 16px;
-            font-family: Arial, sans-serif;
+            width: 360px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 480px;
+            position: relative;
+            overflow-x: hidden;
         }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 16px;
+
+        /* Aurora Effect Background */
+        .aurora-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 0% 100%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+            pointer-events: none;
         }
-        
-        .logo {
-            font-size: 20px;
-            font-weight: bold;
-            color: #333;
+
+        .container {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
+
+        /* Utility Classes */
+        .hidden { display: none !important; }
+        .text-center { text-align: center; }
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .justify-between { justify-content: space-between; }
+        .items-center { align-items: center; }
+        .w-full { width: 100%; }
+        .gap-2 { gap: 0.5rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mt-4 { margin-top: 1rem; }
+        .text-sm { font-size: 0.875rem; }
+
+        /* Typography */
+        h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+        h2 { margin: 0 0 8px 0; font-size: 20px; font-weight: 600; }
+        p { margin: 0; color: #888; line-height: 1.5; }
+
+        /* Inputs */
+        .form-group { margin-bottom: 16px; }
+        label { display: block; margin-bottom: 6px; font-size: 13px; color: #aaa; }
         
-        .status {
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 12px;
-            border: 2px solid;
-        }
-        
-        .status.safe {
-            background: #d4edda;
-            border-color: #28a745;
-            color: #155724;
-        }
-        
-        .status.warning {
-            background: #fff3cd;
-            border-color: #ffc107;
-            color: #856404;
-        }
-        
-        .status.danger {
-            background: #f8d7da;
-            border-color: #dc3545;
-            color: #721c24;
-        }
-        
-        .scan-button {
+        input {
             width: 100%;
-            padding: 10px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+            padding: 12px;
+            box-sizing: border-box;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-color);
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.2s;
             font-size: 14px;
-            font-weight: bold;
+        }
+
+        input:focus {
+            border-color: var(--primary-color);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .btn-google {
+            background: white;
+            color: #1f1f1f;
+            margin-bottom: 12px;
         }
         
-        .scan-button:hover {
-            background: #0056b3;
+        .btn-google:hover {
+            background: #f1f1f1;
         }
-        
-        .warnings {
-            margin-top: 8px;
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: #444;
+            margin: 20px 0;
             font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #333;
+        }
+        .divider::before { margin-right: 10px; }
+        .divider::after { margin-left: 10px; }
+
+        .btn-link {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            padding: 0;
+            font-size: 0.875rem;
+        }
+        .btn-link:hover { text-decoration: underline; }
+
+        /* Dashboard Card */
+        .status-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        }
+
+        .status-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            display: block;
         }
         
-        .warnings ul {
-            margin: 4px 0;
-            padding-left: 16px;
+        /* Loading Spinner */
+        .loader {
+            width: 24px;
+            height: 24px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .logo-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 32px;
+            gap: 12px;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="logo">🛡️ PhishGuard</div>
-        <div style="font-size: 12px; color: #666;">Simple Phishing Protection</div>
+    <div class="aurora-bg"></div>
+
+    <div class="container">
+        
+        <!-- Header -->
+        <div class="logo-header">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <h1>SmartShield</h1>
+        </div>
+
+        <!-- AUTH: LOGIN VIEW -->
+        <div id="login-view" class="view">
+            <h2 class="text-center" style="margin-bottom: 24px;">Welcome Back</h2>
+            
+            <button id="google-login-btn" class="btn btn-google">
+                <svg width="18" height="18" viewBox="0 0 18 18">
+                    <path d="M17.64 9.2c0-.637-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+                    <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.836.86-3.048.86-2.344 0-4.328-1.584-5.036-3.715H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+                    <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+                    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.159 6.656 3.58 9 3.58z" fill="#EA4335"/>
+                </svg>
+                Sign in with Google
+            </button>
+
+            <div class="divider">or continue with email</div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="login-email" placeholder="name@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required>
+                </div>
+                <div id="login-error" class="hidden" style="color: #ef4444; font-size: 12px; margin-bottom: 12px; text-align: center;"></div>
+                <button type="submit" class="btn btn-primary">Sign In</button>
+            </form>
+            
+            <div class="text-center mt-4 text-sm">
+                <span style="color: #666;">Don't have an account?</span>
+                <button id="goto-signup" class="btn-link">Sign up</button>
+            </div>
+        </div>
+
+        <!-- AUTH: SIGNUP VIEW -->
+        <div id="signup-view" class="view hidden">
+            <button id="back-to-login" class="btn-link" style="margin-bottom: 16px;">← Back</button>
+            <h2 class="text-center mb-4">Create Account</h2>
+            
+            <form id="signup-form">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="signup-email" placeholder="name@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signup-password" placeholder="••••••••" required>
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" id="signup-confirm-password" placeholder="••••••••" required>
+                </div>
+                <div id="signup-error" class="hidden" style="color: #ef4444; font-size: 12px; margin-bottom: 12px; text-align: center;"></div>
+                <button type="submit" class="btn btn-primary">Sign Up</button>
+            </form>
+        </div>
+
+        <!-- DASHBOARD VIEW -->
+        <div id="dashboard-view" class="view hidden">
+            <div class="status-card">
+                <span id="status-icon" class="status-icon">🛡️</span>
+                <h2 id="status-title" style="margin-bottom: 8px;">Protected</h2>
+                <p id="status-desc" style="font-size: 14px;">This website appears safe.</p>
+                
+                <div id="scan-warnings" class="hidden" style="margin-top: 16px; text-align: left; background: rgba(234, 179, 8, 0.1); padding: 12px; border-radius: 8px; border: 1px solid rgba(234, 179, 8, 0.2);">
+                    <strong style="color: #eab308; display: block; margin-bottom: 4px; font-size: 12px;"> RISK FACTORS</strong>
+                    <div id="warning-list" style="font-size: 12px; color: #ddd;"></div>
+                </div>
+            </div>
+
+            <button id="scan-btn" class="btn btn-primary mb-4">
+                <span>Scan Current Page</span>
+            </button>
+
+            <div class="flex justify-between items-center" style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-size: 10px; color: #666; text-transform: uppercase;">Signed in as</span>
+                    <span id="user-display" style="font-size: 12px; font-weight: 500;">user@example.com</span>
+                </div>
+                <button id="logout-btn" style="background: none; border: 1px solid #333; padding: 6px 12px; border-radius: 6px; color: #888; cursor: pointer; font-size: 12px;">Logout</button>
+            </div>
+        </div>
+        
+        <!-- LOADING OVERLAY -->
+        <div id="loading-overlay" class="hidden" style="position: absolute; inset: 0; background: rgba(10,10,10,0.8); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 50;">
+            <div class="loader"></div>
+        </div>
+
     </div>
-
-    <div id="status" class="status safe">
-        <div id="status-text">Checking current page...</div>
-        <div id="warnings" class="warnings"></div>
-    </div>
-
-    <button id="scan-button" class="scan-button">Scan This Page</button>
-
-    <div style="margin-top: 12px; font-size: 11px; color: #666; text-align: center;">
-        Stay safe online! Always verify suspicious websites.
-    </div>
-
     <script src="popup.js"></script>
 </body>
 </html>
