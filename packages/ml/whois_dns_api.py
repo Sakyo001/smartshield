@@ -288,12 +288,13 @@ def explain_analysis():
         whois_info = data.get('whois_info', {})
         dns_info = data.get('dns_info', {})
         ssl_info = data.get('ssl_info', {})
+        deterministic_flags = data.get('deterministic_flags', [])
         
         if not url:
             return jsonify({'error': 'URL is required'}), 400
         
         # Use simplified XAI explainer
-        explanation = generate_explanation(url, scan_result, whois_info, dns_info, ssl_info)
+        explanation = generate_explanation(url, scan_result, whois_info, dns_info, ssl_info, deterministic_flags)
         return jsonify(explanation), 200
         
     except Exception as e:
