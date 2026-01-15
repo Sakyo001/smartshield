@@ -143,7 +143,7 @@ export default function Navbar() {
             <div className="hidden md:block w-px h-8 bg-gray-200 dark:bg-white/10 mx-1"></div>
 
             <Link
-              href="/signin"
+              href="/login"
               className={`hidden md:flex px-8 py-2.5 text-sm font-semibold rounded-full transition-all duration-300 ${poppins.className}
                 bg-[#5667FF] text-white hover:bg-[#4349dd] 
                 shadow-lg shadow-[#5667FF]/20 hover:shadow-[#5667FF]/40 hover:-translate-y-0.5 active:translate-y-0`}
@@ -194,7 +194,7 @@ export default function Navbar() {
           </a>
         ))}
         <Link
-          href="/signin"
+          href="/login"
           className="px-10 py-3.5 bg-[#5667FF] text-white text-lg font-medium rounded-full shadow-xl shadow-[#5667FF]/30 hover:bg-[#4a51e0] transition-transform active:scale-95"
         >
           Sign In
