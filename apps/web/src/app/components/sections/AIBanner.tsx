@@ -85,15 +85,15 @@ export default function AIBanner() {
             </div>
 
             {/* Right Image Area */}
-            <div className="relative p-10 md:p-16 flex items-center justify-center h-full">
+            <div className="relative p-8 md:p-12 flex items-center justify-center h-full">
               <div className="absolute inset-0 bg-gradient-to-tr from-[#6B7FFF]/5 to-transparent rounded-full blur-3xl transform scale-75"></div>
 
-              <div className="relative w-full max-w-md animate-[float_6s_ease-in-out_infinite]">
+              <div className="relative w-full max-w-sm animate-[float_6s_ease-in-out_infinite]">
                 <Image
-                  src="/images/Typing-bro 1.png"
+                  src="/images/Smarter Protection.png"
                   alt="AI Protection Illustration"
-                  width={600}
-                  height={600}
+                  width={500}
+                  height={500}
                   className="w-full h-auto drop-shadow-2xl"
                   priority
                 />

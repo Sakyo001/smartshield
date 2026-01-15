@@ -75,7 +75,7 @@ export default function CTASection() {
             }`}
         >
           <Image
-            src="/images/logo 1 (1).png"
+            src="/images/3D Logo.png"
             alt="Protected"
             width={500}
             height={500}

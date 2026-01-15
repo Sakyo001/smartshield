@@ -18,6 +18,21 @@ export default function HeroSection() {
       className="relative w-full h-screen bg-[#0a0a0f] overflow-hidden"
       suppressHydrationWarning
     >
+      <style>{`
+        @keyframes pulseGlow {
+          0%, 100% {
+            transform: scale(1);
+            filter: drop-shadow(0 0 20px rgba(84, 91, 255, 0.3));
+          }
+          50% {
+            transform: scale(1.03);
+            filter: drop-shadow(0 0 40px rgba(84, 91, 255, 0.6));
+          }
+        }
+        .floating-image {
+          animation: pulseGlow 5s ease-in-out infinite;
+        }
+      `}</style>
       {/* Aurora Background */}
       <div className="absolute inset-0 w-full h-full">
         <Aurora
@@ -82,12 +97,12 @@ export default function HeroSection() {
             <div className="relative h-full flex items-center justify-center">
               <div className="absolute inset-0 bg-gradient-to-b from-[#545BFF]/10 to-transparent rounded-3xl blur-2xl"></div>
               <Image
-                src="/images/laptop.png"
+                src="/images/LP Body Logo.png"
                 alt="SmartShield Protection"
                 width={500}
                 height={300}
                 priority
-                className="w-full h-auto relative z-10 drop-shadow-2xl"
+                className="w-full h-auto relative z-10 drop-shadow-2xl floating-image"
               />
             </div>
           </div>
