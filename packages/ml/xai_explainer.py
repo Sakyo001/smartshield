@@ -4,7 +4,7 @@ XAI (Explainable AI) analysis for scan results
 from datetime import datetime
 
 
-def generate_explanation(url, scan_result, whois_info, dns_info, ssl_info):
+def generate_explanation(url, scan_result, whois_info, dns_info, ssl_info, deterministic_flags=None):
     """Generate human-readable explanation of scan results"""
     explanation = {
         'url': url,
@@ -17,6 +17,30 @@ def generate_explanation(url, scan_result, whois_info, dns_info, ssl_info):
     risk_score = scan_result.get('riskScore', 0)
     positive_count = 0
     high_risk_count = 0
+    
+    print(f"XAI: Processing deterministic_flags: {deterministic_flags}")
+    
+    # Add deterministic threat vectors as risk factors
+    if deterministic_flags:
+        print(f"XAI: Found {len(deterministic_flags)} deterministic flags")
+        for flag in deterministic_flags:
+            # Determine severity based on flag content
+            severity = 'high'
+            if 'HTTP' in flag or 'IP-based' in flag or 'Untrusted TLD' in flag:
+                severity = 'high'
+            elif 'encoding' in flag.lower() or 'hyphen' in flag.lower():
+                severity = 'medium'
+            
+            explanation['risk_factors'].append({
+                'title': 'Threat Vector Detected',
+                'description': flag,
+                'severity': severity
+            })
+            print(f"  ✓ Added threat vector: {flag} (severity: {severity})")
+            if severity == 'high':
+                high_risk_count += 1
+    else:
+        print(f"WARNING XAI: No deterministic_flags received")
     
     # Risk score analysis
     if risk_score >= 70:
@@ -118,21 +142,41 @@ def generate_explanation(url, scan_result, whois_info, dns_info, ssl_info):
                     explanation['risk_factors'].append({
                         'title': 'Expired SSL Certificate',
                         'description': 'Certificate has expired',
-                        'severity': 'medium'
+                        'severity': 'high'
                     })
+                    high_risk_count += 1
             except:
                 pass
     else:
+        # SSL error - ALL SSL errors are critical security issues
         ssl_error = ssl_info.get('error', 'Unknown error') if isinstance(ssl_info, dict) else 'Unknown error'
-        severity = 'medium' if ssl_info.get('is_timeout') or ssl_info.get('is_ssl_verify_error') else 'high'
+        
+        # Determine specific error type for better messaging
+        if ssl_info.get('is_timeout'):
+            title = '⏱️ SSL Verification Timeout'
+            description = f'{ssl_error}\n\nThis means: We could not verify the website\'s security certificate because the server took too long to respond. The website may be slow, overloaded, or temporarily offline.'
+        elif ssl_info.get('is_connection_error'):
+            title = '⚠️ SSL Connection Failed'
+            description = f'{ssl_error}\n\nThis means: We could not establish a secure connection to verify the website\'s certificate. This could indicate a server misconfiguration or network issue.'
+        elif ssl_info.get('is_dns_error'):
+            title = '⚠️ Website Server Unreachable'
+            description = f'{ssl_error}\n\nThis means: The domain is registered, but we cannot reach the website\'s server to verify its content or security. The website may be offline, blocked, or the server is not responding.'
+        elif ssl_info.get('is_ssl_verify_error'):
+            title = '🚨 Certificate Not Trustworthy'
+            description = f'{ssl_error}\n\nThis means: The website\'s security certificate is invalid, expired, or fake. This is a major red flag for phishing or fraud.'
+        elif ssl_info.get('is_ssl_config_error'):
+            title = '⚠️ Broken Security Setup'
+            description = f'{ssl_error}\n\nThis means: The website owner has not properly configured HTTPS. This is a sign of poor security maintenance.'
+        else:
+            title = '⚠️ Security Connection Failed'
+            description = f'{ssl_error}\n\nThis means: We could not verify this website\'s security certificate. Proceed with extreme caution.'
         
         explanation['risk_factors'].append({
-            'title': 'SSL Certificate Issue',
-            'description': ssl_error,
-            'severity': severity
+            'title': title,
+            'description': description,
+            'severity': 'high'
         })
-        if severity == 'high':
-            high_risk_count += 1
+        high_risk_count += 1
     
     # Detection results
     for detection in scan_result.get('detections', []):
@@ -143,14 +187,28 @@ def generate_explanation(url, scan_result, whois_info, dns_info, ssl_info):
         })
         high_risk_count += 1
     
-    # Check critical issues
+    # Check critical issues - but distinguish between actual security problems vs verification timeouts
     critical_issues = []
+    
+    # SSL: Only critical if it's a verification failure, NOT if it's just a timeout
     if ssl_info and ssl_info.get('error'):
-        critical_issues.append('SSL Certificate Issue')
+        # Timeouts are not security issues - just means our verification service is slow
+        if ssl_info.get('is_ssl_verify_error') or ssl_info.get('is_ssl_config_error'):
+            critical_issues.append('SSL Certificate Issue')
+        # is_timeout, is_connection_error, is_dns_error are NOT critical - just verification problems
+    
+    # DNS: Only critical if there's an actual resolution failure, NOT timeout
     if dns_info and dns_info.get('error'):
-        critical_issues.append('DNS Resolution Issue')
+        # Check if it's a real DNS error or just a timeout/network issue
+        if not dns_info.get('is_timeout'):
+            critical_issues.append('DNS Resolution Issue')
+    
+    # WHOIS: Only critical if domain is truly not found, NOT if it's timeout or privacy protected
     if whois_info and whois_info.get('error'):
-        critical_issues.append('WHOIS Information Unavailable')
+        # is_not_found means domain doesn't exist - that's critical
+        if whois_info.get('is_not_found'):
+            critical_issues.append('WHOIS Information Unavailable')
+        # is_timeout or privacy protection are NOT critical - just can't verify
     
     # Calculate adjusted risk score
     adjusted_risk = risk_score

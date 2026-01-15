@@ -15,29 +15,23 @@ class PhishingDetector {
       isSuspicious: false,
       riskLevel: 'low',
       warnings: [],
-      score: 0
+      score: 0,
+      isHTTP: false,
+      protocol: url.startsWith('https://') ? 'https' : (url.startsWith('http://') ? 'http' : 'unknown')
     };
 
     // Basic URL checks
-    if (this.isURLTooLong(url)) {
-      result.warnings.push('URL is unusually long');
-      result.score += 2;
-    }
-
-    if (this.hasIPAddress(url)) {
-      result.warnings.push('Uses IP address instead of domain name');
-      result.score += 3;
-    }
-
-    if (this.hasSuspiciousKeywords(url)) {
-      result.warnings.push('Contains suspicious keywords');
-      result.score += 2;
-    }
-
-    if (!this.isHTTPS(url)) {
+    // Check for HTTP specifically (much more serious)
+    if (url.startsWith('http://')) {
+      result.warnings.push('Using unsecure HTTP protocol (not HTTPS)');
+      result.score += 3; // Higher score for HTTP
+      result.isHTTP = true;
+    } else if (!this.isHTTPS(url)) {
       result.warnings.push('Not using secure HTTPS connection');
       result.score += 1;
     }
+
+    if (this.isURLTooLong(url)) {
 
     if (this.hasTooManySubdomains(url)) {
       result.warnings.push('Too many subdomains');
@@ -99,6 +93,10 @@ class PhishingDetector {
    * Check if using HTTPS
    */
   isHTTPS(url) {
+    // HTTP is insecure - always flag as warning
+    if (url.startsWith('http://')) {
+      return false;
+    }
     return url.startsWith('https://');
   }
 
