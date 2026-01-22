@@ -228,6 +228,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const currentTab = tabs[0];
 
       if (currentTab && currentTab.url) {
+        // Send message to background script to scan with Whois API
         chrome.runtime.sendMessage(
           {
             action: "checkURL",
@@ -240,9 +241,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (chrome.runtime.lastError) {
               console.error("Runtime error:", chrome.runtime.lastError);
-              displayError("Service unavailable.");
-            } else {
+              displayError("Scan service is temporarily unavailable. Please try again.");
+            } else if (result && result.error) {
+              console.error("Scan error:", result.error);
+              displayError("Unable to complete scan. Please check your connection.");
+            } else if (result) {
+              console.log("Scan completed successfully:", result);
               displayResult(result);
+            } else {
+              displayError("No result received from scan service.");
             }
           }
         );
@@ -250,13 +257,14 @@ document.addEventListener("DOMContentLoaded", () => {
         showLoading(false);
         scanBtn.disabled = false;
         scanBtn.innerHTML = originalText;
+        displayError("Unable to access current page URL.");
       }
     } catch (error) {
       console.error("Error scanning page:", error);
       showLoading(false);
       scanBtn.disabled = false;
       scanBtn.innerHTML = originalText;
-      displayError("Error initializing scan.");
+      displayError("An error occurred during the scan.");
     }
   }
 

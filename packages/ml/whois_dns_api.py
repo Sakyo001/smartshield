@@ -19,9 +19,13 @@ app = Flask(__name__)
 CORS(app)
 
 
-@app.route('/api/domain-info', methods=['POST'])
+@app.route('/api/scan', methods=['POST', 'OPTIONS'])
+@app.route('/api/domain-info', methods=['POST', 'OPTIONS'])
 def domain_info():
     """Get WHOIS, DNS, and SSL information for a domain"""
+    # Handle CORS preflight
+    if request.method == 'OPTIONS':
+        return '', 204
     try:
         data = request.get_json()
         url = data.get('url', '')
