@@ -177,7 +177,7 @@ export default function UserDashboard() {
   }
 
   // API URL - uses environment variable for production, falls back to localhost for development
-  const WHOIS_API_URL = process.env.NEXT_PUBLIC_WHOIS_API_URL || "http://localhost:5001"
+  const WHOIS_API_URL = process.env.NEXT_PUBLIC_WHOIS_API_URL
 
   const loadingStates = [
     { text: "Initializing phishing detection system..." },
@@ -199,19 +199,14 @@ export default function UserDashboard() {
   useEffect(() => {
     const checkApiHealth = async () => {
       try {
-        // Check both APIs - main scan API and WHOIS API
-        const scanApiCheck = fetch("https://phishguard-api-kwpg.onrender.com/health", { 
-          method: "GET"
-        }).catch(() => null);
-        
+        // Check Whois API health
         const whoisApiCheck = fetch(`${WHOIS_API_URL}/health`, { 
           method: "GET"
         }).catch(() => null);
         
-        const [scanResponse, whoisResponse] = await Promise.all([scanApiCheck, whoisApiCheck]);
+        const [whoisResponse] = await Promise.all([whoisApiCheck]);
         
-        // If at least one API is online, consider system online
-        if (scanResponse?.ok || whoisResponse?.ok) {
+        if (whoisResponse?.ok) {
           setApiStatus('online');
         } else {
           setApiStatus('offline');
@@ -298,7 +293,7 @@ export default function UserDashboard() {
     setCurrentScan(null)
     
     try {
-      const response = await fetchWithTimeout("https://phishguard-api-kwpg.onrender.com/api/scan", {
+      const response = await fetchWithTimeout(`${WHOIS_API_URL}/api/scan`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

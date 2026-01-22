@@ -9,6 +9,9 @@
     "storage",
     "identity"
   ],
+  "host_permissions": [
+    "https://smartshield-whois-api.onrender.com/*"
+  ],
   "oauth2": {
     "client_id": "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
     "scopes": [
