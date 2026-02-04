@@ -1,11 +1,23 @@
 
 /**
  * Content Script - Runs on every webpage
- * Provides real-time protection and warnings
+ * Provides real-time protection and warnings (only when Safe Mode is enabled)
  */
 
-// Only run on actual web pages
-if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+// Get Safe Mode status and check current page
+chrome.storage.local.get(['safeModeEnabled'], (result) => {
+  const safeModeEnabled = result.safeModeEnabled !== undefined ? result.safeModeEnabled : true;
+  
+  console.log('[SmartShield Content] Safe Mode status:', safeModeEnabled);
+  
+  // Only run protection if Safe Mode is enabled
+  if (!safeModeEnabled) {
+    console.log('[SmartShield Content] Skipping page check - Safe Mode is disabled');
+    return;
+  }
+
+  // Only run on actual web pages
+  if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
   
   // Check current page when script loads
   chrome.runtime.sendMessage({
@@ -14,6 +26,14 @@ if (window.location.protocol === 'http:' || window.location.protocol === 'https:
   }, (result) => {
     if (result && result.isSuspicious) {
       showWarning(result);
+    }
+  });
+  
+  // Listen for instant warnings from background script
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'showThreatWarning' && message.result) {
+      showWarning(message.result);
+      sendResponse({ displayed: true });
     }
   });
 
@@ -167,4 +187,5 @@ if (window.location.protocol === 'http:' || window.location.protocol === 'https:
         host.remove(); // Remove banner
     });
   }
-}
+  }
+});
