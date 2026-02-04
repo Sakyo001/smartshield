@@ -11,648 +11,787 @@
     />
     <style>
       :root {
-        --bg-primary: #0f0f1e;
-        --bg-secondary: #1a1a2e;
-        --bg-tertiary: #16213e;
-        --text-primary: #ffffff;
-        --text-secondary: #b0b5c8;
-        --text-tertiary: #7a8096;
-        --primary-color: #6366f1;
-        --primary-dark: #4f46e5;
-        --primary-light: #818cf8;
-        --accent-success: #10b981;
-        --accent-warning: #f59e0b;
-        --accent-danger: #ef4444;
-        --input-bg: rgba(255, 255, 255, 0.04);
-        --input-border: rgba(255, 255, 255, 0.08);
-        --input-border-focus: rgba(99, 102, 241, 0.3);
-        --glass-border: rgba(255, 255, 255, 0.1);
-        --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        --bg-app: #0f172a;
+        --bg-card: #1e293b;
+        --bg-card-hover: #334155;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --primary: #6366f1;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --border: #334155;
+        --radius: 16px;
+        --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
       }
+
+      * { box-sizing: border-box; }
 
       body {
-        width: 380px;
-        min-height: 100vh;
-        font-family:
-          "Poppins",
-          -apple-system,
-          BlinkMacSystemFont,
-          "Segoe UI",
-          Roboto,
-          Helvetica,
-          Arial,
-          sans-serif;
+        width: 400px;
+        max-height: 600px;
         margin: 0;
-        background: linear-gradient(
-          135deg,
-          var(--bg-primary) 0%,
-          var(--bg-secondary) 100%
-        );
-        color: var(--text-primary);
-        position: relative;
-        overflow-y: auto;
+        background-color: var(--bg-app);
+        color: var(--text-main);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
         overflow-x: hidden;
+        overflow-y: auto;
       }
 
-      /* Aurora Effect Background */
-      .aurora-bg {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: -1;
-        background:
-          radial-gradient(
-            circle at 80% -20%,
-            rgba(99, 102, 241, 0.15) 0%,
-            transparent 50%
-          ),
-          radial-gradient(
-            circle at 20% 120%,
-            rgba(139, 92, 246, 0.1) 0%,
-            transparent 50%
-          );
-        pointer-events: none;
-      }
+      svg { display: block; }
+      
+      .container { padding: 24px; }
+      .hidden { display: none !important; }
 
-      .container {
-        padding: 24px;
+      /* Header */
+      .header {
         display: flex;
-        flex-direction: column;
-        gap: 16px;
-        min-height: 100vh;
-      }
-
-      /* Utility Classes */
-      .hidden {
-        display: none !important;
-      }
-      .text-center {
-        text-align: center;
-      }
-      .flex {
-        display: flex;
-      }
-      .flex-col {
-        flex-direction: column;
-      }
-      .justify-between {
         justify-content: space-between;
-      }
-      .items-center {
         align-items: center;
+        margin-bottom: 24px;
       }
-      .w-full {
-        width: 100%;
+      .brand { display: flex; align-items: center; gap: 12px; }
+      .brand-icon { 
+        color: var(--primary); 
+        background: rgba(99, 102, 241, 0.1);
+        padding: 8px;
+        border-radius: 12px;
       }
-      .gap-2 {
-        gap: 0.5rem;
-      }
-      .mb-4 {
-        margin-bottom: 1rem;
-      }
-      .mt-4 {
-        margin-top: 1rem;
-      }
-      .text-sm {
-        font-size: 0.875rem;
-      }
-
-      /* Typography */
-      h1 {
-        margin: 0;
-        font-size: 24px;
-        font-weight: 700;
-        letter-spacing: -0.5px;
-        text-align: center;
-        color: var(--text-primary);
-      }
-      h2 {
-        margin: 0 0 8px 0;
-        font-size: 18px;
+      .text-wrapper { line-height: 1; }
+      .brand-name { font-weight: 700; font-size: 18px; display: block; margin-bottom: 4px; letter-spacing: -0.02em;}
+      .brand-tag { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+      
+      .status-badge { 
+        font-size: 11px; 
+        background: rgba(16, 185, 129, 0.1); 
+        color: var(--success);
+        padding: 6px 10px; 
+        border-radius: 20px; 
         font-weight: 600;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .dot { width: 6px; height: 6px; background: currentColor; border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
+
+      /* Main Status Area */
+      .status-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 30px;
         text-align: center;
-        color: var(--text-primary);
-      }
-      .tagline {
-        margin: 4px 0 0 0;
-        color: var(--text-secondary);
-        font-size: 12px;
-        text-align: center;
-        font-weight: 500;
-        letter-spacing: 0.3px;
-      }
-      p {
-        margin: 0;
-        color: var(--text-tertiary);
-        line-height: 1.6;
-        font-size: 13px;
+        position: relative;
+        margin-bottom: 24px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
       }
 
-      /* Inputs */
-      .form-group {
-        margin-bottom: 14px;
+      /* Background gradient for card */
+      .status-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 4px;
+        background: linear-gradient(90deg, var(--primary), #818cf8);
+        opacity: 0.5;
       }
-      label {
-        display: block;
-        margin-bottom: 6px;
-        font-size: 12px;
-        color: var(--text-tertiary);
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-      }
-
-      input {
-        width: 100%;
-        padding: 11px 14px;
-        box-sizing: border-box;
-        background: var(--input-bg);
-        border: 1px solid var(--input-border);
-        color: var(--text-primary);
-        border-radius: 10px;
-        outline: none;
-        transition: var(--transition-smooth);
-        font-size: 14px;
-        font-family: "Poppins", inherit;
-      }
-
-      input::placeholder {
-        color: var(--text-tertiary);
-      }
-
-      input:focus {
-        border-color: var(--input-border-focus);
-        background: rgba(255, 255, 255, 0.06);
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-      }
-
-      /* Buttons */
-      .btn {
-        width: 100%;
-        padding: 12px 16px;
-        border: none;
-        border-radius: 10px;
-        cursor: pointer;
-        font-weight: 600;
-        font-size: 14px;
-        transition: var(--transition-smooth);
+      
+      .status-ring {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        margin: 0 auto 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
-        font-family: "Poppins", inherit;
+        background: rgba(255, 255, 255, 0.03);
+        position: relative;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        color: var(--text-muted);
+      }
+      
+      .status-ring svg { width: 48px; height: 48px; }
+
+      .status-ring.scanning {
+        color: var(--primary);
+        background: rgba(99, 102, 241, 0.1);
+      }
+      .status-ring.scanning::after {
+        content: '';
+        position: absolute;
+        inset: -8px;
+        border-radius: 50%;
+        border: 2px solid var(--primary);
+        opacity: 0.5;
+        animation: pulse 2s infinite;
       }
 
-      .btn-primary {
-        background: linear-gradient(
-          135deg,
-          var(--primary-color) 0%,
-          var(--primary-light) 100%
-        );
-        color: white;
-        box-shadow: 0 10px 28px rgba(99, 102, 241, 0.25);
-      }
-
-      .btn-primary:hover {
-        background: linear-gradient(
-          135deg,
-          var(--primary-dark) 0%,
-          var(--primary-color) 100%
-        );
-        transform: translateY(-2px);
-        box-shadow: 0 14px 36px rgba(99, 102, 241, 0.35);
-      }
-
-      .btn-primary:active {
-        transform: translateY(0);
-      }
-
-      .btn-google {
-        background: rgba(255, 255, 255, 0.08);
-        color: var(--text-primary);
-        margin-bottom: 16px;
-        border: 1px solid var(--glass-border);
-      }
-
-      .btn-google:hover {
-        background: rgba(255, 255, 255, 0.12);
-        border-color: rgba(255, 255, 255, 0.15);
-      }
-
-      .divider {
+      .status-title { font-size: 20px; font-weight: 700; margin: 0 0 8px; letter-spacing: -0.02em; color: var(--text-main); }
+      .status-desc { color: var(--text-muted); font-size: 13px; max-width: 280px; margin: 0 auto; line-height: 1.5; }
+      
+      /* URL Display */
+      .url-display {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border);
+        padding: 12px 16px;
+        border-radius: 12px;
+        margin-top: 16px;
+        word-break: break-all;
+        font-size: 12px;
+        color: var(--text-muted);
+        font-family: 'Consolas', monospace;
+        line-height: 1.4;
         display: flex;
         align-items: center;
-        text-align: center;
-        color: var(--text-tertiary);
-        margin: 16px 0;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        font-weight: 500;
+        gap: 8px;
       }
-      .divider::before,
-      .divider::after {
-        content: "";
-        flex: 1;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-      }
-      .divider::before {
-        margin-right: 12px;
-      }
-      .divider::after {
-        margin-left: 12px;
-      }
+      .url-icon { flex-shrink: 0; color: var(--primary); opacity: 0.7; }
 
-      .btn-link {
-        background: none;
-        border: none;
-        color: var(--primary-color);
-        cursor: pointer;
-        padding: 0;
-        font-size: 0.875rem;
+      /* All Tabs Section */
+      .all-tabs-section {
+        margin-top: 24px;
+      }
+      
+      .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        padding: 0 4px;
+      }
+      
+      .section-header h3 {
+        font-size: 13px;
         font-weight: 600;
-        transition: var(--transition-smooth);
+        color: var(--text-main);
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
       }
-      .btn-link:hover {
-        color: var(--primary-light);
+      
+      .tabs-count {
+        font-size: 11px;
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-weight: 600;
       }
-
-      /* Dashboard Card */
-      .status-card {
-        background: linear-gradient(
-          135deg,
-          rgba(99, 102, 241, 0.1) 0%,
-          rgba(139, 92, 246, 0.05) 100%
-        );
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(99, 102, 241, 0.15);
-        border-radius: 16px;
-        padding: 24px;
-        margin-bottom: 16px;
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-        transition: var(--transition-smooth);
+      
+      .tabs-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 400px;
+        overflow-y: auto;
+        min-height: 50px;
       }
-
-      .status-card:hover {
-        background: linear-gradient(
-          135deg,
-          rgba(99, 102, 241, 0.15) 0%,
-          rgba(139, 92, 246, 0.1) 100%
-        );
-        border-color: rgba(99, 102, 241, 0.25);
-        box-shadow: 0 12px 32px rgba(99, 102, 241, 0.15);
+      
+      .tab-item {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.2s;
+        cursor: pointer;
       }
-
-      .status-card::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: linear-gradient(
-          90deg,
-          transparent,
-          rgba(255, 255, 255, 0.2),
-          transparent
-        );
+      
+      .tab-item:hover {
+        background: var(--bg-card-hover);
+        border-color: #475569;
       }
-
-      .status-icon {
-        font-size: 56px;
-        margin-bottom: 16px;
-        display: block;
-        animation: float 3s ease-in-out infinite;
+      
+      .tab-item.active {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.05);
       }
-
-      @keyframes float {
-        0%,
-        100% {
-          transform: translateY(0px);
-        }
-        50% {
-          transform: translateY(-8px);
-        }
-      }
-
-      /* Loading Spinner */
-      .loader {
+      
+      .tab-status-icon {
         width: 32px;
         height: 32px;
-        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 14px;
+      }
+      
+      .tab-status-icon.safe {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+      }
+      
+      .tab-status-icon.warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+      }
+      
+      .tab-status-icon.danger {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+      }
+      
+      .tab-status-icon.scanning {
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
+        animation: pulse 2s infinite;
+      }
+      
+      .tab-status-icon.pending {
+        background: rgba(148, 163, 184, 0.1);
+        color: var(--text-muted);
+      }
+      
+      .tab-info {
+        flex: 1;
+        min-width: 0;
+      }
+      
+      .tab-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-main);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 2px;
+      }
+      
+      .tab-url {
+        font-size: 11px;
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-family: 'Consolas', monospace;
+      }
+      
+      .tab-risk-badge {
+        font-size: 10px;
+        padding: 4px 8px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      
+      .tab-risk-badge.safe {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+      }
+      
+      .tab-risk-badge.medium {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+      }
+      
+      .tab-risk-badge.high {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+      }
+      
+      .tab-risk-badge.scanning {
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
+      }
+      
+      .tab-risk-badge.pending {
+        background: rgba(148, 163, 184, 0.1);
+        color: var(--text-muted);
+      }
+
+      /* Full URL Display */
+      .full-url-display {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin-top: 8px;
+        font-size: 10px;
+        color: var(--text-muted);
+        font-family: 'Consolas', monospace;
+        word-break: break-all;
+        line-height: 1.4;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+      }
+
+      .tab-item:hover .full-url-display {
+        opacity: 1;
+        color: var(--primary);
+      }
+
+      /* Metrics Grid */
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .metric-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        padding: 16px;
+        border-radius: var(--radius);
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      .metric-label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+      .metric-value { font-size: 18px; font-weight: 700; color: var(--text-main); }
+      .metric-value-large { font-size: 24px; font-weight: 700; color: var(--text-main); line-height: 1; }
+      
+      .metric-value.safe { color: var(--success); }
+      .metric-value.risk { color: var(--danger); }
+      .metric-value.warn { color: var(--warning); }
+      
+      /* Circular Gauge */
+      .risk-gauge { width: 70px; height: 70px; position: relative; }
+      .circular-chart { display: block; margin: 0 auto; max-width: 100%; max-height: 250px; }
+      .circle-bg { fill: none; stroke: rgba(255, 255, 255, 0.05); stroke-width: 2.8; }
+      .circle { fill: none; stroke-width: 2.8; stroke-linecap: round; transition: stroke-dasharray 0.6s ease; }
+      .percentage { fill: var(--text-main); font-family: 'Inter', sans-serif; font-weight: 700; font-size: 9px; text-anchor: middle; }
+
+      /* Safe Mode Toggle redesigned */
+      .control-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--bg-card);
+        padding: 16px 20px;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        margin-bottom: 24px;
+        transition: transform 0.2s;
+      }
+      .control-row:hover { border-color: #475569; }
+      
+      .control-info h3 { font-size: 14px; font-weight: 600; margin: 0 0 4px; }
+      .control-info p { font-size: 12px; color: var(--text-muted); margin: 0; }
+
+      /* Toggle Switch */
+      .toggle-switch {
+        position: relative;
+        width: 48px;
+        height: 26px;
+        flex-shrink: 0;
+      }
+      .toggle-switch input { opacity: 0; width: 0; height: 0; }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #334155;
+        transition: .3s;
+        border-radius: 26px;
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .3s;
         border-radius: 50%;
-        border-top-color: var(--primary-light);
-        animation: spin 1s linear infinite;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      }
+      input:checked + .slider { background-color: var(--primary); }
+      input:checked + .slider:before { transform: translateX(22px); }
+
+      /* Warnings */
+      .warnings {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+        padding: 16px;
+        border-radius: var(--radius);
+        font-size: 13px;
+        margin-bottom: 24px;
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
       }
 
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
+      /* Details Accordion */
+      .details-container { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+      
+      .detail-section {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--bg-card);
+        overflow: hidden;
+      }
+      
+      .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 18px;
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.2s;
+      }
+      .detail-header:hover { background: var(--bg-card-hover); }
+
+      .detail-title { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 10px; color: var(--text-main); }
+      .detail-icon { color: var(--primary); opacity: 0.9; display: flex; }
+      .chevron { transition: transform 0.3s; opacity: 0.5; }
+      .open .chevron { transform: rotate(180deg); }
+
+      .detail-content {
+        padding: 0 18px 18px;
+        border-top: 1px solid var(--border);
+        font-size: 13px;
+        background: rgba(0,0,0,0.1);
       }
 
-      .logo-header {
+      .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px dashed var(--border);
+      }
+      .detail-row:last-child { border-bottom: none; }
+      .detail-label { color: var(--text-muted); font-size: 12px; }
+      .detail-value { font-family: 'Consolas', monospace; color: var(--text-main); font-size: 12px; }
+      
+      /* Footer */
+      .footer {
+        margin-top: 32px;
+        text-align: center;
+        font-size: 11px;
+        color: var(--text-muted);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        opacity: 0.6;
+      }
+
+      /* Loading */
+      .loading-overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.9);
+        backdrop-filter: blur(4px);
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        margin-bottom: 24px;
-        gap: 6px;
-        padding: 8px 0;
+        z-index: 50;
+        border-radius: var(--radius);
+      }
+      
+      @keyframes pulse {
+        0% { transform: scale(0.95); opacity: 0.8; }
+        50% { transform: scale(1.05); opacity: 0.4; }
+        100% { transform: scale(0.95); opacity: 0.8; }
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      
+      /* Scrollbar */
+      ::-webkit-scrollbar { width: 4px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+      /* Alert Modal */
+      .alert-modal {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        animation: fadeIn 0.3s ease;
       }
 
-      .logo-header img {
-        filter: drop-shadow(0 8px 16px rgba(99, 102, 241, 0.25));
-        transition: transform 0.3s ease;
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
       }
 
-      .logo-header img:hover {
-        transform: scale(1.05);
+      @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
       }
 
-      /* Scrollbar styling */
-      ::-webkit-scrollbar {
-        width: 6px;
+      .alert-content {
+        background: var(--bg-card);
+        border: 2px solid var(--danger);
+        border-radius: var(--radius);
+        padding: 28px;
+        max-width: 340px;
+        text-align: center;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       }
 
-      ::-webkit-scrollbar-track {
-        background: transparent;
+      .alert-content.warning {
+        border-color: var(--warning);
       }
 
-      ::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 3px;
+      .alert-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 16px;
+        color: var(--danger);
+        animation: pulse 2s infinite;
       }
 
-      ::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 255, 255, 0.15);
+      .alert-content.warning .alert-icon {
+        color: var(--warning);
+      }
+
+      .alert-title {
+        font-size: 20px;
+        font-weight: 700;
+        margin: 0 0 8px;
+        color: var(--danger);
+      }
+
+      .alert-content.warning .alert-title {
+        color: var(--warning);
+      }
+
+      .alert-message {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin: 0 0 24px;
+        line-height: 1.6;
+      }
+
+      .alert-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      .alert-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: inherit;
+      }
+
+      .alert-btn.primary {
+        background: var(--danger);
+        color: white;
+      }
+
+      .alert-btn.primary:hover {
+        background: #dc2626;
+        transform: translateY(-1px);
+      }
+
+      .alert-btn.secondary {
+        background: var(--bg-card-hover);
+        color: var(--text-main);
+        border: 1px solid var(--border);
+      }
+
+      .alert-btn.secondary:hover {
+        background: #475569;
       }
     </style>
   </head>
   <body>
-    <div class="aurora-bg"></div>
-
     <div class="container">
+      
       <!-- Header -->
-      <div class="logo-header">
-        <img
-          src="images/light-logo-extension.png"
-          alt="SmartShield"
-          width="40"
-          height="40"
-          style="object-fit: contain"
-        />
-        <h1>SmartShield</h1>
-        <p class="tagline">AI-Powered Phishing Detector</p>
-      </div>
+      <header class="header">
+        <div class="brand">
+          <div class="brand-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <div class="text-wrapper">
+             <span class="brand-name">SmartShield</span>
+             <span class="brand-tag">ACTIVE PROTECTION</span>
+          </div>
+        </div>
+        <div class="status-badge">
+          <span class="dot"></span>
+          <span>Online</span>
+        </div>
+      </header>
 
-      <!-- AUTH: LOGIN VIEW -->
-      <div id="login-view" class="view">
-        <h2 class="text-center" style="margin-bottom: 28px; margin-top: 8px">
-          Welcome Back
-        </h2>
-
-        <button id="google-login-btn" class="btn btn-google">
-          <svg width="18" height="18" viewBox="0 0 18 18">
-            <path
-              d="M17.64 9.2c0-.637-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"
-              fill="#4285F4"
-            />
-            <path
-              d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.836.86-3.048.86-2.344 0-4.328-1.584-5.036-3.715H.957v2.332A8.997 8.997 0 0 0 9 18z"
-              fill="#34A853"
-            />
-            <path
-              d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"
-              fill="#FBBC05"
-            />
-            <path
-              d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.159 6.656 3.58 9 3.58z"
-              fill="#EA4335"
-            />
+      <!-- Status Card with Ring -->
+      <div class="status-card">
+        <div class="status-ring scanning" id="status-icon">
+          <!-- Default: Search Icon -->
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          Sign in with Google
-        </button>
-
-        <div class="divider">or continue with email</div>
-
-        <form id="login-form">
-          <div class="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              id="login-email"
-              placeholder="name@example.com"
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              id="login-password"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-          <div
-            id="login-error"
-            class="hidden"
-            style="
-              color: var(--accent-danger);
-              font-size: 12px;
-              margin-bottom: 12px;
-              text-align: center;
-              background: rgba(239, 68, 68, 0.1);
-              padding: 8px;
-              border-radius: 6px;
-              border: 1px solid rgba(239, 68, 68, 0.2);
-            "
-          ></div>
-          <button type="submit" class="btn btn-primary">Sign In</button>
-        </form>
-
-        <div class="text-center mt-4 text-sm">
-          <span style="color: var(--text-tertiary)"
-            >Don't have an account?</span
-          >
-          <button id="goto-signup" class="btn-link">Sign up</button>
+        </div>
+        <div class="status-title" id="status-title">Scanning Target...</div>
+        <div class="status-desc" id="status-desc">Analyzing domain reputation and page content for threats</div>
+        <div class="url-display hidden" id="url-display">
+          <svg class="url-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+          <span id="url-text"></span>
         </div>
       </div>
 
-      <!-- AUTH: SIGNUP VIEW -->
-      <div id="signup-view" class="view hidden">
-        <button id="back-to-login" class="btn-link" style="margin-bottom: 8px">
-          ← Back
-        </button>
-        <h2 class="text-center" style="margin-bottom: 8px">Create Account</h2>
-
-        <form id="signup-form">
-          <div class="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              id="signup-email"
-              placeholder="name@example.com"
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              id="signup-password"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-          <div class="form-group" style="margin-bottom: 6px">
-            <label>Confirm Password</label>
-            <input
-              type="password"
-              id="signup-confirm-password"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-          <div
-            id="signup-error"
-            class="hidden"
-            style="
-              color: var(--accent-danger);
-              font-size: 12px;
-              margin-bottom: 12px;
-              text-align: center;
-              background: rgba(239, 68, 68, 0.1);
-              padding: 8px;
-              border-radius: 6px;
-              border: 1px solid rgba(239, 68, 68, 0.2);
-            "
-          ></div>
-          <button type="submit" class="btn btn-primary">Sign Up</button>
-        </form>
-      </div>
-
-      <!-- DASHBOARD VIEW -->
-      <div id="dashboard-view" class="view hidden">
-        <div class="status-card">
-          <span id="status-icon" class="status-icon">🛡️</span>
-          <h2 id="status-title" style="margin-bottom: 8px">Protected</h2>
-          <p id="status-desc" style="font-size: 14px">
-            This website appears safe.
-          </p>
-
-          <div
-            id="scan-warnings"
-            class="hidden"
-            style="
-              margin-top: 16px;
-              text-align: left;
-              background: rgba(245, 158, 11, 0.08);
-              padding: 12px 14px;
-              border-radius: 10px;
-              border: 1px solid rgba(245, 158, 11, 0.15);
-            "
-          >
-            <strong
-              style="
-                color: var(--accent-warning);
-                display: block;
-                margin-bottom: 6px;
-                font-size: 11px;
-                text-transform: uppercase;
-                letter-spacing: 0.3px;
-              "
-            >
-              ⚠️ Risk Factors</strong
-            >
-            <div
-              id="warning-list"
-              style="
-                font-size: 12px;
-                color: var(--text-secondary);
-                line-height: 1.5;
-              "
-            ></div>
+      <!-- New Metrics Grid -->
+      <div class="metrics-grid hidden" id="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Risk Score</div>
+          <div class="risk-gauge">
+            <svg viewBox="0 0 36 36" class="circular-chart">
+              <path class="circle-bg"
+                d="M18 2.0845
+                  a 15.9155 15.9155 0 0 1 0 31.831
+                  a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+              <path class="circle" id="risk-circle-path"
+                stroke-dasharray="0, 100"
+                d="M18 2.0845
+                  a 15.9155 15.9155 0 0 1 0 31.831
+                  a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+              <text x="18" y="21.5" class="percentage" id="risk-score-text">0</text>
+            </svg>
           </div>
         </div>
-
-        <button id="scan-btn" class="btn btn-primary mb-4">
-          <span>Scan Current Page</span>
-        </button>
-
-        <div
-          class="flex justify-between items-center"
-          style="
-            margin-top: auto;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-          "
-        >
-          <div style="display: flex; flex-direction: column">
-            <span
-              style="
-                font-size: 10px;
-                color: var(--text-tertiary);
-                text-transform: uppercase;
-                letter-spacing: 0.3px;
-                margin-bottom: 2px;
-              "
-              >Signed in as</span
-            >
-            <span
-              id="user-display"
-              style="
-                font-size: 13px;
-                font-weight: 500;
-                color: var(--text-primary);
-              "
-              >user@example.com</span
-            >
-          </div>
-          <button
-            id="logout-btn"
-            style="
-              background: rgba(255, 255, 255, 0.06);
-              border: 1px solid rgba(255, 255, 255, 0.1);
-              padding: 8px 16px;
-              border-radius: 8px;
-              color: var(--text-secondary);
-              cursor: pointer;
-              font-size: 12px;
-              font-weight: 600;
-              transition: var(--transition-smooth);
-            "
-            onmouseover="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.borderColor='rgba(255, 255, 255, 0.15)'"
-            onmouseout="this.style.background='rgba(255, 255, 255, 0.06)'; this.style.borderColor='rgba(255, 255, 255, 0.1)'"
-          >
-            Logout
-          </button>
+        <div class="metric-card">
+          <div class="metric-label">Confidence</div>
+          <div class="metric-value-large" id="confidence-score">--</div>
         </div>
       </div>
 
-      <!-- LOADING OVERLAY -->
-      <div
-        id="loading-overlay"
-        class="hidden"
-        style="
-          position: fixed;
-          inset: 0;
-          background: rgba(15, 15, 30, 0.85);
-          backdrop-filter: blur(8px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 50;
-        "
-      >
-        <div class="loader"></div>
+      <!-- Safe Mode Toggle -->
+      <div class="control-row">
+        <div class="control-info">
+          <h3>Safe Mode</h3>
+          <p>Real-time threat blocking</p>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="safe-mode-toggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- Warnings -->
+      <div class="warnings hidden" id="scan-warnings">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="min-width: 20px;">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <div id="warning-list"></div>
+      </div>
+
+      <!-- Details -->
+      <div class="details-container hidden" id="details-container">
+        
+        <div class="detail-section">
+          <div class="detail-header" id="whois-toggle">
+            <span class="detail-title">
+              <span class="detail-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              </span>
+              Whois Data
+            </span>
+            <span class="chevron">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
+          </div>
+          <div class="detail-content" id="whois-data" style="display: none;"></div>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-header" id="dns-toggle">
+            <span class="detail-title">
+              <span class="detail-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+              </span>
+              DNS Records
+            </span>
+            <span class="chevron">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
+          </div>
+          <div class="detail-content" id="dns-data" style="display: none;"></div>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-header" id="ssl-toggle">
+            <span class="detail-title">
+              <span class="detail-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              </span>
+              SSL Certificate
+            </span>
+            <span class="chevron">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
+          </div>
+          <div class="detail-content" id="ssl-data" style="display: none;"></div>
+        </div>
+
+      </div>
+
+      <!-- All Tabs Section -->
+      <div class="all-tabs-section">
+        <div class="section-header">
+          <h3>All Tabs</h3>
+          <span class="tabs-count" id="tabs-count">0</span>
+        </div>
+        <div class="tabs-list" id="tabs-list">
+          <!-- Tabs will be dynamically inserted here -->
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <span>SmartShield AI Engine v1.0.2</span>
+        <span>Secure Connection Established</span>
+      </footer>
+    </div>
+
+    <!-- Alert Modal -->
+    <div class="alert-modal hidden" id="alert-modal">
+      <div class="alert-content" id="alert-content">
+        <div class="alert-icon" id="alert-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
+        <h2 class="alert-title" id="alert-title">Dangerous Website Detected!</h2>
+        <p class="alert-message" id="alert-message">This website has been flagged as a phishing attempt. Your personal information may be at risk.</p>
+        <div class="alert-actions">
+          <button class="alert-btn primary" id="alert-leave">Leave Site</button>
+          <button class="alert-btn secondary" id="alert-dismiss">Dismiss</button>
+        </div>
       </div>
     </div>
+    
     <script src="popup.js"></script>
   </body>
 </html>

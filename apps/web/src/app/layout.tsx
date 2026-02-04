@@ -36,6 +36,7 @@ export default function RootLayout({
             `,
           }}
         />
+        <script src="/extension-sync.js" defer></script>
       </head>
       <body suppressHydrationWarning>
         <Providers>{children}</Providers>

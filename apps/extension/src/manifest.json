@@ -1,24 +1,21 @@
 {
   "manifest_version": 3,
-  "name": "PhishGuard",
+  "name": "SmartShield",
   "version": "1.0.0",
-  "description": "Simple phishing protection for your browser",
+  "description": "AI-powered phishing protection for your browser",
   
   "permissions": [
     "activeTab",
+    "tabs",
     "storage",
-    "identity"
+    "identity",
+    "notifications"
   ],
   "host_permissions": [
-    "https://smartshield-whois-api.onrender.com/*"
+    "https://smartshield-whois-api.onrender.com/*",
+    "https://jlgktijajxapqclgjyjx.supabase.co/*",
+    "https://www.googleapis.com/*"
   ],
-  "oauth2": {
-    "client_id": "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
-    "scopes": [
-      "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/userinfo.profile"
-    ]
-  },
   "background": {
     "service_worker": "background.js"
   },
@@ -32,6 +29,6 @@
   
   "action": {
     "default_popup": "popup.html",
-    "default_title": "PhishGuard - Check this page"
+    "default_title": "SmartShield - Check this page"
   }
 }
