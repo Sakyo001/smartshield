@@ -303,11 +303,12 @@ document.addEventListener("DOMContentLoaded", () => {
         statusTitle.textContent = "High Risk Detected";
         statusTitle.style.color = "var(--danger)";
         statusDesc.textContent = "This site shows strong signs of phishing. Do not enter personal information.";
-        statusCard.style.borderColor = "var(--danger)";
+        
+        statusCard.className = 'status-card danger';
         
         // Show alert modal for high risk
         showAlertModal(
-          "Phishing Website Detected!",
+          "Phishing Website Detected",
           "This website has been identified as a phishing attempt. Do not enter any personal information, passwords, or credit card details.",
           "danger"
         );
@@ -322,11 +323,12 @@ document.addEventListener("DOMContentLoaded", () => {
         statusTitle.textContent = "Suspicious Activity";
         statusTitle.style.color = "var(--warning)";
         statusDesc.textContent = "This site has some suspicious characteristics. Proceed with caution.";
-        statusCard.style.borderColor = "var(--warning)";
+        
+        statusCard.className = 'status-card warning';
         
         // Show alert modal for medium risk
         showAlertModal(
-          "Suspicious Website Warning",
+          "Suspicious Website",
           "This website shows suspicious characteristics. Exercise caution and avoid entering sensitive information.",
           "warning"
         );
@@ -351,7 +353,9 @@ document.addEventListener("DOMContentLoaded", () => {
       statusTitle.textContent = "Site is Safe";
       statusTitle.style.color = "var(--success)";
       statusDesc.textContent = "This website appears safe to use.";
-      statusCard.style.borderColor = "var(--success)";
+      
+      statusCard.className = 'status-card safe';
+      
       scanWarnings.classList.add("hidden");
     }
 
@@ -604,6 +608,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Update a specific tab element in the UI after scan completes
   function updateTabElementInUI(tab, scanResult, isActive) {
+    console.log(`🔄 Updating tab element for ${tab.url}:`, {
+      isSuspicious: scanResult?.isSuspicious,
+      riskScore: scanResult?.riskScore,
+      riskLevel: scanResult?.riskLevel,
+      decision: scanResult?.decision,
+      confidence: scanResult?.confidence
+    });
+    
     const tabElementId = `tab-item-${tab.id}`;
     const existingElement = document.getElementById(tabElementId);
     

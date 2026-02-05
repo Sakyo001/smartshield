@@ -313,9 +313,17 @@ async function checkURLWithAPI(url) {
     let warnings = [];
     let riskScore = 0;
 
+    console.log(`🔍 Processing scan result for ${url}:`, {
+      decision: data.decision,
+      confidence: data.confidence,
+      riskScore: data.risk_score
+    });
+
     if (data.decision === 'PHISHING') {
       // If PHISHING, confidence represents danger level (100 = very dangerous)
       riskScore = Math.round(data.confidence || 100);
+      console.log(`  PHISHING decision: riskScore=${riskScore}`);
+      
       if (riskScore >= 70) {
         riskLevel = 'high';
         isSuspicious = true;
@@ -335,6 +343,8 @@ async function checkURLWithAPI(url) {
       // If LEGITIMATE, confidence represents safety (100 = very safe)
       // Invert it to get risk score (100% safe = 0% risk)
       riskScore = Math.round(100 - (data.confidence || 0));
+      console.log(`  LEGITIMATE decision: confidence=${data.confidence}, riskScore=${riskScore}`);
+      
       if (riskScore >= 70) {
         riskLevel = 'high';
         isSuspicious = true;

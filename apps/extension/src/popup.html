@@ -88,20 +88,39 @@
         margin-bottom: 24px;
         box-shadow: var(--shadow);
         overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .status-card.safe {
+        background: linear-gradient(180deg, rgba(16, 185, 129, 0.1) 0%, var(--bg-card) 100%);
+        border-color: rgba(16, 185, 129, 0.3);
+        box-shadow: 0 0 25px rgba(16, 185, 129, 0.1);
+      }
+
+      .status-card.warning {
+        background: linear-gradient(180deg, rgba(245, 158, 11, 0.1) 0%, var(--bg-card) 100%);
+        border-color: rgba(245, 158, 11, 0.3);
+        box-shadow: 0 0 25px rgba(245, 158, 11, 0.1);
+      }
+      
+      .status-card.danger {
+        background: linear-gradient(180deg, rgba(239, 68, 68, 0.15) 0%, var(--bg-card) 100%);
+        border-color: rgba(239, 68, 68, 0.4);
+        box-shadow: 0 0 35px rgba(239, 68, 68, 0.15);
       }
 
       /* Background gradient for card */
       .status-card::before {
         content: '';
         position: absolute;
-        top: 0; left: 0; right: 0; height: 4px;
-        background: linear-gradient(90deg, var(--primary), #818cf8);
+        top: 0; left: 0; right: 0; height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
         opacity: 0.5;
       }
       
       .status-ring {
-        width: 100px;
-        height: 100px;
+        width: 90px;
+        height: 90px;
         border-radius: 50%;
         margin: 0 auto 20px;
         display: flex;
@@ -111,26 +130,57 @@
         position: relative;
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         color: var(--text-muted);
+        box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
       }
       
-      .status-ring svg { width: 48px; height: 48px; }
+      .status-ring svg { width: 42px; height: 42px; stroke-width: 2px; }
 
       .status-ring.scanning {
         color: var(--primary);
         background: rgba(99, 102, 241, 0.1);
+        box-shadow: 0 0 30px rgba(99, 102, 241, 0.2);
       }
+      
+      .status-card.safe .status-ring {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+        box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
+      }
+      
+      .status-card.warning .status-ring {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+        box-shadow: 0 0 30px rgba(245, 158, 11, 0.2);
+        animation: pulse-ring 2s infinite;
+      }
+      
+      .status-card.danger .status-ring {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+        box-shadow: 0 0 40px rgba(239, 68, 68, 0.3);
+        animation: pulse-ring 1.5s infinite;
+      }
+      
+      @keyframes pulse-ring {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1); }
+        70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+      }
+
       .status-ring.scanning::after {
         content: '';
         position: absolute;
-        inset: -8px;
+        inset: -6px;
         border-radius: 50%;
-        border: 2px solid var(--primary);
-        opacity: 0.5;
-        animation: pulse 2s infinite;
+        border: 2px solid transparent;
+        border-top-color: var(--primary);
+        border-left-color: var(--primary);
+        opacity: 0.6;
+        animation: spin 1.5s linear infinite;
       }
 
-      .status-title { font-size: 20px; font-weight: 700; margin: 0 0 8px; letter-spacing: -0.02em; color: var(--text-main); }
-      .status-desc { color: var(--text-muted); font-size: 13px; max-width: 280px; margin: 0 auto; line-height: 1.5; }
+      .status-title { font-size: 22px; font-weight: 700; margin: 0 0 8px; letter-spacing: -0.03em; color: var(--text-main); text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+      .status-desc { color: var(--text-muted); font-size: 13px; max-width: 290px; margin: 0 auto; line-height: 1.6; font-weight: 400; opacity: 0.9; }
       
       /* URL Display */
       .url-display {
@@ -507,109 +557,146 @@
       ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
       ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-      /* Alert Modal */
+      /* Alert Modal Modernization */
       .alert-modal {
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0, 0, 0, 0.85);
-        backdrop-filter: blur(8px);
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(12px);
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 100;
-        animation: fadeIn 0.3s ease;
+        animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+        from { opacity: 0; background: rgba(15, 23, 42, 0); backdrop-filter: blur(0px); }
+        to { opacity: 1; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px); }
       }
 
-      @keyframes slideUp {
-        from { transform: translateY(20px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
+      @keyframes slideUpFade {
+        from { transform: translateY(40px) scale(0.95); opacity: 0; }
+        to { transform: translateY(0) scale(1); opacity: 1; }
       }
 
       .alert-content {
-        background: var(--bg-card);
-        border: 2px solid var(--danger);
-        border-radius: var(--radius);
-        padding: 28px;
-        max-width: 340px;
+        background: rgba(30, 41, 59, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 32px;
+        max-width: 320px;
         text-align: center;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-        animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 
+          0 25px 50px -12px rgba(0, 0, 0, 0.5),
+          0 0 0 1px rgba(255, 255, 255, 0.05);
+        animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .alert-content::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 100px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+        pointer-events: none;
       }
 
       .alert-content.warning {
-        border-color: var(--warning);
+        border-top: 4px solid var(--warning);
+        background: linear-gradient(180deg, rgba(245, 158, 11, 0.1) 0%, rgba(30, 41, 59, 1) 100%);
+      }
+      
+      .alert-content.danger {
+        border-top: 4px solid var(--danger);
+        background: linear-gradient(180deg, rgba(239, 68, 68, 0.1) 0%, rgba(30, 41, 59, 1) 100%);
       }
 
       .alert-icon {
-        width: 64px;
-        height: 64px;
-        margin: 0 auto 16px;
+        width: 72px;
+        height: 72px;
+        margin: 0 auto 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.03);
+        box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
         color: var(--danger);
-        animation: pulse 2s infinite;
       }
+      
+      .alert-icon svg { width: 36px; height: 36px; stroke-width: 2.5px; }
 
       .alert-content.warning .alert-icon {
         color: var(--warning);
+        background: rgba(245, 158, 11, 0.1);
+        box-shadow: 0 0 30px rgba(245, 158, 11, 0.15);
+      }
+      
+      .alert-content.danger .alert-icon {
+        color: var(--danger);
+        background: rgba(239, 68, 68, 0.1);
+        box-shadow: 0 0 30px rgba(239, 68, 68, 0.2);
+        animation: pulse-ring 2s infinite;
       }
 
       .alert-title {
         font-size: 20px;
         font-weight: 700;
-        margin: 0 0 8px;
-        color: var(--danger);
+        margin: 0 0 10px;
+        letter-spacing: -0.02em;
+        color: var(--text-main);
       }
 
-      .alert-content.warning .alert-title {
-        color: var(--warning);
-      }
+      .alert-content.warning .alert-title { color: var(--warning); text-shadow: 0 0 20px rgba(245, 158, 11, 0.3); }
+      .alert-content.danger .alert-title { color: var(--danger); text-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
 
       .alert-message {
         font-size: 13px;
         color: var(--text-muted);
-        margin: 0 0 24px;
+        margin: 0 0 28px;
         line-height: 1.6;
       }
 
       .alert-actions {
         display: flex;
-        gap: 10px;
+        gap: 12px;
         justify-content: center;
       }
 
       .alert-btn {
-        padding: 10px 20px;
+        padding: 12px 24px;
         border: none;
-        border-radius: 8px;
+        border-radius: 12px;
         font-weight: 600;
         font-size: 13px;
         cursor: pointer;
         transition: all 0.2s;
         font-family: inherit;
+        flex: 1;
       }
 
       .alert-btn.primary {
-        background: var(--danger);
+        background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
         color: white;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
       }
 
       .alert-btn.primary:hover {
-        background: #dc2626;
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
       }
 
       .alert-btn.secondary {
-        background: var(--bg-card-hover);
+        background: rgba(255, 255, 255, 0.05);
         color: var(--text-main);
-        border: 1px solid var(--border);
+        border: 1px solid rgba(255, 255, 255, 0.05);
       }
 
       .alert-btn.secondary:hover {
-        background: #475569;
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.1);
       }
     </style>
   </head>
