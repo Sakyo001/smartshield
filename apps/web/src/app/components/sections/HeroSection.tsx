@@ -3,6 +3,7 @@
 import { Poppins } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
+import { useRef, useState } from "react";
 import Aurora from "../ui/Aurora";
 
 const poppins = Poppins({
@@ -12,6 +13,29 @@ const poppins = Poppins({
 });
 
 export default function HeroSection() {
+  const [rotate, setRotate] = useState({ x: 0, y: 0 });
+  const imageRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!imageRef.current) return;
+
+    const rect = imageRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    const mouseX = e.clientX - centerX;
+    const mouseY = e.clientY - centerY;
+
+    const rotateX = (mouseY / (rect.height / 2)) * 15;
+    const rotateY = -(mouseX / (rect.width / 2)) * 15;
+
+    setRotate({ x: rotateX, y: rotateY });
+  };
+
+  const handleMouseLeave = () => {
+    setRotate({ x: 0, y: 0 });
+  };
+
   return (
     <section
       // CHANGED: w-screen -> w-full to prevent horizontal scrollbar
@@ -21,16 +45,16 @@ export default function HeroSection() {
       <style>{`
         @keyframes pulseGlow {
           0%, 100% {
-            transform: scale(1);
             filter: drop-shadow(0 0 20px rgba(84, 91, 255, 0.3));
           }
           50% {
-            transform: scale(1.03);
             filter: drop-shadow(0 0 40px rgba(84, 91, 255, 0.6));
           }
         }
         .floating-image {
           animation: pulseGlow 5s ease-in-out infinite;
+          transition: transform 0.1s ease-out;
+          transform-style: preserve-3d;
         }
       `}</style>
       {/* Aurora Background */}
@@ -94,16 +118,30 @@ export default function HeroSection() {
             </div>
 
             {/* Right Image */}
-            <div className="relative h-full flex items-center justify-center">
+            <div
+              ref={imageRef}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              className="relative h-full flex items-center justify-center cursor-pointer"
+              style={{
+                perspective: "1000px",
+              }}
+            >
               <div className="absolute inset-0 bg-gradient-to-b from-[#545BFF]/10 to-transparent rounded-3xl blur-2xl"></div>
-              <Image
-                src="/images/LP Body Logo.png"
-                alt="SmartShield Protection"
-                width={500}
-                height={300}
-                priority
-                className="w-full h-auto relative z-10 drop-shadow-2xl floating-image"
-              />
+              <div
+                style={{
+                  transform: `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg)`,
+                }}
+              >
+                <Image
+                  src="/images/LP Body Logo.png"
+                  alt="SmartShield Protection"
+                  width={650}
+                  height={420}
+                  priority
+                  className="w-full h-auto relative z-10 drop-shadow-2xl floating-image"
+                />
+              </div>
             </div>
           </div>
         </div>
