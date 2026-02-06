@@ -52,53 +52,48 @@ export default function HowItWorks() {
         </div>
 
         {/* --- Process Steps --- */}
-        <div className="relative grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-          {/* Connector Line (Desktop Only) */}
-          <div className="hidden md:block absolute top-[4.5rem] left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 -z-10 dashed-line"></div>
+        <div className="relative">
+          {/* Vertical Timeline (Desktop) */}
+          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-[#6B73FF]/20 via-[#6B73FF]/40 to-[#6B73FF]/20 transform -translate-x-1/2"></div>
 
-          {steps.map((step, index) => (
-            <div
-              key={index}
-              className="group relative bg-white rounded-3xl p-8 md:p-10 transition-all duration-500 hover:-translate-y-2 border border-gray-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_40px_-12px_rgba(107,115,255,0.15)] flex flex-col items-center text-center"
-            >
-              {/* Number Watermark (Background) */}
-              <div className="absolute top-4 right-6 text-7xl font-black text-[#6B73FF]/10 select-none transition-all duration-500 group-hover:text-[#6B73FF]/20 group-hover:scale-110 z-0">
-                {step.number}
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+            {steps.map((step, index) => (
+              <div key={index} className="relative">
+                {/* Timeline Dot */}
+                <div className="hidden md:flex absolute left-1/2 top-20 w-5 h-5 rounded-full bg-white border-4 border-[#6B73FF] transform -translate-x-1/2 -translate-y-1/2 z-20 shadow-lg"></div>
 
-              {/* Icon Container */}
-              <div className="relative z-10 mb-8">
-                <div className="w-40 h-40 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 relative overflow-hidden group-hover:border-[#6B73FF]/30 transition-colors duration-500">
-                  {/* Icon Glow Background */}
-                  <div className="absolute inset-0 bg-[#6B73FF]/0 group-hover:bg-[#6B73FF]/5 transition-colors duration-500"></div>
+                <div className="group relative bg-white rounded-2xl p-8 md:p-10 transition-all duration-500 hover:-translate-y-3 border border-gray-200 shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:shadow-[0_20px_50px_rgba(107,115,255,0.2)] hover:border-[#6B73FF]/30 flex flex-col">
+                  {/* Number Badge */}
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-[#6B73FF] to-[#8a9dff] text-white font-bold text-lg mb-6 shadow-lg group-hover:shadow-xl group-hover:shadow-[#6B73FF]/40 transition-all duration-300">
+                    {step.number}
+                  </div>
 
-                  <Image
-                    src={step.icon}
-                    alt={step.title}
-                    width={88}
-                    height={88}
-                    className="w-20 h-20 object-contain transition-transform duration-500 group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_rgba(84,91,255,0.5)]"
-                  />
+                  {/* Icon Container */}
+                  <div className="relative mb-6 h-32 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#6B73FF]/5 to-[#8a9dff]/5 rounded-2xl blur-xl group-hover:from-[#6B73FF]/10 group-hover:to-[#8a9dff]/10 transition-all duration-500"></div>
+                    <Image
+                      src={step.icon}
+                      alt={step.title}
+                      width={100}
+                      height={100}
+                      className="relative z-10 object-contain transition-transform duration-500 group-hover:scale-110"
+                    />
+                  </div>
+
+                  {/* Content */}
+                  <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-[#6B73FF] transition-colors duration-300">
+                    {step.title}
+                  </h3>
+                  <p className="text-gray-600 text-sm leading-relaxed flex-grow">
+                    {step.description}
+                  </p>
+
+                  {/* Bottom Accent Line */}
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#6B73FF]/0 via-[#6B73FF] to-[#6B73FF]/0 rounded-b-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 </div>
-                {/* Connecting Dot (Desktop) */}
-                <div className="hidden md:block absolute top-1/2 -left-6 w-3 h-3 rounded-full bg-white border-2 border-gray-200 -translate-y-1/2 -translate-x-1/2 group-hover:border-[#6B73FF] transition-colors duration-300"></div>
-                <div className="hidden md:block absolute top-1/2 -right-6 w-3 h-3 rounded-full bg-white border-2 border-gray-200 -translate-y-1/2 translate-x-1/2 group-hover:border-[#6B73FF] transition-colors duration-300"></div>
               </div>
-
-              {/* Content */}
-              <div className="relative z-10">
-                <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-[#6B73FF] transition-colors duration-300">
-                  {step.title}
-                </h3>
-                <p className="text-gray-500 text-sm leading-relaxed">
-                  {step.description}
-                </p>
-              </div>
-
-              {/* Hover Bottom Bar */}
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-1 bg-[#6B73FF] rounded-full transition-all duration-500 group-hover:w-1/2 opacity-0 group-hover:opacity-100"></div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>
