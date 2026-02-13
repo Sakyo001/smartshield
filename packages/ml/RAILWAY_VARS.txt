@@ -1,0 +1,47 @@
+===============================================
+  RAILWAY ENVIRONMENT VARIABLES - COPY THESE
+===============================================
+
+NOTE: PORT is automatically set by Railway.
+      Do NOT manually add PORT variable!
+
+VARIABLE NAME: SUPABASE_URL
+VALUE: https://jlgktijajxapqclgjyjx.supabase.co
+
+-----------------------------------------------
+
+VARIABLE NAME: SUPABASE_SERVICE_ROLE_KEY
+VALUE: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsZ2t0aWphanhhcHFjbGdqeWp4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzAzNzk5MywiZXhwIjoyMDc4NjEzOTkzfQ.GEUApKbMLKCfMytNNdDQCJuxdpshNsZqKBZwyd1vZrQ
+
+-----------------------------------------------
+
+VARIABLE NAME: PYTHONUNBUFFERED
+VALUE: 1
+
+===============================================
+  RAILWAY SETTINGS
+===============================================
+
+ROOT DIRECTORY: packages/ml
+
+HEALTH CHECK PATH: /health
+
+HEALTH CHECK TIMEOUT: 100
+
+===============================================
+  AFTER DEPLOYMENT
+===============================================
+
+Your API will be at:
+https://YOUR-APP-NAME.railway.app
+
+Health check:
+https://YOUR-APP-NAME.railway.app/health
+
+Scan endpoint:
+https://YOUR-APP-NAME.railway.app/api/scan
+
+Domain info endpoint:
+https://YOUR-APP-NAME.railway.app/api/domain-info
+
+===============================================
