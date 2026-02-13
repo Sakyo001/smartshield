@@ -1,0 +1,16 @@
+# Railway Configuration for SmartShield ML API
+# Since this is a monorepo, Railway needs to know where the Python app lives
+
+# IMPORTANT: In Railway dashboard, set "Root Directory" to: packages/ml
+# This configuration assumes you've set that root directory in Railway settings.
+# If not set, Railway will try to build from repo root and fail.
+
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 wsgi:app"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
