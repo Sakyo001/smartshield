@@ -1,6 +1,37 @@
-# 🔧 Fixed: "$PORT is not a valid port number" Error
+# 🔧 Fixed: Railway Build Errors
 
-## ✅ What Was Fixed
+## ✅ Issue 1: "undefined variable 'pip'" (Nixpacks Error)
+
+**Error:**
+```
+error: undefined variable 'pip'
+at /app/.nixpacks/nixpkgs-*.nix:19:9:
+```
+
+**Root Cause:** 
+In Nix, `pip` is not a standalone package. It comes bundled with Python, so trying to install it separately causes an error.
+
+**Solution:**
+Removed `pip` from the `nixPkgs` array in nixpacks.toml files. Python 3.10 includes pip automatically.
+
+**Files Fixed:**
+- [nixpacks.toml](../../nixpacks.toml) - Root config for monorepo
+- [packages/ml/nixpacks.toml](nixpacks.toml) - Package-specific config
+
+**Changed:**
+```toml
+# Before (WRONG)
+nixPkgs = ["python310", "pip", "gcc", "zlib"]
+
+# After (CORRECT)
+nixPkgs = ["python310", "gcc", "zlib"]
+```
+
+Also updated to use `python -m pip` instead of just `pip` for better reliability.
+
+---
+
+## ✅ Issue 2: "$PORT is not a valid port number"
 
 The error occurred because Railway wasn't properly expanding the `$PORT` environment variable in the start command.
 
@@ -23,7 +54,7 @@ The error occurred because Railway wasn't properly expanding the `$PORT` environ
 1. **Commit and push these changes:**
    ```bash
    git add .
-   git commit -m "Fix PORT variable handling for Railway"
+   git commit -m "Fix Nixpacks pip error and PORT variable handling"
    git push
    ```
 

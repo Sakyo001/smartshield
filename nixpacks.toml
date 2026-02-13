@@ -2,14 +2,14 @@
 # This file tells Nixpacks to build the Python service from packages/ml directory
 
 [phases.setup]
-nixPkgs = ["python310", "pip", "gcc", "zlib"]
+nixPkgs = ["python310", "gcc", "zlib"]
 
 [phases.install]
 dependsOn = ["setup"]
 paths = ["packages/ml"]
 cmds = [
-  "pip install --upgrade pip",
-  "pip install -r packages/ml/requirements.txt"
+  "python -m pip install --upgrade pip",
+  "python -m pip install -r packages/ml/requirements.txt"
 ]
 
 [phases.build]
