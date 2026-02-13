@@ -106,6 +106,42 @@ def apply_lightweight_rules(url, domain):
         risk_increase += 15
         flags.append('URL shortener (destination hidden)')
 
+    # Redirect parameters (from full rules — no network needed)
+    redirect_params = ['redirect', 'url', 'next', 'return', 'goto', 'continue', 'forward', 'redir']
+    for param in redirect_params:
+        if f'{param}=' in url.lower() or f'{param}%' in url.lower():
+            risk_increase += 18
+            flags.append('Redirection parameter detected (open redirect risk)')
+            break
+
+    # Random tokens in path
+    if '/' in url:
+        for segment in url.split('/')[3:]:
+            if len(segment) > 4:
+                main_part = segment.split('.')[0].split('?')[0]
+                has_mixed = (any(c.isdigit() for c in main_part) and
+                             any(c.isupper() for c in main_part) and
+                             any(c.islower() for c in main_part) and
+                             len(main_part) >= 5)
+                if has_mixed:
+                    risk_increase += 12
+                    flags.append(f'Random token in path: {main_part[:20]}')
+                    break
+
+    # Short suspicious filenames
+    if '/' in url:
+        last_segment = url.split('/')[-1].split('?')[0]
+        if '.' in last_segment:
+            filename = last_segment.split('.')[0]
+            if len(filename) <= 2 and filename.isalpha():
+                risk_increase += 10
+                flags.append(f'Suspicious short filename: {last_segment}')
+
+    # Multiple @ symbols or unusual characters
+    if url.count('@') > 1:
+        risk_increase += 10
+        flags.append('Multiple @ symbols in URL')
+
     return risk_increase, flags
 
 
