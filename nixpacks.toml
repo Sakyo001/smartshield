@@ -8,8 +8,8 @@ nixPkgs = ["python310", "gcc", "zlib"]
 dependsOn = ["setup"]
 paths = ["packages/ml"]
 cmds = [
-  "python -m pip install --upgrade pip",
-  "python -m pip install -r packages/ml/requirements.txt"
+  "python -m ensurepip --upgrade",
+  "python -m pip install --no-cache-dir -r packages/ml/requirements.txt"
 ]
 
 [phases.build]
