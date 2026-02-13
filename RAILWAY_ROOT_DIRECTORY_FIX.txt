@@ -1,55 +1,54 @@
-⚠️  CRITICAL: Railway Root Directory Setup Required!
+✅ FIXED: Railway Build Configuration
 ================================================================
 
-The error you're seeing means Railway is building from the WRONG directory.
+STATUS: nixpacks.toml files removed successfully!
 
-Railway is detecting this as a Node.js project (because of package.json 
-at the root) and trying to install Python dependencies, which fails.
+Railway will now use your custom build/start commands instead of Nixpacks.
 
-✅ SOLUTION - SET ROOT DIRECTORY IN RAILWAY:
+✅ YOUR CURRENT RAILWAY SETTINGS:
 
-1. Go to Railway Dashboard
-2. Click on your service
-3. Go to **Settings** tab
-4. Scroll to "Service Settings" section
-5. Find **"Root Directory"** field
-6. Enter exactly: packages/ml
-7. Click **Save Changes**
-8. Railway will automatically redeploy
+Root Directory: packages/ml
+Build Command: pip install -r requirements.txt
+Start Command: gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 wsgi:app
+Health Check: /health (timeout: 100s)
 
 ================================================================
 
-Without setting Root Directory to "packages/ml", Railway will:
-❌ Build from the monorepo root
-❌ Detect both Node.js and Python
-❌ Fail to find pip module
-❌ Fail to install dependencies
+🚀 WHAT HAPPENS NOW:
 
-With Root Directory set to "packages/ml", Railway will:
-✅ Build ONLY the Python API
-✅ Use the Procfile, runtime.txt, nixpacks.toml from packages/ml
-✅ Successfully install dependencies
-✅ Deploy successfully
+Railway will:
+✅ Use Python buildpack (with pip pre-installed)
+✅ Install requirements.txt dependencies
+✅ Start Gunicorn with 2 workers, 120s timeout
+✅ Bind to Railway's dynamic $PORT
+✅ Health check at /health endpoint
 
-================================================================
-
-Alternative if setting Root Directory doesn't work:
-
-Use the Dockerfile builder instead:
-
-1. Railway Settings → Builder → Select "Dockerfile"
-2. Make sure the Dockerfile in the root exists (it does)
-3. Redeploy
-
-The Dockerfile is configured to build only packages/ml from the monorepo.
-
-================================================================
-
-After fixing, you should see in logs:
-
+You should see in logs:
+✅ Installing dependencies from requirements.txt
 ✅ Build successful
 🚀 Starting SmartShield ML API
-PORT: 8000
-[INFO] Listening at: http://0.0.0.0:8000
+PORT: [Railway assigned port]
+[INFO] Listening at: http://0.0.0.0:[port]
+
+================================================================
+
+⚠️ IMPORTANT ENVIRONMENT VARIABLES NEEDED:
+
+Make sure these are set in Railway → Settings → Variables:
+
+SUPABASE_URL=your-supabase-url
+SUPABASE_ANON_KEY=your-anon-key
+ENVIRONMENT=production
+ALLOWED_ORIGINS=chrome-extension://*,https://your-web-app.vercel.app
+DATABASE_URL=postgresql://... (if using direct DB access)
+
+================================================================
+
+📝 AFTER DEPLOYMENT SUCCEEDS:
+
+1. Copy your Railway app URL: https://your-app.up.railway.app
+2. Update extension config at: apps/extension/src/config.js
+3. Change API_URL from Render to Railway URL
+4. Reload extension in Chrome
 
 ================================================================
