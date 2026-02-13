@@ -1,7 +1,33 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useRef, useState } from "react";
 
 export default function AIBanner() {
+  const [rotate, setRotate] = useState({ x: 0, y: 0 });
+  const imageRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!imageRef.current) return;
+
+    const rect = imageRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    const mouseX = e.clientX - centerX;
+    const mouseY = e.clientY - centerY;
+
+    const rotateX = (mouseY / (rect.height / 2)) * 15;
+    const rotateY = -(mouseX / (rect.width / 2)) * 15;
+
+    setRotate({ x: rotateX, y: rotateY });
+  };
+
+  const handleMouseLeave = () => {
+    setRotate({ x: 0, y: 0 });
+  };
+
   const features = [
     "Machine Learning Detection",
     "Real-Time Monitoring",
@@ -85,18 +111,34 @@ export default function AIBanner() {
             </div>
 
             {/* Right Image Area */}
-            <div className="relative p-8 md:p-12 flex items-center justify-center h-full">
+            <div
+              ref={imageRef}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              className="relative p-8 md:p-12 flex items-center justify-center h-full cursor-pointer"
+              style={{
+                perspective: "1000px",
+              }}
+            >
               <div className="absolute inset-0 bg-gradient-to-tr from-[#6B7FFF]/5 to-transparent rounded-full blur-3xl transform scale-75"></div>
 
               <div className="relative w-full max-w-sm animate-[float_6s_ease-in-out_infinite]">
-                <Image
-                  src="/images/Smarter Protection.png"
-                  alt="AI Protection Illustration"
-                  width={500}
-                  height={500}
-                  className="w-full h-auto drop-shadow-2xl"
-                  priority
-                />
+                <div
+                  style={{
+                    transform: `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg)`,
+                    transition: "transform 0.1s ease-out",
+                    transformStyle: "preserve-3d",
+                  }}
+                >
+                  <Image
+                    src="/images/Smarter Protection.png"
+                    alt="AI Protection Illustration"
+                    width={650}
+                    height={650}
+                    className="w-full h-auto drop-shadow-2xl"
+                    priority
+                  />
+                </div>
               </div>
             </div>
           </div>

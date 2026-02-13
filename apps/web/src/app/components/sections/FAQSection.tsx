@@ -164,16 +164,20 @@ export default function FAQSection() {
           letter-spacing: 0.3px;
         }
       `}</style>
-      <div className="max-w-4xl mx-auto relative z-10">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-black mb-4 transition-colors">
-            Answers To
-            <br />
-            Common <span className="text-[#6B73FF]">Questions</span>
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="text-center max-w-3xl mx-auto mb-24">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#6B73FF]/5 border border-[#6B73FF]/10 mb-6">
+            <span className="w-2 h-2 rounded-full bg-[#6B73FF] animate-pulse"></span>
+            <span className="text-[#6B73FF] font-bold tracking-wide text-xs uppercase">
+              Common Questions
+            </span>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">
+            Answers to Your <span className="text-[#6B73FF]">Questions</span>
           </h2>
-          <p className="text-gray-600 dark:text-gray-600 text-base transition-colors">
+          <p className="text-gray-500 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et
+            eiusmod tempor incididunt ut labore et dolore magna aliqua.
           </p>
         </div>
 
