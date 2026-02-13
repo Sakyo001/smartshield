@@ -309,42 +309,29 @@ export default function UserDashboard() {
       const data = await response.json()
       
       // Calculate risk score and status based on API response
-      // API returns: confidence (0-100), decision ("PHISHING" or "LEGITIMATE")
-      // For LEGITIMATE: confidence is how confident it's safe (high = safe)
-      // For PHISHING: confidence is how confident it's dangerous (high = dangerous)
+      // New TinyBERT API returns risk_score directly (ML + rules combined)
+      // Fallback to confidence-based calculation for backward compat
       
       let riskScore = 0
       let status: "Safe" | "Warning" | "Dangerous" = "Safe"
       
-      if (data.decision === "PHISHING") {
-        // If PHISHING, confidence represents danger level (100 = very dangerous)
+      if (data.risk_score !== undefined) {
+        // New API: use pre-computed risk_score
+        riskScore = Math.round(data.risk_score)
+      } else if (data.decision === "PHISHING") {
         riskScore = Math.round(data.confidence || 100)
-        if (riskScore >= 70) {
-          status = "Dangerous"
-        } else if (riskScore >= 40) {
-          status = "Warning"
-        } else {
-          status = "Safe"
-        }
       } else if (data.decision === "LEGITIMATE") {
-        // If LEGITIMATE, confidence represents safety (100 = very safe)
-        // Invert it to get risk score (100% safe = 0% risk)
         riskScore = Math.round(100 - (data.confidence || 0))
-        if (riskScore >= 70) {
-          status = "Dangerous"
-        } else if (riskScore >= 40) {
-          status = "Warning"
-        } else {
-          status = "Safe"
-        }
       } else {
-        // Fallback to old score calculation
         riskScore = Math.round(data.score * 100 || 0)
-        if (riskScore >= 70) {
-          status = "Dangerous"
-        } else if (riskScore >= 40) {
-          status = "Warning"
-        }
+      }
+
+      if (riskScore >= 70) {
+        status = "Dangerous"
+      } else if (riskScore >= 40) {
+        status = "Warning"
+      } else {
+        status = "Safe"
       }
 
       // Fetch WHOIS, DNS, and SSL information from Python API

@@ -9,6 +9,106 @@ from third_party_apis import BrandVerificationService
 brand_service = BrandVerificationService()
 
 
+def apply_lightweight_rules(url, domain):
+    """
+    Fast deterministic rules — NO network calls, NO API lookups.
+    Used by /api/scan alongside TinyBERT for instant scoring.
+    Returns: (risk_increase, flags)
+    """
+    risk_increase = 0
+    flags = []
+
+    # IP-based URL
+    if re.search(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', domain):
+        risk_increase += 40
+        flags.append('IP-based URL (high risk)')
+
+    # HTTP (insecure)
+    if url.startswith('http://'):
+        risk_increase += 30
+        flags.append('Using HTTP (insecure protocol)')
+    elif not url.startswith('https://'):
+        risk_increase += 15
+        flags.append('No HTTPS encryption')
+
+    # Untrusted TLDs
+    untrusted_tlds = [
+        '.tk', '.ml', '.ga', '.cf', '.gq',
+        '.xyz', '.top', '.work', '.click', '.link', '.download', '.stream',
+        '.win', '.bid', '.loan', '.trade', '.racing', '.party',
+        '.science', '.date', '.faith', '.cricket', '.accountant', '.review',
+        '.country', '.kim', '.men', '.webcam'
+    ]
+    if any(domain.endswith(tld) for tld in untrusted_tlds):
+        risk_increase += 25
+        flags.append('Untrusted TLD (commonly used in phishing)')
+
+    # URL encoding
+    if '%' in url:
+        encoded_count = url.count('%')
+        if encoded_count > 3:
+            risk_increase += 20
+            flags.append(f'Heavy URL encoding ({encoded_count} encoded characters)')
+        else:
+            risk_increase += 10
+            flags.append('URL encoding detected')
+
+    # Punycode
+    if domain.startswith('xn--'):
+        risk_increase += 30
+        flags.append('Punycode domain (potential homograph attack)')
+
+    # @ symbol
+    if url.count('@') > 0:
+        risk_increase += 25
+        flags.append('@ symbol in URL (credential phishing)')
+
+    # Excessive hyphens
+    if domain.count('-') > 2:
+        risk_increase += 15
+        flags.append(f'Excessive hyphens in domain ({domain.count("-")} hyphens)')
+
+    # Deep paths
+    path_depth = url.count('/') - 2
+    if path_depth > 5:
+        risk_increase += 12
+        flags.append(f'Deep URL path structure ({path_depth} levels)')
+
+    # Excessive subdomains
+    subdomain_count = domain.count('.')
+    if subdomain_count > 3:
+        risk_increase += 20
+        flags.append(f'Excessive subdomains ({subdomain_count} levels)')
+
+    # Phishing path keywords
+    phishing_paths = ['deliver', 'verify', 'update', 'confirm', 'validate', 'secure',
+                      'account', 'suspended', 'restore', 'recovery', 'billing', 'payment',
+                      'urgent', 'action', 'required', 'expire', 'limited']
+    path_lower = url.split('?')[0].lower()
+    found_paths = [p for p in phishing_paths if f'/{p}/' in path_lower or path_lower.endswith(f'/{p}')]
+    if found_paths:
+        risk_increase += 15
+        flags.append(f'Suspicious path: /{found_paths[0]}/')
+
+    # Urgency keywords in URL
+    urgency_keywords = [
+        'verify-now', 'act-now', 'urgent', 'suspended', 'expire', 'limited-time',
+        'confirm-immediately', 'action-required', 'account-locked', 'security-alert'
+    ]
+    found_urgency = [kw for kw in urgency_keywords if kw in url.lower()]
+    if found_urgency:
+        risk_increase += 25
+        flags.append(f'Urgency keywords: {", ".join(found_urgency[:2])}')
+
+    # URL shorteners
+    shortener_domains = ['bit.ly', 'tinyurl.com', 'goo.gl', 't.co', 'ow.ly', 'is.gd']
+    if any(shortener in domain for shortener in shortener_domains):
+        risk_increase += 15
+        flags.append('URL shortener (destination hidden)')
+
+    return risk_increase, flags
+
+
 def apply_deterministic_rules(url, domain):
     """
     Layer 1: Deterministic phishing detection rules

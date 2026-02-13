@@ -1,6 +1,7 @@
 """
 WHOIS and DNS Lookup API - Main Flask Application
-Simplified and modular architecture
+- /api/scan: FAST ML-powered URL classification (TinyBERT + lightweight rules)
+- /api/domain-info: Detailed WHOIS/DNS/SSL lookup (heavy, called lazily)
 """
 
 from flask import Flask, request, jsonify
@@ -12,17 +13,90 @@ import os
 from utils import extract_domain
 from data_fetchers import get_whois_info, get_dns_records, get_ssl_info
 from database import supabase_request, save_whois_history, save_dns_history, save_ssl_history
-from risk_assessment import apply_deterministic_rules, calculate_contextual_risk_adjustment
+from risk_assessment import apply_lightweight_rules, apply_deterministic_rules, calculate_contextual_risk_adjustment
 from xai_explainer import generate_explanation
+from tinybert_scanner import load_model, predict_url
 
 app = Flask(__name__)
 CORS(app)
 
+# Load TinyBERT model at startup (once, stays in memory)
+with app.app_context():
+    load_model()
+
 
 @app.route('/api/scan', methods=['POST', 'OPTIONS'])
+def fast_scan():
+    """
+    FAST scan endpoint — TinyBERT ML model + lightweight URL rules.
+    No WHOIS/DNS/SSL lookups here. Designed for <500ms response.
+    """
+    if request.method == 'OPTIONS':
+        return '', 204
+
+    try:
+        data = request.get_json()
+        url = data.get('url', '')
+
+        if not url:
+            return jsonify({'error': 'URL is required'}), 400
+
+        domain = extract_domain(url)
+        if not domain:
+            return jsonify({'error': 'Invalid URL'}), 400
+
+        # ── Layer 1: TinyBERT ML prediction (instant, ~5-20ms) ──
+        ml_result = predict_url(url)
+        print(f"🤖 TinyBERT: {ml_result['decision']} ({ml_result['confidence']}%) in {ml_result['inference_ms']}ms")
+
+        # ── Layer 2: Lightweight deterministic rules (no network calls) ──
+        rule_risk, rule_flags = apply_lightweight_rules(url, domain)
+        print(f"📏 Rules: +{rule_risk}% risk, flags: {rule_flags}")
+
+        # ── Combine ML + rules into final score ──
+        decision = ml_result['decision']
+        ml_confidence = ml_result['confidence']
+
+        # ML model is primary signal; rules adjust the score
+        if decision == 'PHISHING':
+            # ML says phishing — confidence IS the risk
+            final_risk = min(100, ml_confidence + rule_risk * 0.3)
+        else:
+            # ML says legitimate — invert confidence to get base risk, then add rules
+            base_risk = 100 - ml_confidence
+            final_risk = min(100, base_risk + rule_risk * 0.5)
+
+            # If rules push risk high enough, override decision
+            if final_risk >= 60:
+                decision = 'PHISHING'
+                ml_confidence = final_risk
+
+        response = {
+            'decision': decision,
+            'confidence': round(ml_confidence, 2),
+            'risk_score': round(final_risk, 2),
+            'model': ml_result['model'],
+            'inference_ms': ml_result['inference_ms'],
+            'phishing_prob': ml_result.get('phishing_prob', 0),
+            'legitimate_prob': ml_result.get('legitimate_prob', 0),
+            'rule_flags': rule_flags,
+            'rule_risk_increase': rule_risk,
+            'domain': domain,
+            'timestamp': datetime.now().isoformat()
+        }
+
+        return jsonify(response)
+
+    except Exception as e:
+        print(f"ERROR in fast_scan: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/domain-info', methods=['POST', 'OPTIONS'])
 def domain_info():
-    """Get WHOIS, DNS, and SSL information for a domain"""
+    """Get detailed WHOIS, DNS, and SSL information for a domain (heavy, called lazily)"""
     # Handle CORS preflight
     if request.method == 'OPTIONS':
         return '', 204
