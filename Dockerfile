@@ -21,9 +21,17 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Expose port (Railway sets PORT env var)
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD python -c "import requests; requests.get('http://localhost:8000/health')"
-
-# Run gunicorn
-CMD gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120 --access-logfile - --error-logfile - wsgi:app
+# Run gunicorn with proper settings for Railway
+# --preload: Load app before forking workers (helps with startup time)
+# --bind 0.0.0.0:$PORT: Listen on all interfaces
+# --workers 1: Use 1 worker for Railway free tier (lower memory)
+# --timeout 120: Request timeout
+# --log-level info: Show startup logs
+CMD gunicorn --bind 0.0.0.0:${PORT:-8000} \
+    --workers 1 \
+    --timeout 120 \
+    --preload \
+    --log-level info \
+    --access-logfile - \
+    --error-logfile - \
+    wsgi:app
