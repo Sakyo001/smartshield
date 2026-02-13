@@ -171,6 +171,19 @@ cd apps/extension
 
 ## 🐛 Troubleshooting
 
+### "undefined variable 'pip'" Nix Error
+
+✅ **Fixed!** The nixpacks.toml files have been corrected.
+
+**Issue:** Nixpacks tried to install `pip` as a separate package, but in Nix, pip comes bundled with Python.
+
+**Solution:** Removed `pip` from `nixPkgs` list. Python 3.10 includes pip by default.
+
+If you still see this:
+1. Make sure you've pushed the latest nixpacks.toml files
+2. Redeploy in Railway dashboard
+3. Build should now succeed
+
 ### "$PORT is not a valid port number" Error
 
 ✅ **Fixed!** The app now uses `start.py` which properly handles the PORT variable.
