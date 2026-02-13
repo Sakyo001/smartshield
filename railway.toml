@@ -1,12 +1,9 @@
 # Railway Configuration for SmartShield ML API
-# Since this is a monorepo, Railway needs to know where the Python app lives
-
-# IMPORTANT: In Railway dashboard, set "Root Directory" to: packages/ml
-# This configuration assumes you've set that root directory in Railway settings.
-# If not set, Railway will try to build from repo root and fail.
+# Uses Dockerfile to build the Python API from packages/ml in the monorepo
 
 [build]
-builder = "NIXPACKS"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
 startCommand = "python start.py"
