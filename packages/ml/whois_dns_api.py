@@ -1,117 +1,28 @@
 """
 WHOIS and DNS Lookup API - Main Flask Application
-- /api/scan: FAST deterministic URL classification (rules + concurrent PhishTank)
-- /api/domain-info: Detailed WHOIS/DNS/SSL lookup (heavy, called lazily)
+Simplified and modular architecture
 """
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import time
 import os
 
 # Import our modules
 from utils import extract_domain
 from data_fetchers import get_whois_info, get_dns_records, get_ssl_info
 from database import supabase_request, save_whois_history, save_dns_history, save_ssl_history
-from risk_assessment import apply_lightweight_rules, apply_deterministic_rules, calculate_contextual_risk_adjustment
-from third_party_apis import BrandVerificationService
+from risk_assessment import apply_deterministic_rules, calculate_contextual_risk_adjustment
 from xai_explainer import generate_explanation
 
 app = Flask(__name__)
 CORS(app)
 
-# Shared brand service for concurrent PhishTank checks
-brand_service = BrandVerificationService()
-
 
 @app.route('/api/scan', methods=['POST', 'OPTIONS'])
-def fast_scan():
-    """
-    FAST scan endpoint — enhanced deterministic rules + concurrent PhishTank/URLhaus.
-    No WHOIS/DNS/SSL lookups here. Designed for <2s response.
-    """
-    if request.method == 'OPTIONS':
-        return '', 204
-
-    try:
-        data = request.get_json()
-        url = data.get('url', '')
-
-        if not url:
-            return jsonify({'error': 'URL is required'}), 400
-
-        domain = extract_domain(url)
-        if not domain:
-            return jsonify({'error': 'Invalid URL'}), 400
-
-        start = time.time()
-
-        # ── Run lightweight rules (instant, 0ms — no network) ──
-        rule_risk, rule_flags = apply_lightweight_rules(url, domain)
-        print(f"📏 Rules: +{rule_risk}% risk, flags: {rule_flags}")
-
-        # ── Run PhishTank/URLhaus check concurrently (max 3s) ──
-        db_risk = 0
-        db_flags = []
-        try:
-            with ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(brand_service.check_phishing_databases, url)
-                is_known_threat, threat_info = future.result(timeout=4)
-                if is_known_threat:
-                    db_risk = 100
-                    db_flags.append(threat_info)
-                    print(f"🚨 PhishTank/URLhaus: CONFIRMED threat")
-        except Exception as e:
-            print(f"⚠️ PhishTank check skipped: {type(e).__name__}")
-
-        # ── Combine scores ──
-        total_risk = min(100, rule_risk + db_risk)
-        all_flags = rule_flags + db_flags
-
-        # Determine decision & confidence
-        if db_risk >= 100:
-            # Confirmed by threat database — definitive
-            decision = 'PHISHING'
-            confidence = 100
-        elif total_risk >= 70:
-            decision = 'PHISHING'
-            confidence = min(100, total_risk)
-        elif total_risk >= 40:
-            decision = 'SUSPICIOUS'
-            confidence = total_risk
-        else:
-            decision = 'LEGITIMATE'
-            confidence = max(0, 100 - total_risk)
-
-        elapsed_ms = round((time.time() - start) * 1000, 1)
-        print(f"⚡ Scan complete in {elapsed_ms}ms — {decision} (risk={total_risk}%)")
-
-        response = {
-            'decision': decision,
-            'confidence': round(confidence, 2),
-            'risk_score': round(total_risk, 2),
-            'model': 'deterministic-v2',
-            'inference_ms': elapsed_ms,
-            'rule_flags': all_flags,
-            'rule_risk_increase': total_risk,
-            'domain': domain,
-            'timestamp': datetime.now().isoformat()
-        }
-
-        return jsonify(response)
-
-    except Exception as e:
-        print(f"ERROR in fast_scan: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
-
-
 @app.route('/api/domain-info', methods=['POST', 'OPTIONS'])
 def domain_info():
-    """Get detailed WHOIS, DNS, and SSL information for a domain (heavy, called lazily)"""
+    """Get WHOIS, DNS, and SSL information for a domain"""
     # Handle CORS preflight
     if request.method == 'OPTIONS':
         return '', 204

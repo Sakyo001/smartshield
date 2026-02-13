@@ -6,7 +6,7 @@ services:
     plan: free
     branch: user-dashboard
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120 wsgi:app
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 wsgi:app
     envVars:
       - key: SUPABASE_URL
         sync: false

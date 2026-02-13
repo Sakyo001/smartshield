@@ -174,31 +174,31 @@ function processScanResult(url, data) {
   let warnings = [];
   let riskScore = 0;
 
-  // Use risk_score from server (deterministic rules + PhishTank)
-  if (data.risk_score !== undefined) {
-    riskScore = Math.round(data.risk_score);
-  } else if (data.decision === 'PHISHING') {
+  if (data.decision === 'PHISHING') {
     riskScore = Math.round(data.confidence || 100);
+    if (riskScore >= 70) {
+      riskLevel = 'high';
+      isSuspicious = true;
+      warnings.push('High risk of phishing detected');
+    } else if (riskScore >= 40) {
+      riskLevel = 'medium';
+      isSuspicious = true;
+      warnings.push('Suspicious activity detected');
+    }
   } else if (data.decision === 'LEGITIMATE') {
     riskScore = Math.round(100 - (data.confidence || 0));
+    if (riskScore >= 70) {
+      riskLevel = 'high';
+      isSuspicious = true;
+      warnings.push('High risk detected despite legitimate classification');
+    } else if (riskScore >= 40) {
+      riskLevel = 'medium';
+      isSuspicious = true;
+      warnings.push('Some suspicious indicators detected');
+    }
   }
 
-  if (riskScore >= 70) {
-    riskLevel = 'high';
-    isSuspicious = true;
-    warnings.push('High risk of phishing detected');
-  } else if (riskScore >= 40) {
-    riskLevel = 'medium';
-    isSuspicious = true;
-    warnings.push('Suspicious activity detected');
-  }
-
-  // Add rule flags from server
-  if (data.rule_flags && data.rule_flags.length > 0) {
-    warnings = warnings.concat(data.rule_flags);
-  }
-
-  if (url.toLowerCase().startsWith('http://') && !warnings.includes('Using HTTP (insecure protocol)')) {
+  if (url.toLowerCase().startsWith('http://')) {
     warnings.push('Insecure HTTP connection - data is not encrypted');
     if (riskScore < 40) {
       riskScore = 40;
@@ -214,8 +214,6 @@ function processScanResult(url, data) {
     warnings,
     decision: data.decision,
     confidence: data.confidence,
-    model: data.model || 'deterministic',
-    inferenceMs: data.inference_ms || 0,
     details: null, // details fetched lazily on demand
     rawResponse: data
   };
