@@ -21,17 +21,5 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Expose port (Railway sets PORT env var)
 EXPOSE 8000
 
-# Run gunicorn with proper settings for Railway
-# --preload: Load app before forking workers (helps with startup time)
-# --bind 0.0.0.0:$PORT: Listen on all interfaces
-# --workers 1: Use 1 worker for Railway free tier (lower memory)
-# --timeout 120: Request timeout
-# --log-level info: Show startup logs
-CMD gunicorn --bind 0.0.0.0:${PORT:-8000} \
-    --workers 1 \
-    --timeout 120 \
-    --preload \
-    --log-level info \
-    --access-logfile - \
-    --error-logfile - \
-    wsgi:app
+# Run the Python startup script (handles PORT properly)
+CMD ["python", "start.py"]
