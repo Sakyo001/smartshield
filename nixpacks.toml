@@ -16,7 +16,7 @@ cmds = [
 cmds = ["echo 'Build complete'"]
 
 [start]
-cmd = "cd packages/ml && gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 wsgi:app"
+cmd = "cd packages/ml && gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --preload --log-level info wsgi:app"
 
 [variables]
 PYTHONUNBUFFERED = "1"

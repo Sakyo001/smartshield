@@ -82,6 +82,41 @@ Create a separate repository for just the Python API:
 - Railway is detecting this as a Node.js project
 - **Solution**: Set Root Directory to `packages/ml` (Option 1)
 
+### Network > HealthCheck failure
+This usually means the app isn't responding to Railway's health checks. Try these fixes:
+
+1. **Wait longer** - First deploy takes 30-60s for cold start
+   - Railway checks `/health` endpoint
+   - If it returns 502/503, wait and it should recover
+
+2. **Check the logs** (Railway Dashboard → Deployments → View Logs)
+   - Look for: "🚀 SmartShield WHOIS API Starting..."
+   - Look for Gunicorn binding message: "Listening at: http://0.0.0.0:XXXX"
+   - Check for Python errors
+
+3. **Verify environment variables are set**:
+   ```
+   PORT (auto-set by Railway)
+   SUPABASE_URL
+   SUPABASE_SERVICE_ROLE_KEY
+   DB_HOST
+   DB_NAME
+   DB_USER
+   DB_PASSWORD
+   DB_PORT
+   ```
+
+4. **Manual health check** after deployment succeeds:
+   ```bash
+   curl https://your-app.railway.app/health
+   ```
+   Should return: `{"status":"ok","service":"whois-dns-api"}`
+
+5. **If health check keeps failing**:
+   - Go to Settings → disable health checks temporarily
+   - Check if the app is actually running: `curl https://your-app.railway.app/health`
+   - Re-enable health checks once you verify the app works
+
 ### Build succeeds but app doesn't start
 - Check Railway logs for Python errors
 - Verify all environment variables are set
