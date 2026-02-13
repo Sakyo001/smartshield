@@ -1,54 +1,64 @@
-✅ FIXED: Railway Build Configuration
+✅ FIXED: Switched to Dockerfile Builder
 ================================================================
 
-STATUS: nixpacks.toml files removed successfully!
+PROBLEM: railway.toml was forcing Nixpacks builder which caused:
+❌ Immutable Nix environment (cannot install pip)  
+❌ Node.js + Python detection conflicts from monorepo root
+❌ "pip: command not found" errors
 
-Railway will now use your custom build/start commands instead of Nixpacks.
+SOLUTION: Changed railway.toml to use Dockerfile builder
 
-✅ YOUR CURRENT RAILWAY SETTINGS:
+================================================================
 
-Root Directory: packages/ml
-Build Command: pip install -r requirements.txt
-Start Command: gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 wsgi:app
+✅ CURRENT CONFIGURATION:
+
+Builder: DOCKERFILE (not Nixpacks)
+Dockerfile: ./Dockerfile (at repo root)
+Start Command: python start.py
 Health Check: /health (timeout: 100s)
 
+The Dockerfile:
+✅ Uses python:3.10-slim (pip included)
+✅ Copies packages/ml → /app
+✅ Installs requirements.txt
+✅ Runs start.py with PORT handling
+
 ================================================================
 
-🚀 WHAT HAPPENS NOW:
+🚀 EXPECTED BUILD OUTPUT:
 
-Railway will:
-✅ Use Python buildpack (with pip pre-installed)
-✅ Install requirements.txt dependencies
-✅ Start Gunicorn with 2 workers, 120s timeout
-✅ Bind to Railway's dynamic $PORT
-✅ Health check at /health endpoint
+Railway will now:
+✅ Use Dockerfile from repo root
+✅ Install Python packages with pip (no Nix issues)
+✅ Build successfully
+✅ Start Gunicorn: 2 workers, 120s timeout, dynamic $PORT
+✅ Health check responds at /health
 
-You should see in logs:
-✅ Installing dependencies from requirements.txt
-✅ Build successful
+Build logs should show:
+[1/4] COPY packages/ml /app
+[2/4] RUN pip install --no-cache-dir -r requirements.txt
+[3/4] Successfully installed [packages...]
+✅ Build complete
 🚀 Starting SmartShield ML API
-PORT: [Railway assigned port]
-[INFO] Listening at: http://0.0.0.0:[port]
 
 ================================================================
 
-⚠️ IMPORTANT ENVIRONMENT VARIABLES NEEDED:
+⚠️ ENVIRONMENT VARIABLES STILL NEEDED:
 
-Make sure these are set in Railway → Settings → Variables:
+Railway → Settings → Variables → Add these:
 
-SUPABASE_URL=your-supabase-url
+SUPABASE_URL=your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
 ENVIRONMENT=production
-ALLOWED_ORIGINS=chrome-extension://*,https://your-web-app.vercel.app
-DATABASE_URL=postgresql://... (if using direct DB access)
+ALLOWED_ORIGINS=chrome-extension://*,https://your-web.vercel.app
 
 ================================================================
 
-📝 AFTER DEPLOYMENT SUCCEEDS:
+📝 AFTER SUCCESSFUL DEPLOYMENT:
 
-1. Copy your Railway app URL: https://your-app.up.railway.app
-2. Update extension config at: apps/extension/src/config.js
-3. Change API_URL from Render to Railway URL
-4. Reload extension in Chrome
+1. Copy Railway URL: https://smartshield-ml-production.up.railway.app
+2. Update apps/extension/src/config.js
+3. Change API_URL to Railway URL
+4. Reload extension
 
 ================================================================
