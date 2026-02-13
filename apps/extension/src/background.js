@@ -174,7 +174,7 @@ function processScanResult(url, data) {
   let warnings = [];
   let riskScore = 0;
 
-  // New TinyBERT API returns risk_score directly
+  // Use risk_score from server (deterministic rules + PhishTank)
   if (data.risk_score !== undefined) {
     riskScore = Math.round(data.risk_score);
   } else if (data.decision === 'PHISHING') {
@@ -214,7 +214,7 @@ function processScanResult(url, data) {
     warnings,
     decision: data.decision,
     confidence: data.confidence,
-    model: data.model || 'unknown',
+    model: data.model || 'deterministic',
     inferenceMs: data.inference_ms || 0,
     details: null, // details fetched lazily on demand
     rawResponse: data

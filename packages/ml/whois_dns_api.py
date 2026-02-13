@@ -1,12 +1,14 @@
 """
 WHOIS and DNS Lookup API - Main Flask Application
-- /api/scan: FAST ML-powered URL classification (TinyBERT + lightweight rules)
+- /api/scan: FAST deterministic URL classification (rules + concurrent PhishTank)
 - /api/domain-info: Detailed WHOIS/DNS/SSL lookup (heavy, called lazily)
 """
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
 import os
 
 # Import our modules
@@ -14,22 +16,21 @@ from utils import extract_domain
 from data_fetchers import get_whois_info, get_dns_records, get_ssl_info
 from database import supabase_request, save_whois_history, save_dns_history, save_ssl_history
 from risk_assessment import apply_lightweight_rules, apply_deterministic_rules, calculate_contextual_risk_adjustment
+from third_party_apis import BrandVerificationService
 from xai_explainer import generate_explanation
-from tinybert_scanner import load_model, predict_url
 
 app = Flask(__name__)
 CORS(app)
 
-# Load TinyBERT model at startup (once, stays in memory)
-with app.app_context():
-    load_model()
+# Shared brand service for concurrent PhishTank checks
+brand_service = BrandVerificationService()
 
 
 @app.route('/api/scan', methods=['POST', 'OPTIONS'])
 def fast_scan():
     """
-    FAST scan endpoint — TinyBERT ML model + lightweight URL rules.
-    No WHOIS/DNS/SSL lookups here. Designed for <500ms response.
+    FAST scan endpoint — enhanced deterministic rules + concurrent PhishTank/URLhaus.
+    No WHOIS/DNS/SSL lookups here. Designed for <2s response.
     """
     if request.method == 'OPTIONS':
         return '', 204
@@ -45,42 +46,56 @@ def fast_scan():
         if not domain:
             return jsonify({'error': 'Invalid URL'}), 400
 
-        # ── Layer 1: TinyBERT ML prediction (instant, ~5-20ms) ──
-        ml_result = predict_url(url)
-        print(f"🤖 TinyBERT: {ml_result['decision']} ({ml_result['confidence']}%) in {ml_result['inference_ms']}ms")
+        start = time.time()
 
-        # ── Layer 2: Lightweight deterministic rules (no network calls) ──
+        # ── Run lightweight rules (instant, 0ms — no network) ──
         rule_risk, rule_flags = apply_lightweight_rules(url, domain)
         print(f"📏 Rules: +{rule_risk}% risk, flags: {rule_flags}")
 
-        # ── Combine ML + rules into final score ──
-        decision = ml_result['decision']
-        ml_confidence = ml_result['confidence']
+        # ── Run PhishTank/URLhaus check concurrently (max 3s) ──
+        db_risk = 0
+        db_flags = []
+        try:
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(brand_service.check_phishing_databases, url)
+                is_known_threat, threat_info = future.result(timeout=4)
+                if is_known_threat:
+                    db_risk = 100
+                    db_flags.append(threat_info)
+                    print(f"🚨 PhishTank/URLhaus: CONFIRMED threat")
+        except Exception as e:
+            print(f"⚠️ PhishTank check skipped: {type(e).__name__}")
 
-        # ML model is primary signal; rules adjust the score
-        if decision == 'PHISHING':
-            # ML says phishing — confidence IS the risk
-            final_risk = min(100, ml_confidence + rule_risk * 0.3)
+        # ── Combine scores ──
+        total_risk = min(100, rule_risk + db_risk)
+        all_flags = rule_flags + db_flags
+
+        # Determine decision & confidence
+        if db_risk >= 100:
+            # Confirmed by threat database — definitive
+            decision = 'PHISHING'
+            confidence = 100
+        elif total_risk >= 70:
+            decision = 'PHISHING'
+            confidence = min(100, total_risk)
+        elif total_risk >= 40:
+            decision = 'SUSPICIOUS'
+            confidence = total_risk
         else:
-            # ML says legitimate — invert confidence to get base risk, then add rules
-            base_risk = 100 - ml_confidence
-            final_risk = min(100, base_risk + rule_risk * 0.5)
+            decision = 'LEGITIMATE'
+            confidence = max(0, 100 - total_risk)
 
-            # If rules push risk high enough, override decision
-            if final_risk >= 60:
-                decision = 'PHISHING'
-                ml_confidence = final_risk
+        elapsed_ms = round((time.time() - start) * 1000, 1)
+        print(f"⚡ Scan complete in {elapsed_ms}ms — {decision} (risk={total_risk}%)")
 
         response = {
             'decision': decision,
-            'confidence': round(ml_confidence, 2),
-            'risk_score': round(final_risk, 2),
-            'model': ml_result['model'],
-            'inference_ms': ml_result['inference_ms'],
-            'phishing_prob': ml_result.get('phishing_prob', 0),
-            'legitimate_prob': ml_result.get('legitimate_prob', 0),
-            'rule_flags': rule_flags,
-            'rule_risk_increase': rule_risk,
+            'confidence': round(confidence, 2),
+            'risk_score': round(total_risk, 2),
+            'model': 'deterministic-v2',
+            'inference_ms': elapsed_ms,
+            'rule_flags': all_flags,
+            'rule_risk_increase': total_risk,
             'domain': domain,
             'timestamp': datetime.now().isoformat()
         }
