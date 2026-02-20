@@ -35,17 +35,17 @@ export default function HowItWorks() {
 
       <div className="max-w-7xl mx-auto relative z-10">
         {/* --- Section Header --- */}
-        <div className="text-center max-w-3xl mx-auto mb-24">
+        <div className="text-center max-w-3xl mx-auto mb-12 md:mb-24">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#6B73FF]/5 border border-[#6B73FF]/10 mb-6">
             <span className="w-2 h-2 rounded-full bg-[#6B73FF] animate-pulse"></span>
             <span className="text-[#6B73FF] font-bold tracking-wide text-xs uppercase">
               Simple Process
             </span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">
+          <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">
             How <span className="text-[#6B73FF]">SmartShield</span> Works
           </h2>
-          <p className="text-gray-500 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto">
+          <p className="text-gray-500 text-base md:text-xl leading-relaxed max-w-2xl mx-auto">
             Advanced security made simple. In just three steps, we transform
             uncertainty into clarity.
           </p>
