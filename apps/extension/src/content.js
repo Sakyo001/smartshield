@@ -1,20 +1,31 @@
 /**
  * Content Script - SmartShield
- * Shows an on-page banner for EVERY scan result (safe, suspicious, or dangerous).
- * Does NOT make its own API calls — receives results from the background script.
- * Banner auto-dismisses after 5s for safe sites, stays for threats.
+ * Shows an on-page banner for scan results (safe, suspicious, or dangerous).
+ * 
+ * Key behaviors:
+ * - Receives results from background script (no own API calls)
+ * - Once dismissed, banner stays hidden for that domain during session
+ * - Sub-route navigations on the same domain do NOT re-trigger banners
+ * - Safe banners auto-dismiss after 5s
  */
 
 (function () {
-  // Only run on real web pages
   if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') return;
   if (window.location.protocol === 'chrome-extension:') return;
-
-  // Prevent running twice
   if (window.__smartshieldLoaded) return;
   window.__smartshieldLoaded = true;
 
-  // Check Safe Mode
+  // Track dismissed domains for this page session
+  // Once user clicks Dismiss / "I understand", don't show again for this domain
+  const dismissedDomains = new Set();
+
+  // Track which domain's banner is currently displayed
+  let currentBannerDomain = null;
+
+  function getRootDomain() {
+    return window.location.protocol + '//' + window.location.hostname;
+  }
+
   chrome.storage.local.get(['safeModeEnabled'], (res) => {
     const enabled = res.safeModeEnabled !== undefined ? res.safeModeEnabled : true;
     if (!enabled) return;
@@ -22,42 +33,58 @@
   });
 
   function init() {
+    const rootDomain = getRootDomain();
+
     // Listen for results pushed from background script
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (message.action === 'showScanResult' && message.result) {
-        showBanner(message.result);
+        const domain = message.rootDomain || rootDomain;
+
+        // Don't show if user already dismissed this domain
+        if (dismissedDomains.has(domain)) {
+          sendResponse({ displayed: false, reason: 'dismissed' });
+          return;
+        }
+
+        // Don't show if banner is already displayed for this domain
+        if (currentBannerDomain === domain && document.getElementById('smartshield-root')) {
+          sendResponse({ displayed: false, reason: 'already_shown' });
+          return;
+        }
+
+        showBanner(message.result, domain);
         sendResponse({ displayed: true });
       }
-      // Backward compat
+
       if (message.action === 'showThreatWarning' && message.result) {
-        showBanner(message.result);
+        const domain = message.rootDomain || rootDomain;
+        if (!dismissedDomains.has(domain)) {
+          showBanner(message.result, domain);
+        }
         sendResponse({ displayed: true });
       }
     });
 
-    // On load, check cache for an already-scanned result (instant, no API call)
-    const storageKey = `result_${window.location.href}`;
+    // On initial load, check cache for root domain result (instant)
+    const storageKey = `result_${rootDomain}`;
     chrome.storage.local.get([storageKey], (stored) => {
-      if (stored[storageKey]) {
-        showBanner(stored[storageKey]);
+      if (stored[storageKey] && !dismissedDomains.has(rootDomain)) {
+        showBanner(stored[storageKey], rootDomain);
       }
     });
   }
 
   /**
    * Show a banner at the top of the page using Shadow DOM.
-   * - Green for safe
-   * - Yellow for suspicious
-   * - Red for high risk / phishing
    */
-  function showBanner(result) {
+  function showBanner(result, domain) {
     if (!result || result.scanPending) return;
 
-    // Remove existing banner
-    const existing = document.getElementById('smartshield-root');
-    if (existing) existing.remove();
+    // Remove existing banner first
+    removeBanner();
 
-    // Determine banner type
+    currentBannerDomain = domain;
+
     const isSafe = !result.isSuspicious;
     const isHigh = result.riskLevel === 'high' || result.riskScore >= 70;
 
@@ -83,7 +110,6 @@
       titleColor = '#eab308';
     }
 
-    // Create host
     const host = document.createElement('div');
     host.id = 'smartshield-root';
     host.style.cssText = 'position:fixed;top:0;left:0;width:100%;z-index:2147483647;pointer-events:none;';
@@ -91,7 +117,6 @@
 
     const shadow = host.attachShadow({ mode: 'closed' });
 
-    // Styles
     const style = document.createElement('style');
     style.textContent = `
       :host {
@@ -195,7 +220,6 @@
     const banner = document.createElement('div');
     banner.className = 'banner';
 
-    // Build inner HTML based on safe/threat
     if (isSafe) {
       banner.innerHTML = `
         <div class="content">
@@ -230,16 +254,22 @@
     shadow.appendChild(style);
     shadow.appendChild(banner);
 
-    // Dismiss handler
+    // Dismiss handler — marks domain as dismissed so banner won't reappear
     const dismissBtn = banner.querySelector('#ss-dismiss');
     if (dismissBtn) {
-      dismissBtn.addEventListener('click', () => dismissBanner(host, banner));
+      dismissBtn.addEventListener('click', () => {
+        dismissedDomains.add(domain);
+        currentBannerDomain = null;
+        dismissBanner(host, banner);
+      });
     }
 
-    // Leave handler (only on threat banners)
+    // Leave handler
     const leaveBtn = banner.querySelector('#ss-leave');
     if (leaveBtn) {
       leaveBtn.addEventListener('click', () => {
+        dismissedDomains.add(domain);
+        currentBannerDomain = null;
         window.history.back();
         setTimeout(() => { window.location.href = 'https://google.com'; }, 500);
       });
@@ -248,16 +278,27 @@
     // Auto-dismiss safe banners after 5 seconds
     if (isSafe) {
       setTimeout(() => {
-        if (document.getElementById('smartshield-root')) {
+        const el = document.getElementById('smartshield-root');
+        if (el) {
+          dismissedDomains.add(domain);
+          currentBannerDomain = null;
           dismissBanner(host, banner);
         }
       }, 5000);
     }
   }
 
+  function removeBanner() {
+    const existing = document.getElementById('smartshield-root');
+    if (existing) existing.remove();
+    currentBannerDomain = null;
+  }
+
   function dismissBanner(host, banner) {
     banner.classList.add('dismissing');
-    banner.addEventListener('animationend', () => host.remove(), { once: true });
+    banner.addEventListener('animationend', () => {
+      if (host.parentNode) host.remove();
+    }, { once: true });
     // Fallback removal
     setTimeout(() => { if (host.parentNode) host.remove(); }, 400);
   }

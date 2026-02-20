@@ -29,13 +29,6 @@ packages/ml/.turbo/
 packages/ml/test_*.py
 packages/ml/*.bat
 packages/ml/*.sh
-packages/ml/README.md
-packages/ml/RAILWAY_DEPLOY.md
-packages/ml/database_setup.sql
-packages/ml/requirements-complete.txt
-packages/ml/requirements-whois.txt
-packages/ml/.renderignore
-packages/ml/render.yaml
 
 # Node modules (not needed for Python build)
 node_modules/

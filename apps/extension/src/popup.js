@@ -1,6 +1,6 @@
 /**
  * Popup Script - SmartShield
- * Optimized: only scans the CURRENT page.
+ * Scans by ROOT DOMAIN (not full URL) for speed.
  * Details (WHOIS/DNS/SSL) are fetched lazily when user clicks expand.
  */
 
@@ -32,15 +32,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // State
   let currentUrl = null;
+  let currentRootDomain = null;
   let detailsFetched = false;
 
-  // ── Alert Modal ──
+  // ── Helper: extract root domain ──
+  function getRootDomain(url) {
+    try {
+      const u = new URL(url);
+      return u.protocol + '//' + u.hostname;
+    } catch {
+      return url;
+    }
+  }
+
+  // ── Alert Modal — fully dismiss on click ──
   alertLeaveBtn.addEventListener("click", async () => {
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tabs[0]) chrome.tabs.update(tabs[0].id, { url: "https://www.google.com" });
     alertModal.classList.add("hidden");
+    alertModal.style.display = "none";
   });
-  alertDismissBtn.addEventListener("click", () => alertModal.classList.add("hidden"));
+  alertDismissBtn.addEventListener("click", () => {
+    alertModal.classList.add("hidden");
+    alertModal.style.display = "none";
+  });
 
   // ── Icons ──
   const Icons = {
@@ -90,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ── Lazy-load details from background (only once per popup session) ──
   function lazyLoadDetails() {
-    if (detailsFetched || !currentUrl) return;
+    if (detailsFetched || !currentRootDomain) return;
     detailsFetched = true;
 
     // Show loading state in detail sections
@@ -99,7 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (el) el.innerHTML = '<p style="color:var(--text-muted);padding:8px 0;">Loading...</p>';
     });
 
-    chrome.runtime.sendMessage({ action: "getDetails", url: currentUrl }, (details) => {
+    chrome.runtime.sendMessage({ action: "getDetails", url: currentRootDomain }, (details) => {
       if (chrome.runtime.lastError || !details) {
         ["whois-data", "dns-data", "ssl-data"].forEach(id => {
           const el = document.getElementById(id);
@@ -133,10 +148,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       currentUrl = tab.url;
+      currentRootDomain = getRootDomain(tab.url);
       displayURL(tab.url);
 
-      // Send single scan request to background (deduped + cached there)
-      chrome.runtime.sendMessage({ action: "checkURL", url: tab.url }, (result) => {
+      // Send scan request using root domain (deduped + cached in background)
+      chrome.runtime.sendMessage({ action: "checkURL", url: currentRootDomain }, (result) => {
         statusIcon.classList.remove("scanning");
 
         if (chrome.runtime.lastError) {
@@ -301,5 +317,6 @@ document.addEventListener("DOMContentLoaded", () => {
     alertMessage.textContent = message;
     alertContent.className = type === "warning" ? "alert-content warning" : "alert-content danger";
     alertModal.classList.remove("hidden");
+    alertModal.style.display = "";
   }
 });

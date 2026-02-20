@@ -1,28 +1,31 @@
 /**
  * Background Script - SmartShield
- * Optimized for fast real-time scanning of the CURRENT page only.
+ * Optimized for fast real-time scanning.
  * 
  * Key optimizations:
+ * - Scans by ROOT DOMAIN (not full URL) — sub-routes reuse the cached result
  * - Single API call for scan (domain-info fetched lazily on demand)
- * - Request deduplication: only one in-flight request per URL
+ * - Request deduplication: only one in-flight request per domain
  * - Smart cache with TTL to avoid redundant scans
- * - No "scan all tabs" overhead — only current page matters
  * - AbortController for proper request cancellation/timeout
  */
 
 const WHOIS_API_URL = 'https://smartshield-whois-api.onrender.com';
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
-const SCAN_TIMEOUT = 30000;        // 30s for scan (Render cold-start can be slow)
-const DETAIL_TIMEOUT = 30000;      // 30s for details (lazy)
+const SCAN_TIMEOUT = 30000;
+const DETAIL_TIMEOUT = 30000;
 
 let safeModeEnabled = true;
 
 // ── In-flight request deduplication ──
-// Maps URL → Promise so concurrent requests for the same URL share one API call
 const pendingScans = new Map();
 
-// ── In-memory result cache with timestamps ──
+// ── In-memory result cache keyed by ROOT DOMAIN ──
 const resultCache = new Map();
+
+// ── Track which tabs have already been notified (prevents re-notify on sub-routes) ──
+// Maps tabId → rootDomain that was already shown
+const tabNotified = new Map();
 
 // ── Initialize ──
 chrome.storage.local.get(['safeModeEnabled'], (result) => {
@@ -30,7 +33,17 @@ chrome.storage.local.get(['safeModeEnabled'], (result) => {
   updateBadge(safeModeEnabled);
 });
 
-// ── Message Listener (single, unified) ──
+// ── Extract root domain from any URL ──
+function getRootDomain(url) {
+  try {
+    const u = new URL(url);
+    return u.protocol + '//' + u.hostname;
+  } catch {
+    return url;
+  }
+}
+
+// ── Message Listener ──
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'safeModeChanged') {
     safeModeEnabled = message.enabled;
@@ -40,12 +53,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.action === 'checkURL') {
-    scanURL(message.url).then(sendResponse);
-    return true; // keep channel open for async
+    const rootDomain = getRootDomain(message.url);
+    scanURL(rootDomain).then(sendResponse);
+    return true;
   }
 
   if (message.action === 'getDetails') {
-    fetchDomainDetails(message.url).then(sendResponse);
+    const rootDomain = getRootDomain(message.url);
+    fetchDomainDetails(rootDomain).then(sendResponse);
     return true;
   }
 });
@@ -73,60 +88,58 @@ function updateTabBadge(tabId, result) {
 // ── Should we skip this URL? ──
 function shouldSkip(url) {
   if (!url) return true;
-  const skip = ['chrome://', 'edge://', 'chrome-extension://', 'about:', 'moz-extension://'];
+  const skip = ['chrome://', 'edge://', 'chrome-extension://', 'about:', 'moz-extension://', 'devtools://'];
   return skip.some(prefix => url.startsWith(prefix));
 }
 
-// ── Core: Fast URL scan with dedup + cache ──
-async function scanURL(url) {
-  if (shouldSkip(url)) return null;
+// ── Core: Fast URL scan with dedup + cache (keyed by root domain) ──
+async function scanURL(rootDomain) {
+  if (shouldSkip(rootDomain)) return null;
 
-  // 1. Check in-memory cache (fastest)
-  const cached = resultCache.get(url);
+  // 1. Check in-memory cache
+  const cached = resultCache.get(rootDomain);
   if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
     return cached.result;
   }
 
   // 2. Check storage cache
-  const storageKey = `result_${url}`;
+  const storageKey = `result_${rootDomain}`;
   try {
     const stored = await chrome.storage.local.get([storageKey, `${storageKey}_ts`]);
     if (stored[storageKey] && stored[`${storageKey}_ts`]) {
       const age = Date.now() - stored[`${storageKey}_ts`];
       if (age < CACHE_TTL) {
-        // Still fresh — put in memory cache and return
-        resultCache.set(url, { result: stored[storageKey], timestamp: stored[`${storageKey}_ts`] });
+        resultCache.set(rootDomain, { result: stored[storageKey], timestamp: stored[`${storageKey}_ts`] });
         return stored[storageKey];
       }
     }
-  } catch (e) { /* storage error, continue to API */ }
+  } catch (e) { /* continue to API */ }
 
-  // 3. Deduplicate: if there's already an in-flight request for this URL, wait for it
-  if (pendingScans.has(url)) {
-    return pendingScans.get(url);
+  // 3. Deduplicate in-flight requests
+  if (pendingScans.has(rootDomain)) {
+    return pendingScans.get(rootDomain);
   }
 
   // 4. Fire the API call
-  const scanPromise = performScan(url);
-  pendingScans.set(url, scanPromise);
+  const scanPromise = performScan(rootDomain);
+  pendingScans.set(rootDomain, scanPromise);
 
   try {
     const result = await scanPromise;
-    // Cache result
     const now = Date.now();
-    resultCache.set(url, { result, timestamp: now });
+    resultCache.set(rootDomain, { result, timestamp: now });
     chrome.storage.local.set({
       [storageKey]: result,
       [`${storageKey}_ts`]: now
     });
     return result;
   } finally {
-    pendingScans.delete(url);
+    pendingScans.delete(rootDomain);
   }
 }
 
-// ── Perform the actual API scan (single call, with AbortController) ──
-async function performScan(url) {
+// ── Perform the actual API scan ──
+async function performScan(rootDomain) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort('Scan timeout'), SCAN_TIMEOUT);
 
@@ -134,26 +147,23 @@ async function performScan(url) {
     const response = await fetch(`${WHOIS_API_URL}/api/scan`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url: rootDomain }),
       signal: controller.signal
     });
 
     clearTimeout(timeoutId);
-
     if (!response.ok) throw new Error(`API ${response.status}`);
     const data = await response.json();
-    return processScanResult(url, data);
+    return processScanResult(rootDomain, data);
 
   } catch (error) {
     clearTimeout(timeoutId);
-
     if (error.name === 'AbortError') {
-      console.warn('Scan timed out for:', url);
+      console.warn('Scan timed out for:', rootDomain);
     } else {
-      console.error('Scan error for', url, error.message);
+      console.error('Scan error for', rootDomain, error.message);
     }
 
-    // Return a non-error safe result so the UI doesn't show "Scan Error"
     return {
       isSuspicious: false,
       riskLevel: 'low',
@@ -167,8 +177,8 @@ async function performScan(url) {
   }
 }
 
-// ── Process raw API scan result into extension format ──
-function processScanResult(url, data) {
+// ── Process raw API scan result ──
+function processScanResult(rootDomain, data) {
   let riskLevel = 'low';
   let isSuspicious = false;
   let warnings = [];
@@ -198,7 +208,7 @@ function processScanResult(url, data) {
     }
   }
 
-  if (url.toLowerCase().startsWith('http://')) {
+  if (rootDomain.startsWith('http://')) {
     warnings.push('Insecure HTTP connection - data is not encrypted');
     if (riskScore < 40) {
       riskScore = 40;
@@ -214,13 +224,13 @@ function processScanResult(url, data) {
     warnings,
     decision: data.decision,
     confidence: data.confidence,
-    details: null, // details fetched lazily on demand
+    details: null,
     rawResponse: data
   };
 }
 
-// ── Lazy: Fetch domain details only when user expands the details panel ──
-async function fetchDomainDetails(url) {
+// ── Lazy: Fetch domain details ──
+async function fetchDomainDetails(rootDomain) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort('Detail fetch timeout'), DETAIL_TIMEOUT);
 
@@ -228,12 +238,11 @@ async function fetchDomainDetails(url) {
     const response = await fetch(`${WHOIS_API_URL}/api/domain-info`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url: rootDomain }),
       signal: controller.signal
     });
 
     clearTimeout(timeoutId);
-
     if (!response.ok) throw new Error(`API ${response.status}`);
     const domainData = await response.json();
 
@@ -248,16 +257,13 @@ async function fetchDomainDetails(url) {
     };
 
     // Attach details to cached result
-    const storageKey = `result_${url}`;
+    const storageKey = `result_${rootDomain}`;
     const stored = await chrome.storage.local.get([storageKey]);
     if (stored[storageKey]) {
       stored[storageKey].details = details;
       chrome.storage.local.set({ [storageKey]: stored[storageKey] });
-      // Update memory cache too
-      const cached = resultCache.get(url);
-      if (cached) {
-        cached.result.details = details;
-      }
+      const cached = resultCache.get(rootDomain);
+      if (cached) cached.result.details = details;
     }
 
     return details;
@@ -268,23 +274,41 @@ async function fetchDomainDetails(url) {
   }
 }
 
-// ── Auto-scan on navigation (current tab only, no "scan all") ──
+// ── Auto-scan on navigation ──
+// Only scans when the ROOT DOMAIN changes for each tab.
+// Sub-route navigations within the same domain are skipped entirely.
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status !== 'complete' || !tab.url || !safeModeEnabled) return;
   if (shouldSkip(tab.url)) return;
 
-  scanURL(tab.url).then(result => {
+  const rootDomain = getRootDomain(tab.url);
+
+  // If we already notified this tab for this root domain, skip entirely
+  if (tabNotified.get(tabId) === rootDomain) {
+    // Just update badge from cache
+    const cached = resultCache.get(rootDomain);
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+      updateTabBadge(tabId, cached.result);
+    }
+    return;
+  }
+
+  scanURL(rootDomain).then(result => {
     if (!result) return;
+
+    // Mark this tab as notified for this domain
+    tabNotified.set(tabId, rootDomain);
+
     updateTabBadge(tabId, result);
 
-    // Always notify content script so it shows a banner (safe or dangerous)
+    // Send result to content script for banner display
     chrome.tabs.sendMessage(tabId, {
       action: 'showScanResult',
-      result
-    }).catch(() => {}); // content script may not be ready
+      result,
+      rootDomain
+    }).catch(() => {});
 
     if (result.isSuspicious) {
-      // Browser notification for threats only
       const isHighRisk = result.riskLevel === 'high' || result.riskScore >= 70;
       chrome.notifications.create({
         type: 'basic',
@@ -300,20 +324,24 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   });
 });
 
-// ── On tab switch: show cached badge instantly (no new API call) ──
+// ── On tab switch: show cached badge instantly ──
 chrome.tabs.onActivated.addListener((activeInfo) => {
   chrome.tabs.get(activeInfo.tabId, (tab) => {
     if (!tab || !tab.url || shouldSkip(tab.url)) return;
-
-    // Just update badge from cache — no new API call
-    const cached = resultCache.get(tab.url);
+    const rootDomain = getRootDomain(tab.url);
+    const cached = resultCache.get(rootDomain);
     if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
       updateTabBadge(activeInfo.tabId, cached.result);
     }
   });
 });
 
-// ── On install: just set up badge ──
+// ── Clean up tabNotified when tab is closed ──
+chrome.tabs.onRemoved.addListener((tabId) => {
+  tabNotified.delete(tabId);
+});
+
+// ── On install/startup ──
 chrome.runtime.onInstalled.addListener(() => {
   updateBadge(safeModeEnabled);
 });
@@ -322,4 +350,4 @@ chrome.runtime.onStartup.addListener(() => {
   updateBadge(safeModeEnabled);
 });
 
-console.log('SmartShield background loaded — fast current-page scanning');
+console.log('SmartShield background loaded — root-domain scanning');

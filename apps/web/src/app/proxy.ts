@@ -1,1 +1,0 @@
-// This file is deprecated - Supabase auth is now handled in middleware.ts

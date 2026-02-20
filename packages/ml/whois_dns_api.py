@@ -16,7 +16,18 @@ from risk_assessment import apply_deterministic_rules, calculate_contextual_risk
 from xai_explainer import generate_explanation
 
 app = Flask(__name__)
-CORS(app)
+
+# Configure CORS to allow production and development origins
+CORS(app, origins=[
+    "https://www.smartshield.it.com",  # Production frontend
+    "https://smartshield.it.com",       # Production frontend (without www)
+    "http://localhost:3000",            # Local development
+    "http://localhost:3001",            # Alternative local port
+    "http://127.0.0.1:3000",            # Alternative localhost
+], 
+supports_credentials=True,
+allow_headers=["Content-Type", "Authorization"],
+methods=["GET", "POST", "OPTIONS"])
 
 
 @app.route('/api/scan', methods=['POST', 'OPTIONS'])
@@ -122,9 +133,12 @@ def domain_info():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/domain-history', methods=['POST'])
+@app.route('/api/domain-history', methods=['POST', 'OPTIONS'])
 def domain_history():
     """Get historical WHOIS, DNS, and SSL data for a domain via Supabase API"""
+    # Handle CORS preflight
+    if request.method == 'OPTIONS':
+        return '', 204
     try:
         data = request.get_json()
         url = data.get('url', '')
@@ -220,9 +234,12 @@ def domain_history():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/reports', methods=['GET', 'POST'])
+@app.route('/api/reports', methods=['GET', 'POST', 'OPTIONS'])
 def reports():
     """Get or create reports (community comments) for a URL"""
+    # Handle CORS preflight
+    if request.method == 'OPTIONS':
+        return '', 204
     try:
         if request.method == 'GET':
             # Get all reports for a URL
@@ -282,9 +299,12 @@ def reports():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/explain', methods=['POST'])
+@app.route('/api/explain', methods=['POST', 'OPTIONS'])
 def explain_analysis():
     """Generate XAI explanation of scan results"""
+    # Handle CORS preflight
+    if request.method == 'OPTIONS':
+        return '', 204
     try:
         data = request.get_json()
         url = data.get('url', '')

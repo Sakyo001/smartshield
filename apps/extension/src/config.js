@@ -1,7 +1,7 @@
 /**
  * SmartShield Extension Configuration
  * Centralized configuration for the Chrome extension
- * Optimized for fast current-page scanning
+ * Optimized: scans by ROOT DOMAIN, skips sub-routes
  */
 
 const CONFIG = {
@@ -9,8 +9,8 @@ const CONFIG = {
   WHOIS_API_URL: 'https://smartshield-whois-api.onrender.com',
   
   // API Timeouts (in milliseconds)
-  SCAN_TIMEOUT: 30000,        // 30s - Render free tier cold starts
-  DETAIL_TIMEOUT: 30000,      // 30s - Details fetched lazily
+  SCAN_TIMEOUT: 30000,
+  DETAIL_TIMEOUT: 30000,
   
   // Cache TTL (in milliseconds) - 10 minutes
   CACHE_TTL: 10 * 60 * 1000,
@@ -34,7 +34,7 @@ const CONFIG = {
   },
 
   // URLs to skip scanning
-  SKIP_PREFIXES: ['chrome://', 'edge://', 'chrome-extension://', 'about:', 'moz-extension://']
+  SKIP_PREFIXES: ['chrome://', 'edge://', 'chrome-extension://', 'about:', 'moz-extension://', 'devtools://']
 };
 
 // Export for use in background and popup scripts

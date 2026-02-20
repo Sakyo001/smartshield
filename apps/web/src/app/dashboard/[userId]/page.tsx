@@ -600,9 +600,9 @@ export default function UserDashboard() {
           
           <div className="hidden md:flex items-center gap-8">
             <Link href="/" className="text-gray-300 hover:text-white transition text-sm">Home</Link>
-            <Link href="#scan" className="text-gray-300 hover:text-white transition text-sm">Scan</Link>
-            <Link href="#about" className="text-gray-300 hover:text-white transition text-sm">About</Link>
-            <Link href="#faq" className="text-gray-300 hover:text-white transition text-sm">FAQ</Link>
+            <Link href="/#scan" className="text-gray-300 hover:text-white transition text-sm">Scan</Link>
+            <Link href="/#about" className="text-gray-300 hover:text-white transition text-sm">About</Link>
+            <Link href="/#faq" className="text-gray-300 hover:text-white transition text-sm">FAQ</Link>
           </div>
 
           <button 
