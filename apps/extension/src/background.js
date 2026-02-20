@@ -351,3 +351,17 @@ chrome.runtime.onStartup.addListener(() => {
 });
 
 console.log('SmartShield background loaded — root-domain scanning');
+
+// ── Keep-alive ping to prevent Render cold starts (every 14 minutes) ──
+// MV3 service workers get suspended — chrome.alarms survives suspension unlike setInterval
+function pingServer() {
+  fetch(`${WHOIS_API_URL}/health`, { method: 'GET' })
+    .then(() => console.log('SmartShield: server keep-alive ping sent'))
+    .catch(() => {}); // silently ignore network errors
+}
+
+chrome.alarms.create('keepAlive', { periodInMinutes: 14 });
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'keepAlive') pingServer();
+});
+pingServer(); // ping immediately on extension load/wake
