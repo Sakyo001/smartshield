@@ -41,21 +41,21 @@ export default function AIBanner() {
     <section className="py-24 px-6 bg-gray-50 transition-colors">
       <div className="max-w-7xl mx-auto">
         {/* Main Card Container (Kept dark for contrast) */}
-        <div className="relative bg-[#0a0a0f] rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl group">
+          <div className="relative bg-[#0a0a0f] rounded-2xl md:rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl group">
           {/* Ambient Background Glow Effects */}
           <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-[#6B7FFF]/10 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
           <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[120px] translate-x-1/2 translate-y-1/2 pointer-events-none"></div>
 
           <div className="grid md:grid-cols-2 gap-12 items-center relative z-10">
             {/* Left Content */}
-            <div className="p-10 md:p-16">
+            <div className="p-7 sm:p-10 md:p-16">
               <div className="inline-block px-3 py-1 mb-6 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
                 <span className="text-xs font-semibold text-[#6B7FFF] uppercase tracking-wider">
                   Next-Gen Security
                 </span>
               </div>
 
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-8 leading-[1.1] tracking-tight">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-8 leading-[1.1] tracking-tight">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6B7FFF] to-[#b19eef]">
                   Smarter
                 </span>{" "}
@@ -115,7 +115,7 @@ export default function AIBanner() {
               ref={imageRef}
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
-              className="relative p-8 md:p-12 flex items-center justify-center h-full cursor-pointer"
+              className="relative p-7 sm:p-8 md:p-12 flex items-center justify-center h-full cursor-pointer"
               style={{
                 perspective: "1000px",
               }}

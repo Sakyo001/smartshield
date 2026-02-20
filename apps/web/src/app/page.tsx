@@ -52,7 +52,7 @@ export default function Home() {
       <AIBanner />
       
       {/* Tabbed Section */}
-      <section id="scan" className="py-24 px-6 bg-gray-50 dark:bg-gray-900 relative overflow-hidden scroll-mt-20">
+      <section id="scan" className="py-16 md:py-24 px-4 md:px-6 bg-gray-50 dark:bg-gray-900 relative overflow-hidden scroll-mt-20">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#6B73FF]/5 to-transparent pointer-events-none"></div>
         
         <div className="max-w-7xl mx-auto relative z-10">
@@ -63,10 +63,10 @@ export default function Home() {
                 Explore SmartShield
               </span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-6 tracking-tight">
+            <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-6 tracking-tight">
               Everything You Need to Know
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 text-lg md:text-xl leading-relaxed max-w-3xl mx-auto">
+            <p className="text-gray-600 dark:text-gray-400 text-base md:text-xl leading-relaxed max-w-3xl mx-auto">
               View your recent scans, learn about our mission, and find answers to your questions
             </p>
           </div>

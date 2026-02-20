@@ -39,7 +39,7 @@ export default function HeroSection() {
   return (
     <section
       // CHANGED: w-screen -> w-full to prevent horizontal scrollbar
-      className="relative w-full h-screen bg-[#0a0a0f] overflow-hidden"
+      className="relative w-full min-h-screen bg-[#0a0a0f] overflow-hidden"
       suppressHydrationWarning
     >
       <style>{`
@@ -69,13 +69,12 @@ export default function HeroSection() {
       {/* Overlay for content */}
       <div className="absolute inset-0 bg-[#0a0a0f]/40"></div>
 
-      <div className="h-full w-full flex items-center justify-center relative z-10">
-        {/* CHANGED: Added mt-24 (96px) to push content down from the top */}
-        <div className="max-w-7xl mx-auto px-6 md:px-8 w-full mt-20">
-          <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
+      <div className="min-h-screen w-full flex items-center justify-center relative z-10 py-24 md:py-0">
+        <div className="max-w-7xl mx-auto px-6 md:px-8 w-full mt-0 md:mt-20">
+          <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
             {/* Left Content */}
-            <div>
-              <h1 className="text-5xl md:text-6xl font-bold text-white mb-8 leading-tight">
+            <div className="text-center md:text-left">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 md:mb-8 leading-tight">
                 Your{" "}
                 <span className="text-[#b19eef] drop-shadow-lg">AI Shield</span>
                 <br />
@@ -89,19 +88,18 @@ export default function HeroSection() {
 
               {/* 3. Applied poppins.className here */}
               <p
-                className={`${poppins.className} text-gray-300 text-lg mb-10 leading-relaxed max-w-xl font-light`}
+                className={`${poppins.className} text-gray-300 text-base md:text-lg mb-8 md:mb-10 leading-relaxed max-w-xl font-light mx-auto md:mx-0`}
               >
                 Our intelligent machine learning engine works around the clock
                 to scan every link you visit, detecting suspicious behavior,
                 fake pages, and phishing attempts before they can cause harm.
               </p>
 
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-3 sm:gap-4">
                 {/* Button 1: Get the Extension */}
                 <Link
                   href="/login"
-                  style={{ width: "180px", height: "35px" }}
-                  className="flex items-center justify-center bg-[#545BFF] hover:bg-[#4349dd] text-white rounded-full transition-all duration-300 font-semibold shadow-[0_0_15px_rgba(84,91,255,0.4)] hover:shadow-2xl hover:-translate-y-0.5 transform"
+                  className="w-full sm:w-auto px-8 h-[42px] flex items-center justify-center bg-[#545BFF] hover:bg-[#4349dd] text-white rounded-full transition-all duration-300 font-semibold shadow-[0_0_15px_rgba(84,91,255,0.4)] hover:shadow-2xl hover:-translate-y-0.5 transform"
                 >
                   Get the Extension
                 </Link>
@@ -109,20 +107,19 @@ export default function HeroSection() {
                 {/* Button 2: Scan Website */}
                 <Link
                   href="/dashboard"
-                  style={{ width: "180px", height: "35px" }}
-                  className="flex items-center justify-center text-white border border-gray-500 hover:border-white hover:bg-white/5 rounded-full transition-all duration-300 font-semibold backdrop-blur-sm"
+                  className="w-full sm:w-auto px-8 h-[42px] flex items-center justify-center text-white border border-gray-500 hover:border-white hover:bg-white/5 rounded-full transition-all duration-300 font-semibold backdrop-blur-sm"
                 >
                   Scan Website
                 </Link>
               </div>
             </div>
 
-            {/* Right Image */}
+            {/* Right Image – hidden on small screens */}
             <div
               ref={imageRef}
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
-              className="relative h-full flex items-center justify-center cursor-pointer"
+              className="hidden md:flex relative h-full items-center justify-center cursor-pointer"
               style={{
                 perspective: "1000px",
               }}

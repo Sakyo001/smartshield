@@ -40,7 +40,7 @@ export default function CTASection() {
       </div>
 
       <div className="max-w-5xl mx-auto text-center relative z-10">
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-8 transition-colors">
+        <h2 className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-white mb-8 transition-colors">
           Browse Safe.
           <br />
           Stay Smart.
@@ -49,15 +49,13 @@ export default function CTASection() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
           <Link
             href="/login"
-            style={{ width: "194.39px", height: "41px" }}
-            className="flex items-center justify-center bg-[#545BFF] hover:bg-[#4349CC] text-white rounded-full transition-all duration-300 font-medium shadow-[0_0_15px_rgba(84,91,255,0.4)]"
+            className="w-full sm:w-auto px-10 h-[41px] flex items-center justify-center bg-[#545BFF] hover:bg-[#4349CC] text-white rounded-full transition-all duration-300 font-medium shadow-[0_0_15px_rgba(84,91,255,0.4)]"
           >
             Get the Extension
           </Link>
 
           <button
-            style={{ width: "194.39px", height: "41px" }}
-            className="flex items-center justify-center text-gray-700 dark:text-white border border-gray-300 dark:border-white/20 hover:border-gray-400 dark:hover:border-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-full transition-all duration-300 font-medium"
+            className="w-full sm:w-auto px-10 h-[41px] flex items-center justify-center text-gray-700 dark:text-white border border-gray-300 dark:border-white/20 hover:border-gray-400 dark:hover:border-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-full transition-all duration-300 font-medium"
           >
             Scan Website
           </button>
