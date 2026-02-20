@@ -293,13 +293,14 @@ export default function UserDashboard() {
     setCurrentScan(null)
     
     try {
+      // Single API call — /api/scan returns whois, dns, ssl, risk_adjustment all at once
       const response = await fetchWithTimeout(`${WHOIS_API_URL}/api/scan`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ url: urlInput }),
-        timeout: 30000 // 30 seconds
+        timeout: 45000 // 45 seconds (covers WHOIS/DNS/SSL in parallel)
       })
 
       if (!response.ok) {
@@ -307,6 +308,14 @@ export default function UserDashboard() {
       }
 
       const data = await response.json()
+
+      // Extract WHOIS/DNS/SSL/risk_adjustment directly from the single response
+      let whoisInfo = data.whois || null
+      let dnsRecords = data.dns || null
+      let sslInfo = data.ssl || null
+      let riskAdjustment = data.risk_adjustment || null
+
+      console.log(`DEBUG: Full riskAdjustment object:`, JSON.stringify(riskAdjustment, null, 2))
       
       // Calculate risk score and status based on API response
       // API returns: confidence (0-100), decision ("PHISHING" or "LEGITIMATE")
@@ -318,6 +327,7 @@ export default function UserDashboard() {
       
       if (data.decision === "PHISHING") {
         // If PHISHING, confidence represents danger level (100 = very dangerous)
+
         riskScore = Math.round(data.confidence || 100)
         if (riskScore >= 70) {
           status = "Dangerous"
@@ -347,126 +357,71 @@ export default function UserDashboard() {
         }
       }
 
-      // Fetch WHOIS, DNS, and SSL information from Python API
-      let whoisInfo = null
-      let dnsRecords = null
-      let sslInfo = null
-      let riskAdjustment = null
-      
-      try {
-        const domainInfoResponse = await fetchWithTimeout(`${WHOIS_API_URL}/api/domain-info`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ url: urlInput }),
-          timeout: 45000 // 45 seconds for WHOIS/DNS/SSL (some domains are slow)
-        })
-        
-        if (domainInfoResponse.ok) {
-          const domainData = await domainInfoResponse.json()
-          whoisInfo = domainData.whois
-          dnsRecords = domainData.dns
-          sslInfo = domainData.ssl
-          riskAdjustment = domainData.risk_adjustment
-          console.log(`DEBUG: Full riskAdjustment object:`, JSON.stringify(riskAdjustment, null, 2))
-          
-          // CHECK FOR HTTP FIRST - this should always be a warning at minimum
-          if (urlInput.toLowerCase().startsWith('http://')) {
-            console.log(`🚨 HTTP DETECTED: URL uses insecure HTTP protocol`)
-            // Set minimum warning level for HTTP
-            if (riskScore < 40) {
-              riskScore = 40
-              status = "Warning"
-              console.log(`🚨 Upgrading to Warning due to HTTP protocol`)
-            }
+      // CHECK FOR HTTP FIRST - this should always be a warning at minimum
+      if (urlInput.toLowerCase().startsWith('http://')) {
+        console.log(`🚨 HTTP DETECTED: URL uses insecure HTTP protocol`)
+        if (riskScore < 40) {
+          riskScore = 40
+          status = "Warning"
+          console.log(`🚨 Upgrading to Warning due to HTTP protocol`)
+        }
+      }
+
+      // MULTI-LAYER RISK ADJUSTMENT (data already in response — no second API call)
+      if (riskAdjustment) {
+        const originalRiskScore = riskScore
+        const deterministicIncrease = riskAdjustment.deterministic_increase || 0
+        const contextualReduction = riskAdjustment.reduction_percentage || 0
+        const indicators = riskAdjustment.indicators || []
+
+        console.log(`🔍 Risk Adjustment Data Received:`)
+        console.log(`  Original ML Score: ${originalRiskScore}%`)
+        console.log(`  Deterministic Increase: +${deterministicIncrease}%`)
+        console.log(`  Contextual Reduction: ${contextualReduction}%`)
+        console.log(`  Indicators Array:`, indicators)
+        console.log(`  Indicators Length:`, indicators.length)
+
+        const criticalIndicators = indicators && indicators.length > 0
+          ? indicators.filter((indicator: string) =>
+              typeof indicator === 'string' && (indicator.includes('CRITICAL') || indicator.includes('🚨'))
+            )
+          : []
+
+        console.log(`  Critical Indicators Found:`, criticalIndicators)
+        console.log(`  Critical Count:`, criticalIndicators.length)
+
+        if (criticalIndicators.length > 0) {
+          riskScore = 100
+          status = "Dangerous"
+          console.log(`🚨 CRITICAL SECURITY ISSUE DETECTED:`, criticalIndicators)
+          console.log(`🚨 Forcing 100% risk score and Dangerous status`)
+        } else {
+          riskScore = riskScore + deterministicIncrease - contextualReduction
+          riskScore = Math.max(0, Math.min(100, riskScore))
+          riskScore = Math.round(riskScore)
+
+          const hasWhoisWarning = indicators && indicators.some((indicator: string) =>
+            typeof indicator === 'string' && indicator.includes('WHOIS Information Unavailable') && !indicator.includes('CRITICAL')
+          )
+          if (hasWhoisWarning && riskScore < 45) {
+            riskScore = 45
+            console.log(`⚠️ WHOIS unavailable - enforcing minimum risk score of 45%`)
           }
-          
-          // MULTI-LAYER RISK ADJUSTMENT
-          // Layer 1: Deterministic rules increase risk for obvious phishing
-          // Layer 3: Contextual enrichment decreases risk for established domains
-          if (riskAdjustment) {
-            const originalRiskScore = riskScore
-            const deterministicIncrease = riskAdjustment.deterministic_increase || 0
-            const contextualReduction = riskAdjustment.reduction_percentage || 0
-            const indicators = riskAdjustment.indicators || []
-            
-            console.log(`🔍 Risk Adjustment Data Received:`)
-            console.log(`  Original ML Score: ${originalRiskScore}%`)
-            console.log(`  Deterministic Increase: +${deterministicIncrease}%`)
-            console.log(`  Contextual Reduction: ${contextualReduction}%`)
-            console.log(`  Indicators Array:`, indicators)
-            console.log(`  Indicators Length:`, indicators.length)
-            
-            // CHECK FOR CRITICAL INDICATORS FIRST - these override everything
-            const criticalIndicators = indicators && indicators.length > 0 
-              ? indicators.filter((indicator: string) => 
-                  typeof indicator === 'string' && (indicator.includes('CRITICAL') || indicator.includes('🚨'))
-                )
-              : []
-            
-            console.log(`  Critical Indicators Found:`, criticalIndicators)
-            console.log(`  Critical Count:`, criticalIndicators.length)
-            
-            if (criticalIndicators.length > 0) {
-              // ANY critical security issue = instant 100% Dangerous
-              riskScore = 100
-              status = "Dangerous"
-              console.log(`🚨 CRITICAL SECURITY ISSUE DETECTED:`, criticalIndicators)
-              console.log(`🚨 Forcing 100% risk score and Dangerous status`)
-            } else {
-              // No critical issues - apply normal multi-layer calculations
-              riskScore = riskScore + deterministicIncrease - contextualReduction
-              riskScore = Math.max(0, Math.min(100, riskScore))
-              riskScore = Math.round(riskScore)
-              
-              // SAFETY CHECK: If WHOIS info is unavailable, enforce minimum risk score
-              const hasWhoisWarning = indicators && indicators.some((indicator: string) => 
-                typeof indicator === 'string' && indicator.includes('WHOIS Information Unavailable') && !indicator.includes('CRITICAL')
-              )
-              if (hasWhoisWarning && riskScore < 45) {
-                riskScore = 45
-                console.log(`⚠️ WHOIS unavailable - enforcing minimum risk score of 45%`)
-              }
-              
-              // Recalculate status based on adjusted risk score
-              if (riskScore >= 70) {
-                status = "Dangerous"
-              } else if (riskScore >= 40) {
-                status = "Warning"
-              } else {
-                status = "Safe"
-              }
-            }
-            
-            console.log(`🔍 Multi-Layer Risk Assessment Final:`)
-            console.log(`  Original Score: ${originalRiskScore}%`)
-            console.log(`  Final Score: ${riskScore}%`)
-            console.log(`  Status: ${status}`)
-            console.log(`  Deterministic Flags:`, riskAdjustment.deterministic_flags)
+
+          if (riskScore >= 70) {
+            status = "Dangerous"
+          } else if (riskScore >= 40) {
+            status = "Warning"
+          } else {
+            status = "Safe"
           }
         }
-      } catch (domainError) {
-        console.error("Error fetching domain info:", domainError)
-        // CRITICAL: Cannot verify domain security - treat as high risk
-        console.log(`🚨 CRITICAL: Domain verification service is slow or unavailable`)
-        
-        // If we cannot reach the domain verification API, we cannot confirm the site is safe
-        // This is a critical security issue - force high risk score
-        const originalRiskScore = riskScore
-        riskScore = Math.max(riskScore, 75) // Minimum 75% risk if we can't verify
-        status = riskScore >= 70 ? "Dangerous" : "Warning"
-        
-        console.log(`🚨 Domain verification service timeout:`)
+
+        console.log(`🔍 Multi-Layer Risk Assessment Final:`)
         console.log(`  Original Score: ${originalRiskScore}%`)
-        console.log(`  Enforced Score: ${riskScore}% (security verification service unavailable)`)
+        console.log(`  Final Score: ${riskScore}%`)
         console.log(`  Status: ${status}`)
-        
-        // Set error flags so XAI can explain this
-        // These are set to timeout to indicate the verification service couldn't respond, not that the website itself is down
-        whoisInfo = { error: 'Background verification service took too long - unable to retrieve domain registration details', is_timeout: true }
-        dnsRecords = { error: 'Background verification service took too long - unable to check DNS configuration', is_timeout: true }
-        sslInfo = { error: 'Background verification service took too long - unable to verify SSL certificate', is_timeout: true }
+        console.log(`  Deterministic Flags:`, riskAdjustment.deterministic_flags)
       }
 
       const scanResult: ScanResult = {

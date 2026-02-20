@@ -6,6 +6,7 @@ Simplified and modular architecture
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 
 # Import our modules
@@ -52,49 +53,75 @@ def domain_info():
         
         print(f"Fetching info for domain: {domain}")
         
-        # Get WHOIS, DNS, and SSL information
+        # ── Parallel WHOIS + DNS + SSL lookups ──
+        # All three run simultaneously; total wait = slowest single call (not sum of all)
         whois_info = {}
-        try:
-            whois_info = get_whois_info(domain)
-            print(f"WHOIS info retrieved: {list(whois_info.keys())}")
-        except Exception as e:
-            print(f"Error getting WHOIS: {e}")
-            whois_info = {'error': f'WHOIS lookup failed: {str(e)}'}
-        
         dns_records = {}
-        try:
-            dns_records = get_dns_records(domain)
-            print(f"DNS records retrieved: {list(dns_records.keys())}")
-        except Exception as e:
-            print(f"Error getting DNS: {e}")
-            dns_records = {'error': f'DNS lookup failed: {str(e)}'}
-        
         ssl_info = {}
-        try:
-            ssl_info = get_ssl_info(domain)
-            print(f"SSL info retrieved: {list(ssl_info.keys())}")
-        except Exception as e:
-            print(f"Error getting SSL: {e}")
-            ssl_info = {'error': f'SSL lookup failed: {str(e)}'}
-        
-        # Save to history tables (non-blocking)
-        try:
-            save_whois_history(domain, whois_info)
-            print("WHOIS history saved")
-        except Exception as e:
-            print(f"Error saving WHOIS history: {e}")
-        
-        try:
-            save_dns_history(domain, dns_records)
-            print("DNS history saved")
-        except Exception as e:
-            print(f"Error saving DNS history: {e}")
-        
-        try:
-            save_ssl_history(domain, ssl_info)
-            print("SSL history saved")
-        except Exception as e:
-            print(f"Error saving SSL history: {e}")
+
+        def _fetch_whois():
+            try:
+                result = get_whois_info(domain)
+                print(f"WHOIS info retrieved: {list(result.keys())}")
+                return ('whois', result)
+            except Exception as e:
+                print(f"Error getting WHOIS: {e}")
+                return ('whois', {'error': f'WHOIS lookup failed: {str(e)}'})
+
+        def _fetch_dns():
+            try:
+                result = get_dns_records(domain)
+                print(f"DNS records retrieved: {list(result.keys())}")
+                return ('dns', result)
+            except Exception as e:
+                print(f"Error getting DNS: {e}")
+                return ('dns', {'error': f'DNS lookup failed: {str(e)}'})
+
+        def _fetch_ssl():
+            try:
+                result = get_ssl_info(domain)
+                print(f"SSL info retrieved: {list(result.keys())}")
+                return ('ssl', result)
+            except Exception as e:
+                print(f"Error getting SSL: {e}")
+                return ('ssl', {'error': f'SSL lookup failed: {str(e)}'})
+
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = [
+                executor.submit(_fetch_whois),
+                executor.submit(_fetch_dns),
+                executor.submit(_fetch_ssl),
+            ]
+            for future in as_completed(futures):
+                key, value = future.result()
+                if key == 'whois':
+                    whois_info = value
+                elif key == 'dns':
+                    dns_records = value
+                elif key == 'ssl':
+                    ssl_info = value
+
+        # Save to history tables in background (non-blocking)
+        def _save_histories():
+            try:
+                save_whois_history(domain, whois_info)
+                print("WHOIS history saved")
+            except Exception as e:
+                print(f"Error saving WHOIS history: {e}")
+            try:
+                save_dns_history(domain, dns_records)
+                print("DNS history saved")
+            except Exception as e:
+                print(f"Error saving DNS history: {e}")
+            try:
+                save_ssl_history(domain, ssl_info)
+                print("SSL history saved")
+            except Exception as e:
+                print(f"Error saving SSL history: {e}")
+
+        executor_bg = ThreadPoolExecutor(max_workers=1)
+        executor_bg.submit(_save_histories)
+        executor_bg.shutdown(wait=False)
         
         # MULTI-LAYER RISK ASSESSMENT
         
