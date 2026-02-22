@@ -1,6 +1,5 @@
 "use client";
 
-import ThemeToggle from "@components/ui/ThemeToggle";
 import { Poppins } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
@@ -98,7 +97,7 @@ export default function Navbar() {
             </div>
 
             <div className="flex flex-col justify-center">
-              <span className="font-nico text-gray-900 dark:text-white text-xl md:text-2xl tracking-wide transition-colors duration-300 font-bold leading-none">
+              <span className="font-nico text-white text-xl md:text-2xl tracking-wide transition-colors duration-300 font-bold leading-none">
                 SmartShield
               </span>
               {/* UPDATED: Removed 'uppercase' class */}
@@ -138,10 +137,6 @@ export default function Navbar() {
 
           {/* --- Right Actions --- */}
           <div className="flex items-center gap-4">
-            <ThemeToggle />
-
-            <div className="hidden md:block w-px h-8 bg-gray-200 dark:bg-white/10 mx-1"></div>
-
             <Link
               href="/login"
               className={`hidden md:flex px-8 py-2.5 text-sm font-semibold rounded-full transition-all duration-300 ${poppins.className}

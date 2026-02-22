@@ -14,6 +14,7 @@ export default function UserLoginForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showResendLink, setShowResendLink] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -43,6 +44,7 @@ export default function UserLoginForm() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setShowResendLink(false);
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -50,7 +52,15 @@ export default function UserLoginForm() {
     });
 
     if (error) {
-      setError(error.message);
+      // Check if error is due to unconfirmed email
+      if (error.message.toLowerCase().includes('email') && 
+          (error.message.toLowerCase().includes('confirm') || 
+           error.message.toLowerCase().includes('verif'))) {
+        setError("Please verify your email address before logging in. Check your inbox for the confirmation email.");
+        setShowResendLink(true);
+      } else {
+        setError(error.message);
+      }
       setLoading(false);
     } else if (data.user) {
       // Sync user to users table on login
@@ -59,201 +69,188 @@ export default function UserLoginForm() {
     }
   };
 
+  const handleResendConfirmation = async () => {
+    if (!email) {
+      setError("Please enter your email address first");
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+      
+      if (error) throw error;
+      
+      setError(null);
+      alert("Confirmation email sent! Please check your inbox and spam folder.");
+    } catch (err) {
+      setError("Failed to resend confirmation email. Please try signing up again or contact support.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    // Changed background to a soft gray for better contrast with the white card
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-      {/* Main Card Container - Increased roundedness and shadow for a premium feel */}
-      <div className="flex w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden min-h-[600px]">
-        {/* Left Side - Blue Section */}
-        <div className="hidden lg:flex w-1/2 relative bg-gradient-to-br from-[#545BFF] to-[#4338ca] p-12 flex-col items-center justify-center text-white overflow-hidden">
-          {/* Subtle Background Pattern for texture */}
-          <div
-            className="absolute inset-0 opacity-10"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
-              backgroundSize: "40px 40px",
-            }}
-          ></div>
-
-          {/* Ambient Glow behind the shield */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white/20 blur-[100px] rounded-full pointer-events-none"></div>
-
-          {/* Heading */}
-          <h2 className="text-3xl font-bold mb-8 text-center relative z-10 leading-tight">
-            Securely manage your <br /> system and operations.
-          </h2>
-
-          {/* Shield Icon */}
-          <div className="relative mb-10 z-10 transform hover:scale-105 transition-transform duration-500">
+    <div className="min-h-screen bg-[#FAFAFA] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="flex justify-center">
+          <Link href="/">
             <Image
-              src="/images/loginlogo.png"
-              alt="SmartShield Shield"
-              width={320}
-              height={320}
-              className="drop-shadow-2xl"
-              priority
+              src="/images/miniloginlogo.png"
+              alt="SmartShield"
+              width={48}
+              height={48}
+              className="object-contain"
             />
-          </div>
-
-          {/* Bottom Text */}
-          <p className="text-center text-indigo-100 max-w-sm relative z-10 font-medium">
-            Log in to access your tools and keep everything running smoothly.
-          </p>
+          </Link>
         </div>
+        <h2 className="mt-6 text-center text-2xl font-bold tracking-tight text-gray-900">
+          Log in to SmartShield
+        </h2>
+        <p className="mt-2 text-center text-sm text-gray-600">
+          Don't have an account?{" "}
+          <Link href="/signup" className="font-medium text-[#545BFF] hover:text-[#4349dd] transition-colors">
+            Sign up for free
+          </Link>
+        </p>
+      </div>
 
-        {/* Right Side - Login Form */}
-        <div className="w-full lg:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-white relative">
-          {/* Top Back Link */}
-          <div className="absolute top-8 left-8 md:left-12">
-            <Link
-              href="/"
-              className="group flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              <span className="group-hover:-translate-x-1 transition-transform">
-                ←
-              </span>{" "}
-              Go back
-            </Link>
-          </div>
-
-          {/* Logo Header */}
-          <div className="mb-10 flex flex-col items-center mt-8 lg:mt-0">
-            <div className="flex items-center gap-3 mb-2">
-              <Image
-                src="/images/miniloginlogo.png"
-                alt="SmartShield"
-                width={48}
-                height={48}
-                className="object-contain"
-              />
-              <div className="flex flex-col justify-center">
-                <span className="text-black text-2xl font-bold tracking-wide leading-none">
-                  SmartShield
-                </span>
-                <span className="font-medium text-[#5667FF] tracking-wide text-[10px] mt-1">
-                  AI-Powered Phishing Detector
-                </span>
-              </div>
-            </div>
-          </div>
-
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow-sm sm:rounded-xl sm:px-10 border border-gray-100">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl text-sm flex items-center gap-2 animate-pulse">
-              <svg
-                width="16"
-                height="16"
-                fill="currentColor"
-                viewBox="0 0 16 16"
-              >
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
-                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z" />
-              </svg>
-              {error}
+            <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-lg text-sm">
+              <div className="flex items-start gap-2">
+                <svg
+                  className="flex-shrink-0 mt-0.5"
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                  viewBox="0 0 16 16"
+                >
+                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                  <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z" />
+                </svg>
+                <div className="flex-1">
+                  <p>{error}</p>
+                  {showResendLink && (
+                    <button
+                      onClick={handleResendConfirmation}
+                      disabled={loading}
+                      className="mt-2 text-sm font-semibold text-red-700 hover:text-red-800 underline disabled:opacity-50"
+                    >
+                      Resend confirmation email
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
           <form onSubmit={handleEmailSignIn} className="space-y-5">
-            {/* Email Input */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2 ml-1">
-                Email Address
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email address
               </label>
-              <input
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-4 focus:ring-[#545BFF]/10 focus:border-[#545BFF] transition-all duration-200"
-              />
+              <div className="mt-1">
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="block w-full appearance-none rounded-lg border border-gray-200 px-3 py-2.5 placeholder-gray-400 shadow-sm focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
+                  placeholder="you@example.com"
+                />
+              </div>
             </div>
 
-            {/* Password Input */}
             <div>
-              <div className="flex justify-between items-center mb-2 ml-1">
-                <label className="text-sm font-semibold text-gray-700">
+              <div className="flex items-center justify-between">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                   Password
                 </label>
-                <Link
-                  href="#"
-                  className="text-xs font-semibold text-[#545BFF] hover:text-[#4349dd]"
-                >
-                  Forgot Password?
-                </Link>
+                <div className="text-sm">
+                  <Link href="#" className="font-medium text-[#545BFF] hover:text-[#4349dd] transition-colors">
+                    Forgot password?
+                  </Link>
+                </div>
               </div>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-4 focus:ring-[#545BFF]/10 focus:border-[#545BFF] transition-all duration-200"
-              />
+              <div className="mt-1">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="block w-full appearance-none rounded-lg border border-gray-200 px-3 py-2.5 placeholder-gray-400 shadow-sm focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
+                  placeholder="••••••••"
+                />
+              </div>
             </div>
 
-            {/* Remember Me */}
-            <div className="flex items-center ml-1">
-              <input
-                type="checkbox"
-                id="remember"
-                className="w-4 h-4 text-[#545BFF] rounded border-gray-300 focus:ring-[#545BFF]"
-              />
-              <label
-                htmlFor="remember"
-                className="ml-2 text-sm text-gray-600 cursor-pointer select-none"
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-300 text-[#545BFF] focus:ring-[#545BFF]"
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                  Remember me
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex w-full justify-center rounded-lg bg-[#545BFF] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#4349dd] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#545BFF] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                Keep me signed in
-              </label>
+                {loading ? "Signing in..." : "Sign in"}
+              </button>
             </div>
-
-            {/* Log In Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-[#545BFF] text-white rounded-xl font-bold hover:bg-[#4349dd] hover:shadow-lg hover:shadow-[#545BFF]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
-            >
-              {loading ? "Signing in..." : "Log In"}
-            </button>
           </form>
 
-          {/* Divider */}
-          <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-2 text-gray-500">Or continue with</span>
+              </div>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-500 font-medium">
-                Or continue with
-              </span>
+
+            <div className="mt-6">
+              <button
+                onClick={handleGoogleSignIn}
+                disabled={loading}
+                className="flex w-full items-center justify-center gap-3 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M19.8 10.2273C19.8 9.51819 19.7364 8.83637 19.6182 8.18182H10V12.05H15.5818C15.3364 13.3 14.5636 14.3591 13.3864 15.0682V17.5773H16.7182C18.7091 15.8364 19.8 13.2727 19.8 10.2273Z" fill="#4285F4"/>
+                  <path d="M10 20C12.7 20 14.9636 19.1045 16.7182 17.5773L13.3864 15.0682C12.3909 15.6682 11.1455 16.0227 10 16.0227C7.39545 16.0227 5.19091 14.2636 4.31364 11.9H0.863636V14.4909C2.60909 17.9591 6.07273 20 10 20Z" fill="#34A853"/>
+                  <path d="M4.31364 11.9C4.10909 11.3 4 10.6591 4 10C4 9.34091 4.10909 8.7 4.31364 8.1V5.50909H0.863636C0.318182 6.59091 0 7.76364 0 10C0 12.2364 0.318182 13.4091 0.863636 14.4909L4.31364 11.9Z" fill="#FBBC05"/>
+                  <path d="M10 3.97727C11.2636 3.97727 12.4091 4.40909 13.3182 5.27273L16.2727 2.31818C14.9636 1.08182 12.7 0 10 0C6.07273 0 2.60909 2.04091 0.863636 5.50909L4.31364 8.1C5.19091 5.73636 7.39545 3.97727 10 3.97727Z" fill="#EA4335"/>
+                </svg>
+                Google
+              </button>
             </div>
           </div>
-
-          {/* Google Sign In */}
-          <button
-            onClick={handleGoogleSignIn}
-            disabled={loading}
-            className="w-full py-3 border border-gray-200 bg-white text-gray-700 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-50"
-          >
-            <Image
-              src="https://www.svgrepo.com/show/475656/google-color.svg"
-              alt="Google"
-              width={20}
-              height={20}
-            />
-            Sign in with Google
-          </button>
-
-          {/* Sign Up Link */}
-          <p className="text-center text-gray-600 text-sm mt-8">
-            Don't have an account?{" "}
-            <Link
-              href="/signup"
-              className="text-[#545BFF] hover:text-[#4349dd] hover:underline font-bold transition-colors"
-            >
-              Sign up for free
-            </Link>
-          </p>
         </div>
       </div>
     </div>

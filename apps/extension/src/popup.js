@@ -117,6 +117,14 @@ document.addEventListener("DOMContentLoaded", () => {
     // ── State ──
     let currentRootDomain = null;
     let detailsFetched = false;
+    let dismissedDomains = new Set();
+
+    // Load previously dismissed domains from session storage
+    chrome.storage.session.get(["dismissedAlerts"], (r) => {
+      if (r.dismissedAlerts && Array.isArray(r.dismissedAlerts)) {
+        dismissedDomains = new Set(r.dismissedAlerts);
+      }
+    });
 
     // ── Icons ──
     const Icons = {
@@ -148,16 +156,41 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // ── Alert modal buttons ──
+    // ── Show Badge on Page button ──
+    const locateBadgeBtn = document.getElementById('locate-badge-btn');
+    if (locateBadgeBtn) {
+      locateBadgeBtn.addEventListener('click', async () => {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!tabs[0]) return;
+        // Send message to content script to flash / recreate the badge
+        chrome.tabs.sendMessage(tabs[0].id, { action: 'locateBadge' }).catch(() => {});
+        // Brief visual confirmation in the popup
+        const origHTML = locateBadgeBtn.innerHTML;
+        locateBadgeBtn.classList.add('done');
+        locateBadgeBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Badge shown!`;
+        setTimeout(() => {
+          locateBadgeBtn.classList.remove('done');
+          locateBadgeBtn.innerHTML = origHTML;
+        }, 2000);
+      });
+    }
+    function dismissAlert() {
+      if (alertModal) alertModal.classList.add("hidden");
+      if (currentRootDomain) {
+        dismissedDomains.add(currentRootDomain);
+        chrome.storage.session.set({ dismissedAlerts: [...dismissedDomains] });
+      }
+    }
+
     if (alertLeaveBtn) {
       alertLeaveBtn.addEventListener("click", async () => {
+        dismissAlert();
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tabs[0]) chrome.tabs.update(tabs[0].id, { url: "https://www.google.com" });
-        alertModal.classList.add("hidden");
       });
     }
     if (alertDismissBtn) {
-      alertDismissBtn.addEventListener("click", () => alertModal.classList.add("hidden"));
+      alertDismissBtn.addEventListener("click", () => dismissAlert());
     }
 
     // ── Accordion toggles (lazy detail load) ──
@@ -360,6 +393,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // ── Alert modal ──
     function showAlertModal(title, message, type = "danger") {
       if (!alertModal) return;
+      // Don't re-show if user already dismissed for this domain
+      if (currentRootDomain && dismissedDomains.has(currentRootDomain)) return;
       if (alertTitle)   alertTitle.textContent   = title;
       if (alertMessage) alertMessage.textContent = message;
       if (alertContent) alertContent.className   = `modal-box ${type}`;
