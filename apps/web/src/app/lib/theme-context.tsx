@@ -13,15 +13,13 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
-    // This won't run on server, only on client after hydration
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("theme") as Theme | null;
+      // Only follow OS preference if the user has never explicitly chosen a theme
       if (saved) return saved;
-      return window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
     }
-    return "light";
+    // Default to dark — the site is designed dark-first
+    return "dark";
   });
 
   // Only run on mount to sync with initial theme

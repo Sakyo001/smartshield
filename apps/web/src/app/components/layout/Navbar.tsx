@@ -63,7 +63,7 @@ export default function Navbar() {
       <nav
         className={`fixed top-0 left-0 z-50 w-full transition-all duration-500 ease-in-out border-b ${
           isScrolled
-            ? "bg-white/80 dark:bg-[#0a0a0f]/80 backdrop-blur-xl shadow-lg dark:border-white/5 border-gray-200/50 py-2"
+            ? "bg-[#0a0a0f]/80 backdrop-blur-xl shadow-lg border-white/5 py-2"
             : "bg-transparent border-transparent py-4"
         }`}
       >
@@ -123,7 +123,7 @@ export default function Navbar() {
                   className={`relative px-5 py-2 text-sm font-medium rounded-full transition-all duration-300 group ${
                     isActive
                       ? "text-[#5667FF] bg-[#5667FF]/10 font-semibold"
-                      : "text-gray-600 dark:text-gray-300 hover:text-[#5667FF] dark:hover:text-[#5667FF]"
+                      : "text-gray-300 hover:text-[#5667FF]"
                   }`}
                 >
                   {item}
@@ -149,7 +149,7 @@ export default function Navbar() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              className="md:hidden p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
             >
               <svg
                 width="28"
@@ -174,7 +174,7 @@ export default function Navbar() {
 
       {/* --- Mobile Menu Overlay --- */}
       <div
-        className={`fixed inset-0 z-40 bg-white/95 dark:bg-[#0a0a0f]/95 backdrop-blur-xl transition-transform duration-300 ease-in-out md:hidden flex flex-col items-center justify-center gap-8 ${
+        className={`fixed inset-0 z-40 bg-[#0a0a0f]/95 backdrop-blur-xl transition-transform duration-300 ease-in-out md:hidden flex flex-col items-center justify-center gap-8 ${
           isMobileMenuOpen ? "translate-y-0" : "-translate-y-full"
         }`}
       >
@@ -183,7 +183,7 @@ export default function Navbar() {
             key={item}
             href={`#${item.toLowerCase()}`}
             onClick={(e) => handleSmoothScroll(e, `#${item.toLowerCase()}`)}
-            className="text-2xl font-bold text-gray-900 dark:text-white hover:text-[#5667FF] transition-colors"
+            className="text-2xl font-bold text-white hover:text-[#5667FF] transition-colors"
           >
             {item}
           </a>

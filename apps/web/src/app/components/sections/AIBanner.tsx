@@ -38,7 +38,7 @@ export default function AIBanner() {
 
   return (
     // MODIFIED: Removed 'dark:bg-black' so background stays light
-    <section className="py-24 px-6 bg-gray-50 transition-colors">
+    <section className="py-24 px-6 bg-[#0a0a0f]">
       <div className="max-w-7xl mx-auto">
         {/* Main Card Container (Kept dark for contrast) */}
           <div className="relative bg-[#0a0a0f] rounded-2xl md:rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl group">
