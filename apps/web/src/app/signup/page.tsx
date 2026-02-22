@@ -145,30 +145,30 @@ export default function SignUpPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#FAFAFA] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-[#0a0a0f] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white py-10 px-6 shadow-sm sm:rounded-xl sm:px-12 border border-gray-100 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 mb-6">
-              <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+          <div className="bg-[#0f0f1e] py-10 px-6 sm:rounded-xl sm:px-12 border border-gray-800 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10 border border-green-500/20 mb-6">
+              <svg className="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold tracking-tight text-gray-900 mb-4">
+            <h2 className="text-2xl font-bold tracking-tight text-white mb-4">
               {needsEmailConfirmation ? "Check your email" : "Account created"}
             </h2>
             
             {needsEmailConfirmation ? (
               <>
-                <p className="text-sm text-gray-600 mb-6">
-                  We've sent a confirmation link to <span className="font-medium text-gray-900">{email}</span>. 
+                <p className="text-sm text-gray-400 mb-6">
+                  We've sent a confirmation link to <span className="font-medium text-white">{email}</span>. 
                   Please click the link to verify your account.
                 </p>
                 
                 {resendMessage && (
                   <div className={`mb-6 p-3 rounded-lg text-sm ${
                     resendMessage.includes('sent') 
-                      ? 'bg-green-50 text-green-700 border border-green-100' 
-                      : 'bg-red-50 text-red-700 border border-red-100'
+                      ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
+                      : 'bg-red-500/10 text-red-400 border border-red-500/20'
                   }`}>
                     {resendMessage}
                   </div>
@@ -178,13 +178,13 @@ export default function SignUpPage() {
                   <button
                     onClick={handleResendConfirmation}
                     disabled={resendingEmail}
-                    className="w-full rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    className="w-full rounded-lg bg-[#1a1a2e] px-4 py-2.5 text-sm font-semibold text-gray-200 border border-gray-700 hover:bg-[#252540] hover:border-gray-600 transition-colors disabled:opacity-50"
                   >
                     {resendingEmail ? "Sending..." : "Resend email"}
                   </button>
                   <Link
                     href="/login"
-                    className="w-full rounded-lg bg-[#545BFF] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#4349dd] transition-colors"
+                    className="w-full rounded-lg bg-[#545BFF] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#4349dd] transition-colors text-center block"
                   >
                     Back to login
                   </Link>
@@ -192,7 +192,7 @@ export default function SignUpPage() {
               </>
             ) : (
               <>
-                <p className="text-sm text-gray-600 mb-6">
+                <p className="text-sm text-gray-400 mb-6">
                   Redirecting you to the dashboard...
                 </p>
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#545BFF] mx-auto"></div>
@@ -205,7 +205,7 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#0a0a0f] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <Link href="/">
@@ -218,21 +218,21 @@ export default function SignUpPage() {
             />
           </Link>
         </div>
-        <h2 className="mt-6 text-center text-2xl font-bold tracking-tight text-gray-900">
+        <h2 className="mt-6 text-center text-2xl font-bold tracking-tight text-white">
           Create an account
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        <p className="mt-2 text-center text-sm text-gray-400">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-[#545BFF] hover:text-[#4349dd] transition-colors">
+          <Link href="/login" className="font-medium text-[#7B83FF] hover:text-[#a5adff] transition-colors">
             Log in
           </Link>
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow-sm sm:rounded-xl sm:px-10 border border-gray-100">
+        <div className="bg-[#0f0f1e] py-8 px-4 sm:rounded-xl sm:px-10 border border-gray-800">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-lg text-sm">
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-sm">
               <div className="flex items-start gap-2">
                 <svg className="flex-shrink-0 mt-0.5" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                   <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
@@ -245,11 +245,11 @@ export default function SignUpPage() {
 
           <form onSubmit={handleEmailSignUp} className="space-y-5">
             <div>
-              <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">
-                Name <span className="text-gray-400 font-normal">(Optional)</span>
+              <label htmlFor="displayName" className="block text-sm font-medium text-gray-300">
+                Name <span className="text-gray-500 font-normal">(Optional)</span>
               </label>
               <div className="mt-1 relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
                   <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor">
                     <circle cx="10" cy="7" r="3" strokeWidth="1.5" />
                     <path d="M4 17c0-2.5 2.5-5 6-5s6 2.5 6 5" strokeWidth="1.5" strokeLinecap="round"/>
@@ -261,18 +261,18 @@ export default function SignUpPage() {
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="block w-full appearance-none rounded-lg border border-gray-200 pl-10 pr-3 py-2.5 placeholder-gray-400 shadow-sm focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
+                  className="block w-full appearance-none rounded-lg border border-gray-700 bg-[#1a1a2e] pl-10 pr-3 py-2.5 text-white placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
                   placeholder="John Doe"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
                 Email address
               </label>
               <div className="mt-1 relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
                   <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor">
                     <path d="M3 4h14a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" strokeWidth="1.5"/>
                     <path d="M2 5l8 5 8-5" strokeWidth="1.5" strokeLinecap="round"/>
@@ -286,18 +286,18 @@ export default function SignUpPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full appearance-none rounded-lg border border-gray-200 pl-10 pr-3 py-2.5 placeholder-gray-400 shadow-sm focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
+                  className="block w-full appearance-none rounded-lg border border-gray-700 bg-[#1a1a2e] pl-10 pr-3 py-2.5 text-white placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
                   placeholder="you@example.com"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
                 Password
               </label>
               <div className="mt-1 relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
                   <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor">
                     <rect x="4" y="9" width="12" height="8" rx="1" strokeWidth="1.5"/>
                     <path d="M7 9V6a3 3 0 0 1 6 0v3" strokeWidth="1.5" strokeLinecap="round"/>
@@ -310,18 +310,18 @@ export default function SignUpPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full appearance-none rounded-lg border border-gray-200 pl-10 pr-3 py-2.5 placeholder-gray-400 shadow-sm focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
+                  className="block w-full appearance-none rounded-lg border border-gray-700 bg-[#1a1a2e] pl-10 pr-3 py-2.5 text-white placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
                   placeholder="Min 6 characters"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300">
                 Confirm password
               </label>
               <div className="mt-1 relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
                   <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor">
                     <rect x="4" y="9" width="12" height="8" rx="1" strokeWidth="1.5"/>
                     <path d="M7 9V6a3 3 0 0 1 6 0v3" strokeWidth="1.5" strokeLinecap="round"/>
@@ -335,7 +335,7 @@ export default function SignUpPage() {
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="block w-full appearance-none rounded-lg border border-gray-200 pl-10 pr-3 py-2.5 placeholder-gray-400 shadow-sm focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
+                  className="block w-full appearance-none rounded-lg border border-gray-700 bg-[#1a1a2e] pl-10 pr-3 py-2.5 text-white placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
                   placeholder="Repeat password"
                 />
               </div>
@@ -355,10 +355,10 @@ export default function SignUpPage() {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
+                <div className="w-full border-t border-gray-700" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                <span className="bg-[#0f0f1e] px-2 text-gray-500">Or continue with</span>
               </div>
             </div>
 
@@ -366,7 +366,7 @@ export default function SignUpPage() {
               <button
                 onClick={handleGoogleSignUp}
                 disabled={loading}
-                className="flex w-full items-center justify-center gap-3 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#1a1a2e] px-4 py-2.5 text-sm font-semibold text-gray-200 border border-gray-700 hover:bg-[#252540] hover:border-gray-600 transition-colors disabled:opacity-50"
               >
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M19.8 10.2273C19.8 9.51819 19.7364 8.83637 19.6182 8.18182H10V12.05H15.5818C15.3364 13.3 14.5636 14.3591 13.3864 15.0682V17.5773H16.7182C18.7091 15.8364 19.8 13.2727 19.8 10.2273Z" fill="#4285F4"/>

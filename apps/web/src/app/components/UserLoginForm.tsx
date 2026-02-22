@@ -99,7 +99,7 @@ export default function UserLoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#0a0a0f] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <Link href="/">
@@ -112,21 +112,21 @@ export default function UserLoginForm() {
             />
           </Link>
         </div>
-        <h2 className="mt-6 text-center text-2xl font-bold tracking-tight text-gray-900">
+        <h2 className="mt-6 text-center text-2xl font-bold tracking-tight text-white">
           Log in to SmartShield
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        <p className="mt-2 text-center text-sm text-gray-400">
           Don't have an account?{" "}
-          <Link href="/signup" className="font-medium text-[#545BFF] hover:text-[#4349dd] transition-colors">
+          <Link href="/signup" className="font-medium text-[#7B83FF] hover:text-[#a5adff] transition-colors">
             Sign up for free
           </Link>
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow-sm sm:rounded-xl sm:px-10 border border-gray-100">
+        <div className="bg-[#0f0f1e] py-8 px-4 sm:rounded-xl sm:px-10 border border-gray-800">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-lg text-sm">
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-sm">
               <div className="flex items-start gap-2">
                 <svg
                   className="flex-shrink-0 mt-0.5"
@@ -144,7 +144,7 @@ export default function UserLoginForm() {
                     <button
                       onClick={handleResendConfirmation}
                       disabled={loading}
-                      className="mt-2 text-sm font-semibold text-red-700 hover:text-red-800 underline disabled:opacity-50"
+                      className="mt-2 text-sm font-semibold text-red-300 hover:text-red-200 underline disabled:opacity-50"
                     >
                       Resend confirmation email
                     </button>
@@ -156,7 +156,7 @@ export default function UserLoginForm() {
 
           <form onSubmit={handleEmailSignIn} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
                 Email address
               </label>
               <div className="mt-1">
@@ -168,7 +168,7 @@ export default function UserLoginForm() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full appearance-none rounded-lg border border-gray-200 px-3 py-2.5 placeholder-gray-400 shadow-sm focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
+                  className="block w-full appearance-none rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2.5 text-white placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
                   placeholder="you@example.com"
                 />
               </div>
@@ -176,11 +176,11 @@ export default function UserLoginForm() {
 
             <div>
               <div className="flex items-center justify-between">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-300">
                   Password
                 </label>
                 <div className="text-sm">
-                  <Link href="#" className="font-medium text-[#545BFF] hover:text-[#4349dd] transition-colors">
+                  <Link href="#" className="font-medium text-[#7B83FF] hover:text-[#a5adff] transition-colors">
                     Forgot password?
                   </Link>
                 </div>
@@ -194,7 +194,7 @@ export default function UserLoginForm() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full appearance-none rounded-lg border border-gray-200 px-3 py-2.5 placeholder-gray-400 shadow-sm focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
+                  className="block w-full appearance-none rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2.5 text-white placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
                   placeholder="••••••••"
                 />
               </div>
@@ -206,9 +206,9 @@ export default function UserLoginForm() {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-[#545BFF] focus:ring-[#545BFF]"
+                  className="h-4 w-4 rounded border-gray-600 bg-[#1a1a2e] text-[#545BFF] focus:ring-[#545BFF]"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-400">
                   Remember me
                 </label>
               </div>
@@ -228,10 +228,10 @@ export default function UserLoginForm() {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
+                <div className="w-full border-t border-gray-700" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                <span className="bg-[#0f0f1e] px-2 text-gray-500">Or continue with</span>
               </div>
             </div>
 
@@ -239,13 +239,13 @@ export default function UserLoginForm() {
               <button
                 onClick={handleGoogleSignIn}
                 disabled={loading}
-                className="flex w-full items-center justify-center gap-3 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#1a1a2e] px-4 py-2.5 text-sm font-semibold text-gray-200 border border-gray-700 hover:bg-[#252540] hover:border-gray-600 transition-colors disabled:opacity-50"
               >
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M19.8 10.2273C19.8 9.51819 19.7364 8.83637 19.6182 8.18182H10V12.05H15.5818C15.3364 13.3 14.5636 14.3591 13.3864 15.0682V17.5773H16.7182C18.7091 15.8364 19.8 13.2727 19.8 10.2273Z" fill="#4285F4"/>
                   <path d="M10 20C12.7 20 14.9636 19.1045 16.7182 17.5773L13.3864 15.0682C12.3909 15.6682 11.1455 16.0227 10 16.0227C7.39545 16.0227 5.19091 14.2636 4.31364 11.9H0.863636V14.4909C2.60909 17.9591 6.07273 20 10 20Z" fill="#34A853"/>
                   <path d="M4.31364 11.9C4.10909 11.3 4 10.6591 4 10C4 9.34091 4.10909 8.7 4.31364 8.1V5.50909H0.863636C0.318182 6.59091 0 7.76364 0 10C0 12.2364 0.318182 13.4091 0.863636 14.4909L4.31364 11.9Z" fill="#FBBC05"/>
-                  <path d="M10 3.97727C11.2636 3.97727 12.4091 4.40909 13.3182 5.27273L16.2727 2.31818C14.9636 1.08182 12.7 0 10 0C6.07273 0 2.60909 2.04091 0.863636 5.50909L4.31364 8.1C5.19091 5.73636 7.39545 3.97727 10 3.97727Z" fill="#EA4335"/>
+                  <path d="M10 3.97727C11.2636 3.97727 12.4091 4.40909 13.3182 5.27273L16.2727 2.31818C14.9636 1.08182 12.7 0 10 0C6.07273 0 2.60909 2.04091 0.863636 5.50909L4.31364 8.1C5.19091 5.73736 7.39545 3.97727 10 3.97727Z" fill="#EA4335"/>
                 </svg>
                 Google
               </button>

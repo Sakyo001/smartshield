@@ -4,7 +4,7 @@ import Aurora from "../ui/Aurora";
 
 export default function Footer() {
   return (
-    <footer className="relative bg-gray-100 dark:bg-[#0a0a0f] border-t border-gray-300 dark:border-gray-800 py-8 px-6 transition-colors overflow-hidden">
+    <footer className="relative bg-[#0a0a0f] border-t border-gray-800 py-8 px-6 overflow-hidden">
       {/* --- Aurora Background Effect --- */}
       {/* 1. Anchored firmly to bottom (bottom-0) */}
       {/* 2. Fixed height (h-[500px]) to ensure large, visible waves rising up */}
@@ -33,7 +33,7 @@ export default function Footer() {
               height={32}
               className="object-contain"
             />
-            <span className="text-gray-900 dark:text-white text-lg font-semibold transition-colors">
+            <span className="text-white text-lg font-semibold">
               SmartShield
             </span>
           </div>
@@ -42,31 +42,31 @@ export default function Footer() {
           <div className="flex flex-wrap items-center justify-center gap-8 text-sm">
             <Link
               href="/about"
-              className="text-gray-600 dark:text-gray-400 hover:text-[#545BFF] dark:hover:text-[#545BFF] transition-colors"
+              className="text-gray-400 hover:text-[#545BFF] transition-colors"
             >
               SmartShield
             </Link>
             <Link
               href="/terms"
-              className="text-gray-600 dark:text-gray-400 hover:text-[#545BFF] dark:hover:text-[#545BFF] transition-colors"
+              className="text-gray-400 hover:text-[#545BFF] transition-colors"
             >
               Terms and Condition
             </Link>
             <Link
               href="/privacy"
-              className="text-gray-600 dark:text-gray-400 hover:text-[#545BFF] dark:hover:text-[#545BFF] transition-colors"
+              className="text-gray-400 hover:text-[#545BFF] transition-colors"
             >
               Privacy Policy
             </Link>
             <Link
               href="/about"
-              className="text-gray-600 dark:text-gray-400 hover:text-[#545BFF] dark:hover:text-[#545BFF] transition-colors"
+              className="text-gray-400 hover:text-[#545BFF] transition-colors"
             >
               About
             </Link>
             <Link
               href="/cookies"
-              className="text-gray-600 dark:text-gray-400 hover:text-[#545BFF] dark:hover:text-[#545BFF] transition-colors"
+              className="text-gray-400 hover:text-[#545BFF] transition-colors"
             >
               Cookies
             </Link>

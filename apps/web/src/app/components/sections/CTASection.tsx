@@ -33,14 +33,14 @@ export default function CTASection() {
   }, []);
 
   return (
-    <section className="py-20 px-6 bg-gray-50 dark:bg-[#0a0a0f] relative overflow-hidden transition-colors">
+    <section className="py-20 px-6 bg-[#0a0a0f] relative overflow-hidden">
       {/* Background glow effect */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="w-[600px] h-[600px] bg-[#545BFF]/10 dark:bg-[#141414]/20 rounded-full blur-[150px]"></div>
       </div>
 
       <div className="max-w-5xl mx-auto text-center relative z-10">
-        <h2 className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-white mb-8 transition-colors">
+        <h2 className="text-3xl md:text-5xl font-bold text-white mb-8">
           Browse Safe.
           <br />
           Stay Smart.
@@ -55,7 +55,7 @@ export default function CTASection() {
           </Link>
 
           <button
-            className="w-full sm:w-auto px-10 h-[41px] flex items-center justify-center text-gray-700 dark:text-white border border-gray-300 dark:border-white/20 hover:border-gray-400 dark:hover:border-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-full transition-all duration-300 font-medium"
+            className="w-full sm:w-auto px-10 h-[41px] flex items-center justify-center text-white border border-white/20 hover:border-white hover:bg-white/5 rounded-full transition-all duration-300 font-medium"
           >
             Scan Website
           </button>
