@@ -31,5 +31,12 @@
   "action": {
     "default_popup": "popup.html",
     "default_title": "SmartShield - Check this page"
-  }
+  },
+
+  "web_accessible_resources": [
+    {
+      "resources": ["images/light-logo-extension.png"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

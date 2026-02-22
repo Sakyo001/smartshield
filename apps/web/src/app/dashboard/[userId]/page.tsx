@@ -60,6 +60,7 @@ export default function UserDashboard() {
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking')
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [activeDashNav, setActiveDashNav] = useState<"scanner" | "history" | "how-to-use" | "extension">("scanner")
   const [xaiExplanation, setXaiExplanation] = useState<any>(null)
   const [loadingXAI, setLoadingXAI] = useState(false)
 
@@ -553,11 +554,28 @@ export default function UserDashboard() {
   </div>
 </Link>
           
-          <div className="hidden md:flex items-center gap-8">
-            <Link href="/" className="text-gray-300 hover:text-white transition text-sm">Home</Link>
-            <Link href="/#scan" className="text-gray-300 hover:text-white transition text-sm">Scan</Link>
-            <Link href="/#about" className="text-gray-300 hover:text-white transition text-sm">About</Link>
-            <Link href="/#faq" className="text-gray-300 hover:text-white transition text-sm">FAQ</Link>
+          <div className="hidden md:flex items-center gap-1">
+            {(["scanner", "history", "how-to-use", "extension"] as const).map((tab) => {
+              const labels: Record<string, string> = {
+                scanner: "Scanner",
+                history: "Scan History",
+                "how-to-use": "How to Use",
+                extension: "Extension",
+              };
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveDashNav(tab)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    activeDashNav === tab
+                      ? "bg-[#7B83FF]/15 text-[#a5adff] border border-[#7B83FF]/30"
+                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {labels[tab]}
+                </button>
+              );
+            })}
           </div>
 
           <button 
@@ -576,12 +594,132 @@ export default function UserDashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-16">
+
+        {/* ── How to Use View ── */}
+        {activeDashNav === "how-to-use" && (
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">How to Use <span className="text-[#7B83FF]">SmartShield</span></h2>
+            <p className="text-gray-400 mb-12">Follow these steps to protect yourself from phishing attacks.</p>
+
+            <div className="space-y-6">
+              {[
+                {
+                  step: "01",
+                  title: "Paste a URL into the Scanner",
+                  desc: "Copy any suspicious link you've received via email, message, or social media. Head to the Scanner tab and paste it into the input field.",
+                  icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>,
+                },
+                {
+                  step: "02",
+                  title: "Click \"Scan Now\"",
+                  desc: "Our AI engine checks the URL against threat intelligence databases, WHOIS records, DNS info, and SSL certificates in real time.",
+                  icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+                },
+                {
+                  step: "03",
+                  title: "Read the Risk Score",
+                  desc: "A risk score from 0–100 is assigned. Green (0–39) is Safe, Yellow (40–69) is a Warning, and Red (70–100) is Dangerous. Inspect the Detection, Explanation, Details, and Community tabs for deeper insight.",
+                  icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+                },
+                {
+                  step: "04",
+                  title: "Install the Browser Extension",
+                  desc: "For automatic protection while you browse, install the SmartShield Chrome extension. It scans every page you visit and alerts you before you click a dangerous link.",
+                  icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>,
+                },
+                {
+                  step: "05",
+                  title: "Review Your Scan History",
+                  desc: "All scans are saved automatically. Head to the Scan History tab to review past results, spot patterns, or re-check a URL at any time.",
+                  icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>,
+                },
+              ].map(({ step, title, desc, icon }) => (
+                <div key={step} className="flex gap-6 p-6 bg-[#1a1a2e]/60 border border-gray-800 rounded-2xl backdrop-blur-sm">
+                  <div className="flex-shrink-0 flex flex-col items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-[#7B83FF]/10 border border-[#7B83FF]/30 flex items-center justify-center text-[#7B83FF]">
+                      {icon}
+                    </div>
+                    <span className="text-[#7B83FF]/40 text-xs font-mono font-bold">{step}</span>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold text-lg mb-2">{title}</h3>
+                    <p className="text-gray-400 text-sm leading-relaxed">{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-10 p-6 bg-[#545BFF]/5 border border-[#545BFF]/20 rounded-2xl">
+              <h4 className="text-white font-semibold mb-2">⚠️ Tips for Staying Safe</h4>
+              <ul className="space-y-2 text-sm text-gray-400 list-disc list-inside">
+                <li>Always verify links before entering personal information.</li>
+                <li>Look for HTTPS — HTTP sites are unencrypted and riskier.</li>
+                <li>Newly registered domains (less than 1 year old) carry higher risk.</li>
+                <li>Community flags and XAI explanations provide extra context on suspicious sites.</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* ── Extension View ── */}
+        {activeDashNav === "extension" && (
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">Browser <span className="text-[#7B83FF]">Extension</span></h2>
+            <p className="text-gray-400 mb-12">Get real-time phishing protection directly in your browser.</p>
+
+            <div className="grid sm:grid-cols-2 gap-6 mb-10">
+              {[
+                { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>, title: "Automatic Scanning", desc: "Every URL you visit is scanned automatically in the background." },
+                { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>, title: "Instant Alerts", desc: "Get a popup warning before you land on a dangerous phishing site." },
+                { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>, title: "Synced with Dashboard", desc: "All scans from the extension sync to your dashboard history automatically." },
+                { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>, title: "Lightweight & Fast", desc: "Minimal performance impact — scans run in milliseconds without slowing your browser." },
+              ].map(({ icon, title, desc }) => (
+                <div key={title} className="p-6 bg-[#1a1a2e]/60 border border-gray-800 rounded-2xl">
+                  <div className="w-10 h-10 rounded-lg bg-[#7B83FF]/10 border border-[#7B83FF]/20 flex items-center justify-center text-[#7B83FF] mb-4">
+                    {icon}
+                  </div>
+                  <h3 className="text-white font-semibold mb-1">{title}</h3>
+                  <p className="text-gray-400 text-sm">{desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-8 bg-gradient-to-br from-[#545BFF]/10 to-[#7B83FF]/5 border border-[#545BFF]/20 rounded-2xl text-center">
+              <h3 className="text-white text-xl font-bold mb-3">Ready to Install?</h3>
+              <p className="text-gray-400 text-sm mb-6 max-w-sm mx-auto">The SmartShield extension is available for Chromium-based browsers. Download and load it manually from the project repository.</p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <a
+                  href="https://github.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#545BFF] hover:bg-[#4349dd] text-white rounded-lg font-medium transition text-sm"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.373 0 12c0 5.303 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+                  View on GitHub
+                </a>
+                <button
+                  onClick={() => setActiveDashNav("how-to-use")}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-gray-700 text-white rounded-lg font-medium transition text-sm"
+                >
+                  Setup Guide
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Scanner + History Views (default) ── */}
+        {(activeDashNav === "scanner" || activeDashNav === "history") && (
+        <>
         {/* Title */}
+        {activeDashNav === "scanner" && (
         <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white text-center mb-8 md:mb-16">
           Is This Website <span className="text-[#7B83FF]">Safe</span>? Find Out Instantly
         </h1>
+        )}
 
-        {/* Scan Box */}
+        {/* Scan Box – scanner tab only */}
+        {activeDashNav === "scanner" && (
         <div className="max-w-3xl mx-auto mb-20">
           <div className="flex items-start gap-3 mb-6">
             <Image src="/images/logo 1.png" alt="SmartShield" width={54} height={54} />
@@ -677,9 +815,10 @@ export default function UserDashboard() {
 
      
         </div>
+        )}  {/* end scanner-only scan box */}
 
-        {/* Scan Results */}
-        {currentScan && (
+        {/* Scan Results – scanner tab only */}
+        {activeDashNav === "scanner" && currentScan && (
           <div className="max-w-6xl mx-auto mb-20">
             {/* Risk Score Card */}
             <div className={`relative overflow-hidden rounded-2xl border ${
@@ -1278,7 +1417,14 @@ export default function UserDashboard() {
                   <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
                </svg>
             </div>
-            <h2 className="text-xl font-semibold text-white tracking-tight">Recent Activity</h2>
+            {activeDashNav === "history" ? (
+              <div>
+                <h2 className="text-2xl font-bold text-white tracking-tight">Scan History</h2>
+                <p className="text-gray-500 text-sm mt-0.5">All URLs you have scanned — click any row to view the full report.</p>
+              </div>
+            ) : (
+              <h2 className="text-xl font-semibold text-white tracking-tight">Recent Activity</h2>
+            )}
           </div>
 
           <div className="bg-[#1a1a2e]/40 backdrop-blur-md border border-gray-800/50 rounded-2xl overflow-hidden shadow-xl">
@@ -1339,6 +1485,8 @@ export default function UserDashboard() {
             </div>
           </div>
         </div>
+        </>
+        )}
       </div>
       
       {/* Footer Background blend */}

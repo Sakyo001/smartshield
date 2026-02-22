@@ -324,15 +324,42 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   });
 });
 
-// ── On tab switch: show cached badge instantly ──
+// ── On tab switch: restore badge in both toolbar AND page ──
 chrome.tabs.onActivated.addListener((activeInfo) => {
   chrome.tabs.get(activeInfo.tabId, (tab) => {
     if (!tab || !tab.url || shouldSkip(tab.url)) return;
     const rootDomain = getRootDomain(tab.url);
+
+    // Always update toolbar badge from cache
     const cached = resultCache.get(rootDomain);
     if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
       updateTabBadge(activeInfo.tabId, cached.result);
+      // Re-send to content script so the floating badge re-appears after auto-dismiss
+      chrome.tabs.sendMessage(activeInfo.tabId, {
+        action: 'showScanResult',
+        result: cached.result,
+        rootDomain
+      }).catch(() => {});
+      return;
     }
+
+    // Not in memory cache — check storage cache
+    const storageKey = `result_${rootDomain}`;
+    chrome.storage.local.get([storageKey, `${storageKey}_ts`], (stored) => {
+      if (stored[storageKey] && stored[`${storageKey}_ts`]) {
+        const age = Date.now() - stored[`${storageKey}_ts`];
+        if (age < CACHE_TTL) {
+          const result = stored[storageKey];
+          resultCache.set(rootDomain, { result, timestamp: stored[`${storageKey}_ts`] });
+          updateTabBadge(activeInfo.tabId, result);
+          chrome.tabs.sendMessage(activeInfo.tabId, {
+            action: 'showScanResult',
+            result,
+            rootDomain
+          }).catch(() => {});
+        }
+      }
+    });
   });
 });
 

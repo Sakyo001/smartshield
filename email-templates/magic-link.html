@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login to SmartShield - Magic Link</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f4;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f4f4f4; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <!-- Main Container -->
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+          
+          <!-- Header with Gradient -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #545BFF 0%, #7B83FF 100%); padding: 40px 30px; text-align: center;">
+              <img src="http://smartshield.it.com/images/light-logo.png" alt="SmartShield" width="60" height="60" style="display: block; margin: 0 auto 16px;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">SmartShield</h1>
+              <p style="margin: 8px 0 0; color: rgba(255, 255, 255, 0.9); font-size: 16px;">AI-Powered Phishing Detection</p>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 48px 40px;">
+              <h2 style="margin: 0 0 16px; color: #141414; font-size: 24px; font-weight: 600;">Your Login Link</h2>
+              
+              <p style="margin: 0 0 24px; color: #666666; font-size: 16px; line-height: 1.6;">
+                Click the button below to securely log in to your SmartShield account. No password needed!
+              </p>
+              
+              <!-- CTA Button -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 32px 0;">
+                <tr>
+                  <td align="center" style="border-radius: 8px; background: linear-gradient(135deg, #545BFF 0%, #7B83FF 100%);">
+                    <a href="{{ .ConfirmationURL }}" target="_blank" style="display: inline-block; padding: 16px 48px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; letter-spacing: 0.3px;">
+                      Log In to SmartShield
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 24px 0 0; color: #999999; font-size: 14px; line-height: 1.6;">
+                Or copy and paste this link into your browser:
+              </p>
+              <p style="margin: 8px 0 0; padding: 12px; background-color: #f8f8f8; border-radius: 6px; color: #545BFF; font-size: 13px; word-break: break-all; border-left: 3px solid #545BFF;">
+                {{ .ConfirmationURL }}
+              </p>
+              
+              <hr style="margin: 32px 0; border: none; border-top: 1px solid #e5e5e5;">
+              
+              <div style="background-color: #E8F4FD; border-left: 3px solid #2196F3; padding: 16px; border-radius: 6px; margin: 24px 0;">
+                <p style="margin: 0; color: #1565C0; font-size: 14px; line-height: 1.6; font-weight: 600;">
+                  ℹ️ Quick & Secure
+                </p>
+                <p style="margin: 8px 0 0; color: #1565C0; font-size: 13px; line-height: 1.6;">
+                  This magic link will log you in automatically. It expires in 1 hour and can only be used once for security purposes.
+                </p>
+              </div>
+              
+              <p style="margin: 24px 0 0; color: #999999; font-size: 13px; line-height: 1.6;">
+                If you didn't request this login link, you can safely ignore this email.
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 32px 40px; background-color: #141414; text-align: center;">
+              <p style="margin: 0 0 12px; color: #ffffff; font-size: 16px; font-weight: 600;">SmartShield</p>
+              <p style="margin: 0 0 16px; color: rgba(255, 255, 255, 0.7); font-size: 14px;">
+                Protecting you from phishing attacks with AI
+              </p>
+              <p style="margin: 0; color: rgba(255, 255, 255, 0.5); font-size: 12px;">
+                © 2025 SmartShield. All rights reserved.
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

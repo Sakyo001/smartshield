@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@lib/supabase";
 import Aurora from "@components/ui/Aurora";
-import ThemeToggle from "@components/ui/ThemeToggle";
 
 export default function AdminDashboardClient() {
   const router = useRouter();
@@ -119,6 +118,10 @@ export default function AdminDashboardClient() {
             day: "numeric",
           }),
           url: report.url,
+          domain: report.domain || "",
+          confidence: report.confidence ?? null,
+          decision: report.decision || "",
+          prediction: report.prediction || null,
           risk: report.decision === "dangerous" ? "Phishing" : report.decision === "safe" ? "Legitimate" : "Suspicious",
           feedback: true,
         }));
@@ -447,7 +450,6 @@ export default function AdminDashboardClient() {
 
           {/* Right Section */}
           <div className="flex items-center gap-4">
-            <ThemeToggle />
             <div className="text-sm text-gray-400 hidden sm:block">
               Admin: <span className="text-white font-medium">{adminEmail}</span>
             </div>
@@ -698,14 +700,107 @@ export default function AdminDashboardClient() {
                   </span>
                 </div>
 
-                <div className="border-t border-gray-700/50 pt-4">
-                  <p className="text-gray-400 text-sm mb-2">Scan Summary</p>
-                  <div className="bg-gray-950/50 rounded p-3 text-gray-300 text-sm">
-                    <p>User <span className="text-white font-medium">{selectedFeedback.email}</span> scanned</p>
-                    <p className="mt-1">URL: <span className="text-blue-400 break-all">{selectedFeedback.url}</span></p>
-                    <p className="mt-1">Result: <span className={`font-medium ${selectedFeedback.risk === 'Phishing' ? 'text-red-400' : selectedFeedback.risk === 'Legitimate' ? 'text-green-400' : 'text-yellow-400'}`}>{selectedFeedback.risk}</span></p>
+                {/* Domain */}
+                {selectedFeedback.domain && (
+                  <div>
+                    <p className="text-gray-400 text-sm">Domain</p>
+                    <p className="text-white font-mono text-sm">{selectedFeedback.domain}</p>
                   </div>
-                </div>
+                )}
+
+                {/* Risk Score */}
+                {selectedFeedback.confidence != null && (
+                  <div>
+                    <p className="text-gray-400 text-sm">Risk Score</p>
+                    <div className="flex items-center gap-3 mt-1">
+                      <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${
+                            selectedFeedback.confidence >= 70
+                              ? "bg-red-500"
+                              : selectedFeedback.confidence >= 40
+                              ? "bg-yellow-500"
+                              : "bg-green-500"
+                          }`}
+                          style={{ width: `${selectedFeedback.confidence}%` }}
+                        />
+                      </div>
+                      <span className={`text-sm font-bold ${
+                        selectedFeedback.confidence >= 70 ? "text-red-400" :
+                        selectedFeedback.confidence >= 40 ? "text-yellow-400" : "text-green-400"
+                      }`}>{selectedFeedback.confidence}%</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Detection Services */}
+                {selectedFeedback.prediction?.detections?.length > 0 && (
+                  <div className="border-t border-gray-700/50 pt-4">
+                    <p className="text-gray-400 text-sm mb-2">
+                      Detection Services
+                      <span className="ml-2 text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">
+                        {selectedFeedback.prediction.detections.filter((d: any) =>
+                          d.category === "phishing" || d.category === "malicious"
+                        ).length} / {selectedFeedback.prediction.detections.length} flagged
+                      </span>
+                    </p>
+                    <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                      {selectedFeedback.prediction.detections.slice(0, 8).map((det: any, i: number) => (
+                        <div key={i} className="flex items-center justify-between bg-gray-950/50 rounded px-3 py-1.5 text-xs">
+                          <span className="text-gray-300 truncate max-w-[55%]">{det.service}</span>
+                          <span className={`px-2 py-0.5 rounded font-medium ${
+                            det.category === "phishing" || det.category === "malicious"
+                              ? "bg-red-500/20 text-red-400"
+                              : det.category === "suspicious"
+                              ? "bg-yellow-500/20 text-yellow-400"
+                              : "bg-green-500/20 text-green-400"
+                          }`}>
+                            {det.result || det.category || "clean"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Risk Indicators */}
+                {selectedFeedback.prediction?.risk_adjustment?.indicators?.length > 0 && (
+                  <div className="border-t border-gray-700/50 pt-4">
+                    <p className="text-gray-400 text-sm mb-2">Risk Indicators</p>
+                    <div className="space-y-1 max-h-28 overflow-y-auto">
+                      {selectedFeedback.prediction.risk_adjustment.indicators.map((flag: string, i: number) => (
+                        <div key={i} className="flex items-start gap-2 text-xs">
+                          <span className={`mt-0.5 ${
+                            flag.includes("CRITICAL") || flag.includes("🚨") ? "text-red-400" : "text-yellow-400"
+                          }`}>▲</span>
+                          <span className="text-gray-300">{flag.replace(/[🚨⚠️]/g, "").trim()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* SSL / WHOIS brief */}
+                {(selectedFeedback.prediction?.ssl || selectedFeedback.prediction?.whois) && (
+                  <div className="border-t border-gray-700/50 pt-4 grid grid-cols-2 gap-3">
+                    {selectedFeedback.prediction?.ssl?.valid !== undefined && (
+                      <div>
+                        <p className="text-gray-400 text-xs">SSL Certificate</p>
+                        <span className={`text-xs font-medium ${
+                          selectedFeedback.prediction.ssl.valid ? "text-green-400" : "text-red-400"
+                        }`}>
+                          {selectedFeedback.prediction.ssl.valid ? "✓ Valid" : "✗ Invalid / Missing"}
+                        </span>
+                      </div>
+                    )}
+                    {selectedFeedback.prediction?.whois?.creation_date && (
+                      <div>
+                        <p className="text-gray-400 text-xs">Domain Created</p>
+                        <span className="text-xs text-gray-300">{selectedFeedback.prediction.whois.creation_date}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="border-t border-gray-700/50 pt-4 mt-4">
                   <p className="text-gray-400 text-sm mb-3">Community Reports</p>

@@ -4,7 +4,7 @@ import { NextResponse } from "next/server"
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get("code")
-  const next = searchParams.get("next") ?? "/dashboard"
+  const next = searchParams.get("next")
 
   if (code) {
     const supabase = await createClient()
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
               .insert({
                 id: user.id,
                 email: user.email,
-                display_name: user.user_metadata?.full_name || user.email?.split('@')[0],
+                display_name: user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split('@')[0],
                 role: 'user', // Default role for OAuth users
                 created_at: new Date().toISOString(),
                 last_login: new Date().toISOString()
@@ -64,17 +64,20 @@ export async function GET(request: Request) {
           console.error('Error syncing user:', syncError)
           // Continue even if sync fails
         }
-      }
-      
-      const forwardedHost = request.headers.get("x-forwarded-host")
-      const isLocalEnv = process.env.NODE_ENV === "development"
-      
-      if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${next}`)
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`)
-      } else {
-        return NextResponse.redirect(`${origin}${next}`)
+        
+        // Redirect to user's dashboard
+        const redirectPath = next || `/dashboard/${user.id}`
+        
+        const forwardedHost = request.headers.get("x-forwarded-host")
+        const isLocalEnv = process.env.NODE_ENV === "development"
+        
+        if (isLocalEnv) {
+          return NextResponse.redirect(`${origin}${redirectPath}`)
+        } else if (forwardedHost) {
+          return NextResponse.redirect(`https://${forwardedHost}${redirectPath}`)
+        } else {
+          return NextResponse.redirect(`${origin}${redirectPath}`)
+        }
       }
     }
   }
