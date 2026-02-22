@@ -125,7 +125,7 @@ export default function SignUpPage() {
           
           // Redirect to dashboard after 2 seconds
           setTimeout(() => {
-            router.push(`/dashboard/${data.user.id}`)
+            if (data.user) router.push(`/dashboard/${data.user.id}`)
           }, 2000)
         } else {
           // Email confirmation is required - user needs to check their email
