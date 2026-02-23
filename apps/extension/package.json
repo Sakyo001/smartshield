@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "PhishGuard browser extension - simple phishing protection",
   "scripts": {
-    "build": "echo 'Building extension...' && xcopy /E /I /Y src dist",
+    "build": "powershell -Command \"if (Test-Path extension.zip) { Remove-Item extension.zip }; Compress-Archive -Path src/* -DestinationPath extension.zip\"",
     "dev": "echo 'Extension ready for development'"
   },
   "dependencies": {

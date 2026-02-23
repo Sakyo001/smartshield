@@ -27,6 +27,13 @@
   // Reference to the live badge element inside the shadow DOM (for flash/locate)
   let activeBadgeEl = null;
 
+  // ── Duplicate-prevention: serial counter for concurrent showBanner calls ──
+  // getSavedPosition is async; without this, two overlapping calls both append
+  // a badge before either has finished, causing duplicates.
+  let bannerBuildId = 0;
+  // Tracks a host that has been created but not yet attached to the DOM
+  let pendingHostEl = null;
+
   function getRootDomain() {
     return window.location.protocol + '//' + window.location.hostname;
   }
@@ -51,13 +58,18 @@
           return;
         }
 
-        // Don't show if banner is already displayed for this domain
+        // If a badge is already visible for this domain, update it in-place
+        // instead of destroying & recreating (which resets position visually)
         if (currentBannerDomain === domain && document.getElementById('smartshield-root')) {
-          sendResponse({ displayed: false, reason: 'already_shown' });
-          return;
+          // Only re-create if the scan was pending and now has a real result
+          if (message.result.scanPending) {
+            sendResponse({ displayed: false, reason: 'already_shown' });
+            return;
+          }
+          // Replace with real result, keeping persistent & position
         }
 
-        showBanner(message.result, domain);
+        showBanner(message.result, domain, false, !!message.persistent);
         sendResponse({ displayed: true });
       }
 
@@ -69,13 +81,14 @@
         sendResponse({ displayed: true });
       }
 
-      // "Show Badge on Page" button in popup — force show + flash
+      // "Show Badge on Page" button in popup — force show + flash + persist
       if (message.action === 'locateBadge') {
         dismissedDomains.delete(rootDomain);
         currentBannerDomain = null;
+        chrome.storage.local.set({ badgeForceVisible: true });
         const sk = `result_${rootDomain}`;
         chrome.storage.local.get([sk], (stored) => {
-          showBanner(stored[sk] || { scanPending: true }, rootDomain, true);
+          showBanner(stored[sk] || { scanPending: true }, rootDomain, true, true);
         });
         sendResponse({ ok: true });
       }
@@ -84,9 +97,9 @@
     // On initial load: immediately show a scanning badge so the icon is always
     // visible, then replace it with the real result when the scan completes.
     const storageKey = `result_${rootDomain}`;
-    chrome.storage.local.get([storageKey], (stored) => {
+    chrome.storage.local.get([storageKey, 'badgeForceVisible'], (stored) => {
       if (!dismissedDomains.has(rootDomain)) {
-        showBanner(stored[storageKey] || { scanPending: true }, rootDomain);
+        showBanner(stored[storageKey] || { scanPending: true }, rootDomain, false, !!stored.badgeForceVisible);
       }
     });
   }
@@ -115,10 +128,14 @@
    * Color-coded: green = safe, orange = warning, red = phishing/high risk.
    * Hovering expands a compact tooltip with details.
    */
-  function showBanner(result, domain, flash = false) {
+  function showBanner(result, domain, flash = false, persistent = false) {
     if (!result) return;
 
-    // Remove existing badge first
+    // Claim this build slot — any concurrent build still waiting on
+    // getSavedPosition (which is async) will see a stale ID and abort.
+    const myBuildId = ++bannerBuildId;
+
+    // Remove existing badge + cancel any in-flight build
     removeBanner();
 
     currentBannerDomain = domain;
@@ -151,10 +168,17 @@
 
     // Load saved position, then build the badge at that position
     getSavedPosition(({ left, top }) => {
+      // Abort if a newer showBanner call has already taken over
+      if (myBuildId !== bannerBuildId) return;
+
       const host = document.createElement('div');
       host.id = 'smartshield-root';
       host.style.cssText = `position:fixed;left:${left}px;top:${top}px;z-index:2147483647;pointer-events:none;`;
+
+      // Track as pending until actually in the DOM
+      pendingHostEl = host;
       document.body.appendChild(host);
+      pendingHostEl = null; // now owned by the DOM / removeBanner
 
       const shadow = host.attachShadow({ mode: 'closed' });
 
@@ -468,6 +492,7 @@
           e.stopPropagation();
           dismissedDomains.add(domain); // intentional user dismiss
           currentBannerDomain = null;
+          chrome.storage.local.remove('badgeForceVisible'); // clear persistent flag
           if (activeDragHandlers) {
             window.removeEventListener('mousemove', activeDragHandlers.move, { capture: true });
             window.removeEventListener('mouseup',   activeDragHandlers.up,   { capture: true });
@@ -477,9 +502,9 @@
         });
       }
 
-      // Auto-dismiss safe badges after 4s — do NOT add to dismissedDomains
-      // so the badge can re-appear when the user switches back to this tab
-      if (isSafe) {
+      // Auto-dismiss safe badges after 4s — unless persistent (user clicked "Show Badge on Page")
+      // Do NOT add to dismissedDomains so the badge can re-appear on tab switch
+      if (isSafe && !persistent) {
         setTimeout(() => {
           const el = document.getElementById('smartshield-root');
           if (el) {
@@ -493,6 +518,11 @@
   }
 
   function removeBanner() {
+    // Also abort any in-flight (not-yet-attached) badge build
+    if (pendingHostEl) {
+      pendingHostEl.remove();
+      pendingHostEl = null;
+    }
     const existing = document.getElementById('smartshield-root');
     if (existing) existing.remove();
     currentBannerDomain = null;
