@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Aurora from "../ui/Aurora";
+import { useAuth } from "@lib/auth-context";
 
 // Configure Poppins
 const poppins = Poppins({
@@ -17,6 +18,7 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -138,12 +140,12 @@ export default function Navbar() {
           {/* --- Right Actions --- */}
           <div className="flex items-center gap-4">
             <Link
-              href="/login"
+              href={user ? `/dashboard/${user.id}` : "/login"}
               className={`hidden md:flex px-8 py-2.5 text-sm font-semibold rounded-full transition-all duration-300 ${poppins.className}
                 bg-[#5667FF] text-white hover:bg-[#4349dd] 
                 shadow-lg shadow-[#5667FF]/20 hover:shadow-[#5667FF]/40 hover:-translate-y-0.5 active:translate-y-0`}
             >
-              Sign In
+              {user ? "Dashboard" : "Sign In"}
             </Link>
 
             {/* Mobile Menu Button */}
@@ -189,10 +191,10 @@ export default function Navbar() {
           </a>
         ))}
         <Link
-          href="/login"
+          href={user ? `/dashboard/${user.id}` : "/login"}
           className="px-10 py-3.5 bg-[#5667FF] text-white text-lg font-medium rounded-full shadow-xl shadow-[#5667FF]/30 hover:bg-[#4a51e0] transition-transform active:scale-95"
         >
-          Sign In
+          {user ? "Dashboard" : "Sign In"}
         </Link>
       </div>
     </>
