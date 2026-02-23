@@ -107,6 +107,13 @@ export default function SignUpPage() {
 
       if (signUpError) throw signUpError
 
+      // Supabase returns identities: [] when email already exists (no error thrown)
+      if (data.user && data.user.identities && data.user.identities.length === 0) {
+        setError("An account with this email already exists. Please sign in instead.")
+        setLoading(false)
+        return
+      }
+
       if (data.user) {
         // Check if email confirmation is required
         // If session exists, email confirmation is disabled
@@ -238,7 +245,12 @@ export default function SignUpPage() {
                   <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
                   <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z" />
                 </svg>
-                <p>{error}</p>
+                <p>
+                  {error}
+                  {error?.includes("already exists") && (
+                    <> <Link href="/login" className="underline font-semibold text-red-300 hover:text-red-200">Sign in</Link></>
+                  )}
+                </p>
               </div>
             </div>
           )}
