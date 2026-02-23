@@ -10,7 +10,7 @@
  * - AbortController for proper request cancellation/timeout
  */
 
-const WHOIS_API_URL = 'https://smartshield-whois-api.onrender.com';
+const WHOIS_API_URL = 'https://railway-whois-production.up.railway.app';
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 const SCAN_TIMEOUT = 30000;
 const DETAIL_TIMEOUT = 30000;
@@ -302,11 +302,15 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     updateTabBadge(tabId, result);
 
     // Send result to content script for banner display
-    chrome.tabs.sendMessage(tabId, {
-      action: 'showScanResult',
-      result,
-      rootDomain
-    }).catch(() => {});
+    // Check if user has badge pinned so it stays persistent on new pages
+    chrome.storage.local.get(['badgeForceVisible'], (flags) => {
+      chrome.tabs.sendMessage(tabId, {
+        action: 'showScanResult',
+        result,
+        rootDomain,
+        persistent: !!flags.badgeForceVisible
+      }).catch(() => {});
+    });
 
     if (result.isSuspicious) {
       const isHighRisk = result.riskLevel === 'high' || result.riskScore >= 70;
@@ -330,35 +334,41 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
     if (!tab || !tab.url || shouldSkip(tab.url)) return;
     const rootDomain = getRootDomain(tab.url);
 
-    // Always update toolbar badge from cache
-    const cached = resultCache.get(rootDomain);
-    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
-      updateTabBadge(activeInfo.tabId, cached.result);
-      // Re-send to content script so the floating badge re-appears after auto-dismiss
-      chrome.tabs.sendMessage(activeInfo.tabId, {
-        action: 'showScanResult',
-        result: cached.result,
-        rootDomain
-      }).catch(() => {});
-      return;
-    }
+    chrome.storage.local.get(['badgeForceVisible'], (flags) => {
+      const persistent = !!flags.badgeForceVisible;
 
-    // Not in memory cache — check storage cache
-    const storageKey = `result_${rootDomain}`;
-    chrome.storage.local.get([storageKey, `${storageKey}_ts`], (stored) => {
-      if (stored[storageKey] && stored[`${storageKey}_ts`]) {
-        const age = Date.now() - stored[`${storageKey}_ts`];
-        if (age < CACHE_TTL) {
-          const result = stored[storageKey];
-          resultCache.set(rootDomain, { result, timestamp: stored[`${storageKey}_ts`] });
-          updateTabBadge(activeInfo.tabId, result);
-          chrome.tabs.sendMessage(activeInfo.tabId, {
-            action: 'showScanResult',
-            result,
-            rootDomain
-          }).catch(() => {});
-        }
+      // Always update toolbar badge from cache
+      const cached = resultCache.get(rootDomain);
+      if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+        updateTabBadge(activeInfo.tabId, cached.result);
+        // Re-send to content script so the floating badge re-appears after auto-dismiss
+        chrome.tabs.sendMessage(activeInfo.tabId, {
+          action: 'showScanResult',
+          result: cached.result,
+          rootDomain,
+          persistent
+        }).catch(() => {});
+        return;
       }
+
+      // Not in memory cache — check storage cache
+      const storageKey = `result_${rootDomain}`;
+      chrome.storage.local.get([storageKey, `${storageKey}_ts`], (stored) => {
+        if (stored[storageKey] && stored[`${storageKey}_ts`]) {
+          const age = Date.now() - stored[`${storageKey}_ts`];
+          if (age < CACHE_TTL) {
+            const result = stored[storageKey];
+            resultCache.set(rootDomain, { result, timestamp: stored[`${storageKey}_ts`] });
+            updateTabBadge(activeInfo.tabId, result);
+            chrome.tabs.sendMessage(activeInfo.tabId, {
+              action: 'showScanResult',
+              result,
+              rootDomain,
+              persistent
+            }).catch(() => {});
+          }
+        }
+      });
     });
   });
 });
