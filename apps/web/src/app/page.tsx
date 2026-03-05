@@ -47,12 +47,21 @@ export default function Home() {
       <div id="home">
         <HeroSection />
       </div>
+
+      {/* Scanner Section – right after hero */}
+      <section id="scan" className="py-16 md:py-20 px-4 md:px-6 bg-[#0a0a0f] relative overflow-hidden scroll-mt-20">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#6B73FF]/5 to-transparent pointer-events-none"></div>
+        <div className="max-w-7xl mx-auto relative z-10">
+          <ScanTab />
+        </div>
+      </section>
+
       <FeatureGrid />
       <HowItWorks />
       <AIBanner />
       
-      {/* Tabbed Section */}
-      <section id="scan" className="py-16 md:py-24 px-4 md:px-6 bg-[#0a0a0f] relative overflow-hidden scroll-mt-20">
+      {/* About / FAQ Tabs */}
+      <section className="py-16 md:py-24 px-4 md:px-6 bg-[#0a0a0f] relative overflow-hidden scroll-mt-20">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#6B73FF]/5 to-transparent pointer-events-none"></div>
         
         <div className="max-w-7xl mx-auto relative z-10">
@@ -67,22 +76,13 @@ export default function Home() {
               Everything You Need to Know
             </h2>
             <p className="text-gray-400 text-base md:text-xl leading-relaxed max-w-3xl mx-auto">
-              View your recent scans, learn about our mission, and find answers to your questions
+              Learn about our mission and find answers to your questions
             </p>
           </div>
 
           <Tabs
-            defaultValue={activeTab}
+            defaultValue={activeTab === "scan" ? "about" : activeTab}
             tabs={[
-              {
-                label: "Recent Scans",
-                value: "scan",
-                icon: (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                  </svg>
-                )
-              },
               {
                 label: "About",
                 value: "about",
@@ -110,7 +110,6 @@ export default function Home() {
           >
             {(activeTab) => (
               <>
-                {activeTab === "scan" && <ScanTab />}
                 {activeTab === "about" && <AboutTab />}
                 {activeTab === "faq" && <FAQTab />}
               </>
