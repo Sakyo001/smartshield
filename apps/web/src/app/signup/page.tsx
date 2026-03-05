@@ -13,6 +13,8 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [displayName, setDisplayName] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -316,15 +318,36 @@ export default function SignUpPage() {
                   </svg>
                 </div>
                 <input
+                
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full appearance-none rounded-lg border border-gray-700 bg-[#1a1a2e] pl-10 pr-3 py-2.5 text-white placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
                   placeholder="Min 6 characters"
                 />
+                <button type="button"
+                     onClick={() => setShowPassword(!showPassword)}
+                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
+                     {showPassword ? (
+                     <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                     d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9-4-10-7a18.3 18.3 0 012.51-3.874M6.7 6.7A9.956 9.956 0 0112 5c5 0 9 4 10 7a18.3 18.3 0 01-4.293 5.24M6.7 6.7L3 3m3.7 3.7L17.3 17.3M17.3 17.3L21 21m-3.7-3.7A9.956 9.956 0 0112 19"
+                      />
+                       </svg>
+                       ) : (
+                      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                       d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                       d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                       />
+                      </svg>
+                       )}
+                      </button>
               </div>
             </div>
 
@@ -343,13 +366,17 @@ export default function SignUpPage() {
                 <input
                   id="confirmPassword"
                   name="confirmPassword"
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="block w-full appearance-none rounded-lg border border-gray-700 bg-[#1a1a2e] pl-10 pr-3 py-2.5 text-white placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
                   placeholder="Repeat password"
                 />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
+                 </button>
+
               </div>
             </div>
 
