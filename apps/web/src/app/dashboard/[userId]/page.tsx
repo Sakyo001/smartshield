@@ -285,14 +285,12 @@ export default function UserDashboard() {
   }
   
 
-  const handleScan = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!urlInput) return
-    
+  const doScan = async (url: string) => {
     setScanning(true)
     setError(null)
     setCurrentScan(null)
-    
+    setUrlInput(url)
+
     try {
       // Single API call — /api/scan returns whois, dns, ssl, risk_adjustment all at once
       const response = await fetchWithTimeout(`${WHOIS_API_URL}/api/scan`, {
@@ -300,7 +298,7 @@ export default function UserDashboard() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ url: urlInput }),
+        body: JSON.stringify({ url }),
         timeout: 45000 // 45 seconds (covers WHOIS/DNS/SSL in parallel)
       })
 
@@ -359,7 +357,7 @@ export default function UserDashboard() {
       }
 
       // CHECK FOR HTTP FIRST - this should always be a warning at minimum
-      if (urlInput.toLowerCase().startsWith('http://')) {
+      if (url.toLowerCase().startsWith('http://')) {
         console.log(`🚨 HTTP DETECTED: URL uses insecure HTTP protocol`)
         if (riskScore < 40) {
           riskScore = 40
@@ -426,7 +424,7 @@ export default function UserDashboard() {
       }
 
       const scanResult: ScanResult = {
-        url: urlInput,
+        url: url,
         riskScore: riskScore,
         status: status,
         date: new Date().toLocaleString(),
@@ -450,7 +448,7 @@ export default function UserDashboard() {
       if (user) {
         try {
           // Normalize URL - add protocol if missing
-          let normalizedUrl = urlInput.trim()
+          let normalizedUrl = url.trim()
           if (!normalizedUrl.match(/^https?:\/\//i)) {
             normalizedUrl = 'https://' + normalizedUrl
           }
@@ -467,7 +465,7 @@ export default function UserDashboard() {
           
           // Save to extension_activity
           await saveScanResult(user.id, {
-            url: urlInput,
+            url: url,
             domain: domain,
             confidence: riskScore,
             decision: status.toLowerCase(),
@@ -481,7 +479,7 @@ export default function UserDashboard() {
           } else if (riskScore >= 70) {
             // Phishing site - add to blacklist and phishing_sites
             await addToBlacklist(domain, user.id, `Phishing site detected with ${riskScore}% risk score`)
-            await addToPhishingSites(urlInput, domain, data)
+            await addToPhishingSites(url, domain, data)
           }
           // Sites with 40-69 risk score (Warning) are not added to any list
           
@@ -496,6 +494,17 @@ export default function UserDashboard() {
     } finally {
       setScanning(false)
     }
+  }
+
+  const handleScan = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!urlInput) return
+    await doScan(urlInput)
+  }
+
+  const handleReanalyze = () => {
+    if (!currentScan) return
+    doScan(currentScan.url)
   }
 
   const getStatusColor = (status: string) => {
@@ -919,11 +928,12 @@ export default function UserDashboard() {
               
               {/* Action Buttons */}
                <div className="flex justify-center lg:justify-end gap-3 mt-8 pt-6 border-t border-gray-800/50">
-                  <button className="px-6 py-2 rounded-lg bg-[#252a41] hover:bg-[#2f3552] text-white transition text-sm font-medium">
-                    Reanalyze
-                  </button>
-                  <button className="px-6 py-2 rounded-lg bg-[#252a41] hover:bg-[#2f3552] text-white transition text-sm font-medium">
-                    Detailed Report
+                  <button
+                    onClick={handleReanalyze}
+                    disabled={scanning}
+                    className="px-6 py-2 rounded-lg bg-[#252a41] hover:bg-[#2f3552] disabled:opacity-50 disabled:cursor-not-allowed text-white transition text-sm font-medium"
+                  >
+                    {scanning ? "Scanning..." : "Reanalyze"}
                   </button>
                </div>
             </div>
