@@ -29,12 +29,25 @@ export async function GET(request: NextRequest) {
       }
     )
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (error) {
+      console.error("[auth/callback] exchangeCodeForSession FAILED:")
+      console.error("  message:", error.message)
+      console.error("  status:", error.status)
+      console.error("  redirectTo was:", `${origin}/auth/callback`)
+      console.error("  NODE_ENV:", process.env.NODE_ENV)
+      console.error("  NEXT_PUBLIC_SITE_URL:", process.env.NEXT_PUBLIC_SITE_URL)
+      console.error("  Full error:", JSON.stringify(error))
+      return NextResponse.redirect(`${origin}/login?error=auth_failed&reason=${encodeURIComponent(error.message)}`)
+    }
+
+    // Use the user returned directly from the exchange — avoids a second
+    // network call to getUser() before session cookies are written.
+    const user = data.user
+
     if (!error) {
       // Get the authenticated user
-      const { data: { user } } = await supabase.auth.getUser()
-      
       if (user) {
         // Sync user to users table
         try {
@@ -118,5 +131,6 @@ export async function GET(request: NextRequest) {
   }
 
   // Return to error page if something went wrong
+  console.error("[auth/callback] Reached fallback — no code or user found. origin:", origin)
   return NextResponse.redirect(`${origin}/login?error=auth_failed`)
 }

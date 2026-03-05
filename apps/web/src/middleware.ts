@@ -76,7 +76,8 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public folder
+     * - auth/callback (Supabase PKCE code exchange — must not be intercepted by middleware)
      */
-    '/((?!_next/static|_next/image|favicon.ico|public).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public|auth/callback).*)',
   ],
 }
