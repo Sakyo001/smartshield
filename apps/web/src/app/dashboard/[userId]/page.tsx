@@ -51,6 +51,7 @@ async function fetchWithTimeout(resource: RequestInfo, options: any = {}) {
 export default function UserDashboard() {
   const { user, loading, signOut } = useAuth()
   const [urlInput, setUrlInput] = useState("")
+  const [urlError, setUrlError] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
   const [currentScan, setCurrentScan] = useState<ScanResult | null>(null)
   const [recentScans, setRecentScans] = useState<ScanResult[]>([])
@@ -499,7 +500,12 @@ export default function UserDashboard() {
   const handleScan = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!urlInput) return
-    await doScan(urlInput)
+    if (!/^https?:\/\//i.test(urlInput.trim())) {
+      setUrlError("Please include the full URL starting with http:// or https://")
+      return
+    }
+    setUrlError(null)
+    await doScan(urlInput.trim())
   }
 
   const handleReanalyze = () => {
@@ -751,9 +757,9 @@ export default function UserDashboard() {
                 <input
                   type="text"
                   value={urlInput}
-                  onChange={(e) => setUrlInput(e.target.value)}
+                  onChange={(e) => { setUrlInput(e.target.value); setUrlError(null); }}
                   placeholder="Paste a URL to scan (e.g., https://example.com)..."
-                  className="w-full bg-transparent border-none text-white placeholder-gray-500 focus:outline-none focus:ring-0 py-3 text-base"
+                  className={`w-full bg-transparent border-none text-white placeholder-gray-500 focus:outline-none focus:ring-0 py-3 text-base`}
                   required
                 />
               </div>
@@ -786,6 +792,14 @@ export default function UserDashboard() {
                  )}
               </button>
             </div>
+            {urlError && (
+              <p className="flex items-center gap-1.5 text-amber-400 text-xs mt-2 px-1">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                {urlError}
+              </p>
+            )}
           </form>
 
          <p className="text-gray-500 text-[15px] text-center mt-4">
