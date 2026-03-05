@@ -49,7 +49,10 @@ export default function Navbar() {
     setIsMobileMenuOpen(false);
 
     const targetId = href.replace("#", "");
-    const element = document.getElementById(targetId);
+
+    // FAQ lives inside the #about section – scroll there directly
+    const scrollTargetId = targetId === "faq" ? "about" : targetId;
+    const element = document.getElementById(scrollTargetId);
 
     if (element) {
       element.scrollIntoView({
@@ -57,6 +60,10 @@ export default function Navbar() {
         block: "start",
       });
       setActiveSection(targetId);
+      // Notify page-level tab switcher without triggering browser native scroll
+      window.dispatchEvent(
+        new CustomEvent("smartshield:tabchange", { detail: { tab: targetId } })
+      );
     }
   };
 

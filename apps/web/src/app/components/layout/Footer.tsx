@@ -41,34 +41,22 @@ export default function Footer() {
           {/* Right: Links */}
           <div className="flex flex-wrap items-center justify-center gap-8 text-sm">
             <Link
-              href="/about"
+              href="/"
               className="text-gray-400 hover:text-[#545BFF] transition-colors"
             >
               SmartShield
             </Link>
             <Link
-              href="/terms"
-              className="text-gray-400 hover:text-[#545BFF] transition-colors"
-            >
-              Terms and Condition
-            </Link>
-            <Link
-              href="/privacy"
+              href="/privacy-policy"
               className="text-gray-400 hover:text-[#545BFF] transition-colors"
             >
               Privacy Policy
             </Link>
             <Link
-              href="/about"
+              href="/#about"
               className="text-gray-400 hover:text-[#545BFF] transition-colors"
             >
               About
-            </Link>
-            <Link
-              href="/cookies"
-              className="text-gray-400 hover:text-[#545BFF] transition-colors"
-            >
-              Cookies
             </Link>
           </div>
         </div>

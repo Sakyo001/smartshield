@@ -53,12 +53,6 @@ export default function CTASection() {
           >
             Get the Extension
           </Link>
-
-          <button
-            className="w-full sm:w-auto px-10 h-[41px] flex items-center justify-center text-white border border-white/20 hover:border-white hover:bg-white/5 rounded-full transition-all duration-300 font-medium"
-          >
-            Scan Website
-          </button>
         </div>
 
         {/* Shield illustration with VERY Slow (5s) Fade-in & Floating Hover */}

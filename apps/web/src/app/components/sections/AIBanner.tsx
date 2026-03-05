@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useRef, useState } from "react";
 
 export default function AIBanner() {
@@ -96,18 +95,7 @@ export default function AIBanner() {
                 ))}
               </ul>
 
-              <div className="flex flex-col sm:flex-row items-center gap-4">
-                <Link
-                  href="/login"
-                  className="w-full sm:w-auto px-8 py-3.5 flex items-center justify-center bg-[#6B7FFF] text-white rounded-full hover:bg-[#5A6BE8] hover:shadow-[0_0_20px_rgba(107,127,255,0.4)] transition-all duration-300 font-semibold text-sm transform hover:-translate-y-0.5"
-                >
-                  Get the Extension
-                </Link>
 
-                <button className="w-full sm:w-auto px-8 py-3.5 flex items-center justify-center text-white border border-white/20 rounded-full hover:bg-white/10 hover:border-white/40 transition-all duration-300 font-semibold text-sm">
-                  Scan Website
-                </button>
-              </div>
             </div>
 
             {/* Right Image Area */}

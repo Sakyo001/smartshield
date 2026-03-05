@@ -104,13 +104,13 @@ export default function HeroSection() {
                   Get the Extension
                 </Link>
 
-                {/* Button 2: Scan Website */}
-                <Link
-                  href="/dashboard"
+                {/* Button 2: Scan Website – scrolls to guest scanner */}
+                <a
+                  href="#scan"
                   className="w-full sm:w-auto px-8 h-[42px] flex items-center justify-center text-white border border-gray-500 hover:border-white hover:bg-white/5 rounded-full transition-all duration-300 font-semibold backdrop-blur-sm"
                 >
                   Scan Website
-                </Link>
+                </a>
               </div>
             </div>
 

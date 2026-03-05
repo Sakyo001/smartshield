@@ -51,6 +51,7 @@ function GuestScanner() {
   const WHOIS_API_URL = process.env.NEXT_PUBLIC_WHOIS_API_URL;
 
   const [urlInput, setUrlInput] = useState("");
+  const [urlError, setUrlError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [currentScan, setCurrentScan] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -256,7 +257,12 @@ function GuestScanner() {
   const handleScan = (e: React.FormEvent) => {
     e.preventDefault();
     if (!urlInput) return;
-    doScan(urlInput);
+    if (!/^https?:\/\//i.test(urlInput.trim())) {
+      setUrlError("Please include the full URL starting with http:// or https://");
+      return;
+    }
+    setUrlError(null);
+    doScan(urlInput.trim());
   };
 
   const handleReanalyze = () => {
@@ -296,7 +302,7 @@ function GuestScanner() {
             <input
               type="text"
               value={urlInput}
-              onChange={(e) => setUrlInput(e.target.value)}
+              onChange={(e) => { setUrlInput(e.target.value); setUrlError(null); }}
               placeholder="Paste a URL to scan (e.g., https://example.com)..."
               className="w-full bg-transparent border-none text-white placeholder-gray-500 focus:outline-none focus:ring-0 py-3 text-base"
               required
@@ -330,6 +336,15 @@ function GuestScanner() {
           </button>
         </div>
       </form>
+
+      {urlError && (
+        <p className="flex items-center gap-1.5 text-amber-400 text-xs mt-2 px-1">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          {urlError}
+        </p>
+      )}
 
       {/* API Status */}
       <div className="flex justify-center mb-6">

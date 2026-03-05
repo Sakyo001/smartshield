@@ -16,28 +16,33 @@ import FAQTab from "@components/sections/FAQTab"
 export default function Home() {
   const [activeTab, setActiveTab] = useState('scan');
 
-  // Handle hash changes to switch tabs
+  // Switch tabs when navbar dispatches a section-change event
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '');
-      if (hash === 'about' || hash === 'faq') {
-        setActiveTab(hash);
-        // Scroll to the scan section which contains the tabs
-        const scanSection = document.getElementById('scan');
-        if (scanSection) {
-          scanSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      } else if (hash === 'scan') {
+    const handleTabChange = (e: Event) => {
+      const tab = (e as CustomEvent<{ tab: string }>).detail.tab;
+      if (tab === 'about' || tab === 'faq') {
+        setActiveTab(tab);
+      } else if (tab === 'scan') {
         setActiveTab('scan');
       }
     };
 
-    // Check initial hash
+    // Also handle direct URL hash navigation (e.g. copy-paste /#about)
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'about' || hash === 'faq') setActiveTab(hash);
+      else if (hash === 'scan') setActiveTab('scan');
+    };
+
+    // Check initial hash on mount
     handleHashChange();
 
-    // Listen for hash changes
+    window.addEventListener('smartshield:tabchange', handleTabChange);
     window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    return () => {
+      window.removeEventListener('smartshield:tabchange', handleTabChange);
+      window.removeEventListener('hashchange', handleHashChange);
+    };
   }, []);
   return (
    
@@ -61,7 +66,7 @@ export default function Home() {
       <AIBanner />
       
       {/* About / FAQ Tabs */}
-      <section className="py-16 md:py-24 px-4 md:px-6 bg-[#0a0a0f] relative overflow-hidden scroll-mt-20">
+      <section id="about" className="py-16 md:py-24 px-4 md:px-6 bg-[#0a0a0f] relative overflow-hidden scroll-mt-20">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#6B73FF]/5 to-transparent pointer-events-none"></div>
         
         <div className="max-w-7xl mx-auto relative z-10">
@@ -79,6 +84,9 @@ export default function Home() {
               Learn about our mission and find answers to your questions
             </p>
           </div>
+
+          {/* Anchor for direct FAQ deep-linking */}
+          <div id="faq" className="sr-only" />
 
           <Tabs
             defaultValue={activeTab === "scan" ? "about" : activeTab}
