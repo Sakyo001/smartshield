@@ -4,7 +4,7 @@ import { createClient } from "@lib/supabase";
 import { syncUserToDatabase, linkSocialAccount } from "@lib/supabase";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function UserLoginForm() {
@@ -16,12 +16,25 @@ export default function UserLoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [showResendLink, setShowResendLink] = useState(false);
   const supabase = createClient();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (user) {
       router.push(`/dashboard/${user.id}`);
     }
   }, [user, router]);
+
+  useEffect(() => {
+    const authError = searchParams.get("error");
+    const reason = searchParams.get("reason");
+    if (authError === "auth_failed") {
+      setError(
+        reason
+          ? `Authentication failed: ${reason}`
+          : "Authentication failed. Check the browser console and server logs for details."
+      );
+    }
+  }, [searchParams]);
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
