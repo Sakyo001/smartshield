@@ -1,13 +1,34 @@
-import { createClient } from "@lib/supabase-server"
-import { NextResponse } from "next/server"
+import { createServerClient } from "@supabase/ssr"
+import { NextResponse, type NextRequest } from "next/server"
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get("code")
   const next = searchParams.get("next")
 
   if (code) {
-    const supabase = await createClient()
+    // Collect cookies Supabase wants to set, then apply them to
+    // the final redirect response so the session survives the redirect.
+    const cookiesToSet: Array<{ name: string; value: string; options: Record<string, unknown> }> = []
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value
+          },
+          set(name: string, value: string, options: Record<string, unknown>) {
+            cookiesToSet.push({ name, value, options })
+          },
+          remove(name: string, options: Record<string, unknown>) {
+            cookiesToSet.push({ name, value: "", options })
+          },
+        },
+      }
+    )
+
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!error) {
@@ -67,17 +88,31 @@ export async function GET(request: Request) {
         
         // Redirect to user's dashboard
         const redirectPath = next || `/dashboard/${user.id}`
-        
+
         const forwardedHost = request.headers.get("x-forwarded-host")
         const isLocalEnv = process.env.NODE_ENV === "development"
-        
+        // NEXT_PUBLIC_SITE_URL takes highest priority in production to avoid
+        // Railway's x-forwarded-host pointing to an internal hostname.
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+
+        let redirectTo: string
         if (isLocalEnv) {
-          return NextResponse.redirect(`${origin}${redirectPath}`)
+          redirectTo = `${origin}${redirectPath}`
+        } else if (siteUrl) {
+          redirectTo = `${siteUrl.replace(/\/$/, "")}${redirectPath}`
         } else if (forwardedHost) {
-          return NextResponse.redirect(`https://${forwardedHost}${redirectPath}`)
+          redirectTo = `https://${forwardedHost}${redirectPath}`
         } else {
-          return NextResponse.redirect(`${origin}${redirectPath}`)
+          redirectTo = `${origin}${redirectPath}`
         }
+
+        // Build the redirect response and attach the session cookies so
+        // the session is available immediately after the redirect.
+        const response = NextResponse.redirect(redirectTo)
+        for (const { name, value, options } of cookiesToSet) {
+          response.cookies.set({ name, value, ...(options as Record<string, unknown>) })
+        }
+        return response
       }
     }
   }
