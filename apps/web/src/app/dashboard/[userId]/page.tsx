@@ -971,25 +971,111 @@ export default function UserDashboard() {
               </div>
 
               <div className="p-6 md:p-8 bg-gradient-to-b from-[#0a0a0f]/50 to-[#0a0a0f]">
-                {activeTab === "detection" && (
-                  <div>
-                    <div className="grid grid-cols-1 gap-px bg-gray-800">
-                      {/* Display only scanned URL and status */}
-                      <div className="bg-[#0f0f1e] p-3 md:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                        <span className="text-white text-xs md:text-sm break-all">{currentScan.url}</span>
+                {activeTab === "detection" && (() => {
+                  const detFlags: string[] = currentScan.details?.riskAdjustment?.deterministic_flags || [];
+                  const allIndicators: string[] = currentScan.details?.riskAdjustment?.indicators || [];
+                  const isBrandImpersonation = (f: string) => f.includes("Brand Impersonation") || f.includes("Impersonating");
+                  const isSuspiciousTLD = (f: string) => f.includes("Untrusted TLD") || f.includes("Suspicious TLD");
+                  const isCritical = (f: string) => f.includes("🚨") || f.includes("CRITICAL");
+                  const positiveIndicators = allIndicators.filter((i) => !isCritical(i));
+                  const negativeIndicators = allIndicators.filter((i) => isCritical(i));
+
+                  return (
+                    <div className="space-y-6">
+                      {/* URL + Status row */}
+                      <div className="bg-[#0f0f1e] border border-gray-800 rounded-xl p-3 md:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                        <span className="text-white text-xs md:text-sm break-all font-mono">{currentScan.url}</span>
                         <span className={`text-xs px-3 py-1 rounded-full font-medium whitespace-nowrap ${
-                          currentScan.riskScore >= 70 
-                            ? "bg-red-500/20 text-red-400" 
-                            : currentScan.riskScore >= 40
-                            ? "bg-yellow-500/20 text-yellow-400"
-                            : "bg-green-500/20 text-green-400"
+                          currentScan.riskScore >= 70 ? "bg-red-500/20 text-red-400" : currentScan.riskScore >= 40 ? "bg-yellow-500/20 text-yellow-400" : "bg-green-500/20 text-green-400"
                         }`}>
                           {currentScan.riskScore >= 70 ? "Phishing" : currentScan.riskScore >= 40 ? "Suspicious" : "Safe"}
                         </span>
                       </div>
+
+                      {/* Threat Flags */}
+                      {detFlags.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-1 h-5 bg-red-500 rounded-full" />
+                            <h4 className="text-white font-semibold text-sm">Threat Indicators</h4>
+                            <span className="text-xs font-mono text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">{detFlags.length} FLAG{detFlags.length !== 1 ? "S" : ""}</span>
+                          </div>
+                          <div className="space-y-2">
+                            {detFlags.map((flag, i) => {
+                              const isBrand = isBrandImpersonation(flag);
+                              const isTLD = isSuspiciousTLD(flag);
+                              const isRed = isCritical(flag) || isBrand;
+                              return (
+                                <div key={i} className={`flex items-start gap-3 p-3 rounded-lg border ${
+                                  isBrand ? "bg-red-500/10 border-red-500/30" :
+                                  isTLD   ? "bg-orange-500/10 border-orange-500/30" :
+                                  isRed   ? "bg-red-500/10 border-red-500/20" :
+                                            "bg-yellow-500/10 border-yellow-500/20"
+                                }`}>
+                                  {isBrand ? (
+                                    <svg className="shrink-0 mt-0.5 text-red-400" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                                  ) : isTLD ? (
+                                    <svg className="shrink-0 mt-0.5 text-orange-400" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                                  ) : (
+                                    <svg className={`shrink-0 mt-0.5 ${isRed ? "text-red-400" : "text-yellow-400"}`} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    {isBrand && <span className="inline-block text-xs font-bold text-red-400 uppercase tracking-wider mb-1 bg-red-500/20 px-1.5 py-0.5 rounded">Brand Impersonation</span>}
+                                    {isTLD  && <span className="inline-block text-xs font-bold text-orange-400 uppercase tracking-wider mb-1 bg-orange-500/20 px-1.5 py-0.5 rounded">Suspicious TLD</span>}
+                                    <p className={`text-xs leading-relaxed ${
+                                      isBrand ? "text-red-200" : isTLD ? "text-orange-200" : isRed ? "text-red-200" : "text-yellow-200"
+                                    }`}>{flag.replace(/^🚨\s*/, "")}</p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Critical indicators from contextual layer */}
+                      {negativeIndicators.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-1 h-5 bg-red-600 rounded-full" />
+                            <h4 className="text-white font-semibold text-sm">Critical Signals</h4>
+                          </div>
+                          <div className="space-y-2">
+                            {negativeIndicators.map((ind, i) => (
+                              <div key={i} className="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                                <svg className="flex-shrink-0 text-red-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6"/><path d="M9 9l6 6"/></svg>
+                                <span className="text-red-200 text-xs">{ind.replace(/^🚨\s*/, "")}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Trust signals */}
+                      {positiveIndicators.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-1 h-5 bg-green-500 rounded-full" />
+                            <h4 className="text-white font-semibold text-sm">Trust Signals</h4>
+                            <span className="text-xs font-mono text-green-400 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">{positiveIndicators.length} FOUND</span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {positiveIndicators.map((ind, i) => (
+                              <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-lg text-green-300 text-xs">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                {ind}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {detFlags.length === 0 && allIndicators.length === 0 && (
+                        <p className="text-gray-500 text-sm text-center py-6">No threat indicators detected.</p>
+                      )}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {activeTab === "details" && (
                   <div className="space-y-4 text-xs md:text-sm">

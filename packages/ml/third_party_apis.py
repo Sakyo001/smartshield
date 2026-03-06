@@ -3,13 +3,95 @@ Third-party brand verification and content analysis APIs
 Real-time validation against trusted sources (NOT hardcoded)
 """
 
+import re
 import requests
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 import dns.resolver
 import whois
 import ssl
 import socket
 from urllib.parse import urlparse
+
+# ---------------------------------------------------------------------------
+# Authoritative brand registry
+# Each entry: brand_keyword -> (official_domain, display_name, category)
+# The keyword is the core word a phisher would embed in a fake domain.
+# ---------------------------------------------------------------------------
+BRAND_REGISTRY: Dict[str, Tuple[str, str, str]] = {
+    # ── Philippine domestic banks ──────────────────────────────────────────
+    "bdo":              ("bdo.com.ph",          "BDO Unibank",                          "PH Bank"),
+    "landbank":         ("landbank.com",         "Land Bank of the Philippines",         "PH Bank"),
+    "bpi":              ("bpi.com.ph",           "Bank of the Philippine Islands",       "PH Bank"),
+    "metrobank":        ("metrobank.com.ph",     "Metropolitan Bank & Trust",            "PH Bank"),
+    "chinabank":        ("chinabank.ph",         "China Banking Corporation",            "PH Bank"),
+    "rcbc":             ("rcbc.com",             "Rizal Commercial Banking Corporation", "PH Bank"),
+    "securitybank":     ("securitybank.com",     "Security Bank",                        "PH Bank"),
+    "pnb":              ("pnb.com.ph",           "Philippine National Bank",             "PH Bank"),
+    "unionbankph":      ("unionbankph.com",      "Union Bank of the Philippines",        "PH Bank"),
+    "unionbank":        ("unionbankph.com",      "Union Bank of the Philippines",        "PH Bank"),
+    "dbp":              ("dbp.ph",               "Development Bank of the Philippines",  "PH Bank"),
+    "eastwestbanker":   ("eastwestbanker.com",   "East West Banking Corporation",        "PH Bank"),
+    "eastwestbank":     ("eastwestbanker.com",   "East West Banking Corporation",        "PH Bank"),
+    "eastwest":         ("eastwestbanker.com",   "East West Banking Corporation",        "PH Bank"),
+    "aub":              ("aub.com.ph",           "Asia United Bank",                     "PH Bank"),
+    "pbcom":            ("pbcom.com.ph",         "Philippine Bank of Communications",    "PH Bank"),
+    "philtrustbank":    ("philtrustbank.com",    "Philippine Trust Company",             "PH Bank"),
+    "philtrust":        ("philtrustbank.com",    "Philippine Trust Company",             "PH Bank"),
+    "bankcom":          ("bankcom.com.ph",       "Bank of Commerce",                     "PH Bank"),
+    "veteransbank":     ("veteransbank.com.ph",  "Philippine Veterans Bank",             "PH Bank"),
+    # ── Philippine digital banks ───────────────────────────────────────────
+    "mayabank":         ("mayabank.ph",          "Maya Bank",                            "PH Digital Bank"),
+    "tonikbank":        ("tonikbank.com",        "Tonik Digital Bank",                   "PH Digital Bank"),
+    "uniondigitalbank": ("uniondigitalbank.io",  "UnionDigital Bank",                    "PH Digital Bank"),
+    "gotyme":           ("gotyme.com.ph",        "GoTyme Bank",                          "PH Digital Bank"),
+    "unobank":          ("unobank.asia",         "UNObank",                              "PH Digital Bank"),
+    "cimbbank":         ("cimbbank.com.ph",      "CIMB Bank Philippines",                "PH Digital Bank"),
+    # ── International banks operating in PH ───────────────────────────────
+    "citibank":         ("citibank.com",         "Citibank",                             "Intl Bank"),
+    "hsbc":             ("hsbc.com.ph",          "HSBC Philippines",                     "Intl Bank"),
+    "maybank":          ("maybank.com",          "Maybank",                              "Intl Bank"),
+    "standardchartered":("sc.com",              "Standard Chartered",                   "Intl Bank"),
+    "mufg":             ("mufg.jp",             "MUFG Bank",                            "Intl Bank"),
+    "mizuho":           ("mizuhogroup.com",      "Mizuho Bank",                          "Intl Bank"),
+    "smbc":             ("smbc.co.jp",           "Sumitomo Mitsui Banking",              "Intl Bank"),
+    "bankofamerica":    ("bankofamerica.com",    "Bank of America",                      "Intl Bank"),
+    "jpmorgan":         ("jpmorgan.com",         "JPMorgan Chase",                       "Intl Bank"),
+    "deutschebank":     ("db.com",              "Deutsche Bank",                        "Intl Bank"),
+}
+
+# Aliases and alternative keywords that should map to the same brand.
+# Attackers often drop or truncate brand names.
+BRAND_KEYWORD_ALIASES: Dict[str, str] = {
+    "ph-bdo":        "bdo",
+    "bdoonline":     "bdo",
+    "bdo-online":    "bdo",
+    "mybdo":         "bdo",
+    "lbp":           "landbank",
+    "lbponline":     "landbank",
+    "bpionline":     "bpi",
+    "mybpi":         "bpi",
+    "metro-bank":    "metrobank",
+    "secbank":       "securitybank",
+    "sec-bank":      "securitybank",
+    "pnbph":         "pnb",
+    "unionbankphil": "unionbank",
+    "dbph":          "dbp",
+    "maya":          "mayabank",
+    "paymaya":       "mayabank",
+    "tonik":         "tonikbank",
+    "gotyme":        "gotyme",
+    "uno":           "unobank",
+    "cimb":          "cimbbank",
+    "citi":          "citibank",
+    "standardch":    "standardchartered",
+    "stanchart":     "standardchartered",
+    "boa":           "bankofamerica",
+    "bofa":          "bankofamerica",
+    "chase":         "jpmorgan",
+    "deutsche":      "deutschebank",
+    "db-bank":       "deutschebank",
+}
+
 
 class BrandVerificationService:
     """Verify if a URL is the legitimate domain of a brand"""
@@ -23,6 +105,78 @@ class BrandVerificationService:
         
         # OpenPhish feed
         self.openphish_url = "https://openphish.com/feed.txt"
+
+    # ------------------------------------------------------------------
+    # Brand Impersonation Detection (bank-aware)
+    # ------------------------------------------------------------------
+
+    def check_brand_impersonation(self, url: str, domain: str) -> Tuple[bool, Optional[str], Optional[str]]:
+        """
+        Detect whether a domain is impersonating a known bank or financial brand.
+
+        Returns: (is_impersonating, legitimate_domain, display_name)
+          - is_impersonating : True if the domain looks like a fake
+          - legitimate_domain: the real domain being impersonated, or None
+          - display_name     : human-readable brand name, or None
+        """
+        # Strip subdomains: "secure.bdo-login.com" → work on "bdo-login.com"
+        # Also strip www.
+        clean = domain.lower().replace("www.", "")
+        # Remove port if present
+        clean = clean.split(":")[0]
+
+        # Split into registrable domain parts (last two labels)
+        parts = clean.split(".")
+        registrable = ".".join(parts[-2:]) if len(parts) >= 2 else clean
+        # Full domain without TLD for keyword scanning
+        domain_no_tld = re.sub(r"\.[a-z]{2,}(\.[a-z]{2})?$", "", clean)
+
+        # ── Step 1: Build a normalised slug from the domain (strip hyphens/numbers) ──
+        slug = re.sub(r"[^a-z0-9]", "", domain_no_tld)          # e.g. "bdosecurelogin"
+        slug_hyphenated = domain_no_tld.replace(" ", "").replace(".", "")  # keep hyphens stripped
+
+        # ── Step 2: Resolve any aliases to canonical brand keys ──
+        all_keywords = {**{k: k for k in BRAND_REGISTRY}, **BRAND_KEYWORD_ALIASES}
+
+        matched_brand_key: Optional[str] = None
+
+        # 2a. Exact keyword appears as a whole token in the domain (hyphen/dot split)
+        domain_tokens = re.split(r"[-.]", domain_no_tld)
+        for token in domain_tokens:
+            if token in all_keywords:
+                resolved = all_keywords[token]
+                matched_brand_key = resolved if resolved in BRAND_REGISTRY else None
+                if matched_brand_key:
+                    break
+
+        # 2b. Keyword is a substring of the slug (e.g. "bdoonline", "metrobankph")
+        if not matched_brand_key:
+            # Sort by length descending so longer keywords match before shorter ones
+            # (prevents "bank" matching before "unionbank")
+            for kw in sorted(all_keywords.keys(), key=len, reverse=True):
+                if kw in slug:
+                    resolved = all_keywords[kw]
+                    if resolved in BRAND_REGISTRY:
+                        matched_brand_key = resolved
+                        break
+
+        if not matched_brand_key:
+            return False, None, None
+
+        legit_domain, display_name, category = BRAND_REGISTRY[matched_brand_key]
+
+        # ── Step 3: Is this the ACTUAL legitimate domain? ──
+        # Accept exact match or "www." prefix of the legitimate domain
+        legit_parts = legit_domain.split(".")
+        legit_registrable = ".".join(legit_parts[-2:]) if len(legit_parts) >= 2 else legit_domain
+
+        if registrable == legit_registrable:
+            print(f"✅ {domain} is the legitimate {display_name} domain")
+            return False, None, None
+
+        # ── Step 4: Confirmed impersonation ──
+        print(f"🚨 BRAND IMPERSONATION: {domain} impersonates {display_name} (legit: {legit_domain})")
+        return True, legit_domain, display_name
 
     def verify_brand_ownership(self, url: str, domain: str) -> Tuple[bool, str]:
         """
@@ -89,6 +243,7 @@ class BrandVerificationService:
         """
         # Common brand names and their legitimate domains
         brands = {
+            # Global tech / e-commerce
             'facebook': 'facebook.com',
             'amazon': 'amazon.com',
             'apple': 'apple.com',
@@ -109,6 +264,40 @@ class BrandVerificationService:
             'slack': 'slack.com',
             'github': 'github.com',
             'gitlab': 'gitlab.com',
+            # Philippine domestic banks
+            'bdo': 'bdo.com.ph',
+            'landbank': 'landbank.com',
+            'bpi': 'bpi.com.ph',
+            'metrobank': 'metrobank.com.ph',
+            'chinabank': 'chinabank.ph',
+            'rcbc': 'rcbc.com',
+            'securitybank': 'securitybank.com',
+            'pnb': 'pnb.com.ph',
+            'unionbankph': 'unionbankph.com',
+            'dbp': 'dbp.ph',
+            'eastwestbanker': 'eastwestbanker.com',
+            'aub': 'aub.com.ph',
+            'pbcom': 'pbcom.com.ph',
+            'philtrustbank': 'philtrustbank.com',
+            'bankcom': 'bankcom.com.ph',
+            'veteransbank': 'veteransbank.com.ph',
+            # Philippine digital banks
+            'mayabank': 'mayabank.ph',
+            'tonikbank': 'tonikbank.com',
+            'uniondigitalbank': 'uniondigitalbank.io',
+            'gotyme': 'gotyme.com.ph',
+            'unobank': 'unobank.asia',
+            'cimbbank': 'cimbbank.com.ph',
+            # International banks
+            'citibank': 'citibank.com',
+            'hsbc': 'hsbc.com.ph',
+            'maybank': 'maybank.com',
+            'mufg': 'mufg.jp',
+            'mizuho': 'mizuhogroup.com',
+            'smbc': 'smbc.co.jp',
+            'bankofamerica': 'bankofamerica.com',
+            'jpmorgan': 'jpmorgan.com',
+            'deutschebank': 'db.com',
         }
         
         domain_name = domain.split('.')[0].lower()
