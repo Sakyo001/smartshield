@@ -1529,17 +1529,11 @@ export default function UserDashboard() {
               <Link href="/about" className="text-gray-400 hover:text-white transition">
                 SmartShield
               </Link>
-              <Link href="/terms" className="text-gray-400 hover:text-white transition">
-                Terms and Condition
-              </Link>
-              <Link href="/privacy" className="text-gray-400 hover:text-white transition">
+              <Link href="/privacy-policy" className="text-gray-400 hover:text-white transition">
                 Privacy Policy
               </Link>
               <Link href="/about" className="text-gray-400 hover:text-white transition">
                 About
-              </Link>
-              <Link href="/cookies" className="text-gray-400 hover:text-white transition">
-                Cookies
               </Link>
             </div>
           </div>
