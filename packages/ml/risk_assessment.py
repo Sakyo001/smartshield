@@ -33,12 +33,14 @@ def apply_deterministic_rules(url, domain):
     # Runs before all heuristics — a fake banking domain is definitive phishing.
     is_impersonating, legit_domain_imp, brand_display_name = brand_service.check_brand_impersonation(url, domain)
     if is_impersonating:
-        risk_increase += 75
+        # Brand impersonation is DEFINITIVE - force 100% risk and return early
+        risk_increase = 100
         flags.append(
             f"🚨 PHISHING: Brand Impersonation — impersonating {brand_display_name} "
             f"(legitimate site: {legit_domain_imp})"
         )
         print(f"🚨 BRAND IMPERSONATION: {domain} → {brand_display_name} ({legit_domain_imp})")
+        return risk_increase, flags
 
     # IP-based URL
     if re.search(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', domain):
