@@ -976,7 +976,9 @@ export default function UserDashboard() {
                   const allIndicators: string[] = currentScan.details?.riskAdjustment?.indicators || [];
                   const isBrandImpersonation = (f: string) => f.includes("Brand Impersonation") || f.includes("Impersonating");
                   const isSuspiciousTLD = (f: string) => f.includes("Untrusted TLD") || f.includes("Suspicious TLD");
-                  const isCritical = (f: string) => f.includes("🚨") || f.includes("CRITICAL");
+                  const isCritical = (f: string) =>
+                    f.includes("🚨") || f.includes("CRITICAL") ||
+                    f.includes("VERY NEW DOMAIN") || f.includes("New Domain (Risk Factor)");
                   const positiveIndicators = allIndicators.filter((i) => !isCritical(i));
                   const negativeIndicators = allIndicators.filter((i) => isCritical(i));
 
@@ -1024,7 +1026,16 @@ export default function UserDashboard() {
                                     {isTLD  && <span className="inline-block text-xs font-bold text-orange-400 uppercase tracking-wider mb-1 bg-orange-500/20 px-1.5 py-0.5 rounded">Suspicious TLD</span>}
                                     <p className={`text-xs leading-relaxed ${
                                       isBrand ? "text-red-200" : isTLD ? "text-orange-200" : isRed ? "text-red-200" : "text-yellow-200"
-                                    }`}>{flag.replace(/^🚨\s*/, "")}</p>
+                                    }`}>{flag.replace(/^🚨\s*/, "").replace(/\s*\(legitimate site: [^)]+\)/, "")}</p>
+                                    {isBrand && (() => {
+                                      const m = flag.match(/\(legitimate site: ([^)]+)\)/);
+                                      return m ? (
+                                        <div className="mt-1.5 flex items-center gap-1.5">
+                                          <span className="text-xs text-gray-400">Legitimate site:</span>
+                                          <a href={`https://${m[1]}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:text-blue-300 underline underline-offset-2">{m[1]}</a>
+                                        </div>
+                                      ) : null;
+                                    })()}
                                   </div>
                                 </div>
                               );
