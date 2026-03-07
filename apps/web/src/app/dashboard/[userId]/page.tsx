@@ -826,7 +826,7 @@ export default function UserDashboard() {
             By entering a URL, you agree to our{" "}
             <Link href="/terms" className="text-[#7B83FF] hover:underline">terms of service</Link>
             {" "}and{" "}
-            <Link href="/privacy" className="text-[#7B83FF] hover:underline">privacy policy</Link>.
+            <Link href="/privacy-policy" className="text-[#7B83FF] hover:underline">privacy policy</Link>.
           </p>
 
 
@@ -1677,17 +1677,11 @@ export default function UserDashboard() {
               <Link href="/about" className="text-faded hover:text-heading transition">
                 SmartShield
               </Link>
-              <Link href="/terms" className="text-faded hover:text-heading transition">
-                Terms and Condition
-              </Link>
-              <Link href="/privacy" className="text-faded hover:text-heading transition">
+              <Link href="/privacy-policy" className="text-faded hover:text-heading transition">
                 Privacy Policy
               </Link>
               <Link href="/about" className="text-faded hover:text-heading transition">
                 About
-              </Link>
-              <Link href="/cookies" className="text-faded hover:text-heading transition">
-                Cookies
               </Link>
             </div>
           </div>
