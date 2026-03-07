@@ -26,7 +26,7 @@ export default function HowItWorks() {
   ];
 
   return (
-    <section className="py-24 md:py-32 px-6 bg-[#0a0a0f] relative overflow-hidden font-sans">
+    <section className="py-24 md:py-32 px-6 bg-page relative overflow-hidden font-sans">
       {/* --- Ambient Background --- */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full pointer-events-none opacity-60">
         <div className="absolute top-[10%] left-[5%] w-96 h-96 bg-[#6B73FF]/10 rounded-full blur-[100px] animate-pulse"></div>
@@ -42,10 +42,10 @@ export default function HowItWorks() {
               Simple Process
             </span>
           </div>
-          <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6 tracking-tight">
+          <h2 className="text-3xl md:text-5xl font-extrabold text-heading mb-6 tracking-tight">
             How <span className="text-[#6B73FF]">SmartShield</span> Works
           </h2>
-          <p className="text-gray-400 text-base md:text-xl leading-relaxed max-w-2xl mx-auto">
+          <p className="text-faded text-base md:text-xl leading-relaxed max-w-2xl mx-auto">
             Advanced security made simple. In just three steps, we transform
             uncertainty into clarity.
           </p>
@@ -60,9 +60,9 @@ export default function HowItWorks() {
             {steps.map((step, index) => (
               <div key={index} className="relative">
                 {/* Timeline Dot */}
-                <div className="hidden md:flex absolute left-1/2 top-20 w-5 h-5 rounded-full bg-[#0a0a0f] border-4 border-[#6B73FF] transform -translate-x-1/2 -translate-y-1/2 z-20 shadow-lg"></div>
+                <div className="hidden md:flex absolute left-1/2 top-20 w-5 h-5 rounded-full bg-page border-4 border-[#6B73FF] transform -translate-x-1/2 -translate-y-1/2 z-20 shadow-lg"></div>
 
-                <div className="group relative bg-[#0f0f1e] rounded-2xl p-8 md:p-10 transition-all duration-500 hover:-translate-y-3 border border-gray-800 shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_20px_50px_rgba(107,115,255,0.2)] hover:border-[#6B73FF]/30 flex flex-col">
+                <div className="group relative bg-panel rounded-2xl p-8 md:p-10 transition-all duration-500 hover:-translate-y-3 border border-divider shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_20px_50px_rgba(107,115,255,0.2)] hover:border-[#6B73FF]/30 flex flex-col">
                   {/* Number Badge */}
                   <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-[#6B73FF] to-[#8a9dff] text-white font-bold text-lg mb-6 shadow-lg group-hover:shadow-xl group-hover:shadow-[#6B73FF]/40 transition-all duration-300">
                     {step.number}
@@ -81,10 +81,10 @@ export default function HowItWorks() {
                   </div>
 
                   {/* Content */}
-                  <h3 className="text-xl font-bold text-white mb-3 group-hover:text-[#6B73FF] transition-colors duration-300">
+                  <h3 className="text-xl font-bold text-heading mb-3 group-hover:text-[#6B73FF] transition-colors duration-300">
                     {step.title}
                   </h3>
-                  <p className="text-gray-400 text-sm leading-relaxed flex-grow">
+                  <p className="text-faded text-sm leading-relaxed flex-grow">
                     {step.description}
                   </p>
 

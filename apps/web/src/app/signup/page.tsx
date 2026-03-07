@@ -154,22 +154,30 @@ export default function SignUpPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-page flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="absolute top-4 left-4">
+          <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-faded hover:text-heading transition-colors">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+            Back to home
+          </Link>
+        </div>
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-[#0f0f1e] py-10 px-6 sm:rounded-xl sm:px-12 border border-gray-800 text-center">
+          <div className="bg-panel py-10 px-6 sm:rounded-xl sm:px-12 border border-divider text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10 border border-green-500/20 mb-6">
               <svg className="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold tracking-tight text-white mb-4">
+            <h2 className="text-2xl font-bold tracking-tight text-heading mb-4">
               {needsEmailConfirmation ? "Check your email" : "Account created"}
             </h2>
             
             {needsEmailConfirmation ? (
               <>
-                <p className="text-sm text-gray-400 mb-6">
-                  We've sent a confirmation link to <span className="font-medium text-white">{email}</span>. 
+                <p className="text-sm text-faded mb-6">
+                  We've sent a confirmation link to <span className="font-medium text-heading">{email}</span>. 
                   Please click the link to verify your account.
                 </p>
                 
@@ -187,7 +195,7 @@ export default function SignUpPage() {
                   <button
                     onClick={handleResendConfirmation}
                     disabled={resendingEmail}
-                    className="w-full rounded-lg bg-[#1a1a2e] px-4 py-2.5 text-sm font-semibold text-gray-200 border border-gray-700 hover:bg-[#252540] hover:border-gray-600 transition-colors disabled:opacity-50"
+                    className="w-full rounded-lg bg-inset px-4 py-2.5 text-sm font-semibold text-copy border border-divider hover:bg-panel hover:border-faded transition-colors disabled:opacity-50"
                   >
                     {resendingEmail ? "Sending..." : "Resend email"}
                   </button>
@@ -201,7 +209,7 @@ export default function SignUpPage() {
               </>
             ) : (
               <>
-                <p className="text-sm text-gray-400 mb-6">
+                <p className="text-sm text-faded mb-6">
                   Redirecting you to the dashboard...
                 </p>
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#545BFF] mx-auto"></div>
@@ -214,7 +222,16 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-page flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      {/* Back to home */}
+      <div className="absolute top-4 left-4">
+        <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-faded hover:text-heading transition-colors">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          Back to home
+        </Link>
+      </div>
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <Link href="/">
@@ -227,10 +244,10 @@ export default function SignUpPage() {
             />
           </Link>
         </div>
-        <h2 className="mt-6 text-center text-2xl font-bold tracking-tight text-white">
+        <h2 className="mt-6 text-center text-2xl font-bold tracking-tight text-heading">
           Create an account
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-400">
+        <p className="mt-2 text-center text-sm text-faded">
           Already have an account?{" "}
           <Link href="/login" className="font-medium text-[#7B83FF] hover:text-[#a5adff] transition-colors">
             Log in
@@ -239,7 +256,7 @@ export default function SignUpPage() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-[#0f0f1e] py-8 px-4 sm:rounded-xl sm:px-10 border border-gray-800">
+        <div className="bg-panel py-8 px-4 sm:rounded-xl sm:px-10 border border-divider">
           {error && (
             <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-sm">
               <div className="flex items-start gap-2">
@@ -259,8 +276,8 @@ export default function SignUpPage() {
 
           <form onSubmit={handleEmailSignUp} className="space-y-5">
             <div>
-              <label htmlFor="displayName" className="block text-sm font-medium text-gray-300">
-                Name <span className="text-gray-500 font-normal">(Optional)</span>
+              <label htmlFor="displayName" className="block text-sm font-medium text-copy">
+                Name <span className="text-faded font-normal">(Optional)</span>
               </label>
               <div className="mt-1 relative">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
@@ -275,14 +292,14 @@ export default function SignUpPage() {
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="block w-full appearance-none rounded-lg border border-gray-700 bg-[#1a1a2e] pl-10 pr-3 py-2.5 text-white placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
+                  className="block w-full appearance-none rounded-lg border border-divider bg-inset pl-10 pr-3 py-2.5 text-heading placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
                   placeholder="John Doe"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+              <label htmlFor="email" className="block text-sm font-medium text-copy">
                 Email address
               </label>
               <div className="mt-1 relative">
@@ -300,14 +317,14 @@ export default function SignUpPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full appearance-none rounded-lg border border-gray-700 bg-[#1a1a2e] pl-10 pr-3 py-2.5 text-white placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
+                  className="block w-full appearance-none rounded-lg border border-divider bg-inset pl-10 pr-3 py-2.5 text-heading placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
                   placeholder="you@example.com"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+              <label htmlFor="password" className="block text-sm font-medium text-copy">
                 Password
               </label>
               <div className="mt-1 relative">
@@ -325,12 +342,12 @@ export default function SignUpPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full appearance-none rounded-lg border border-gray-700 bg-[#1a1a2e] pl-10 pr-3 py-2.5 text-white placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
+                  className="block w-full appearance-none rounded-lg border border-divider bg-inset pl-10 pr-3 py-2.5 text-heading placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
                   placeholder="Min 6 characters"
                 />
                 <button type="button"
                      onClick={() => setShowPassword(!showPassword)}
-                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
+                     className="absolute right-3 top-1/2 -translate-y-1/2 text-faded hover:text-heading">
                      {showPassword ? (
                      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
@@ -352,7 +369,7 @@ export default function SignUpPage() {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-copy">
                 Confirm password
               </label>
               <div className="mt-1 relative">
@@ -370,11 +387,11 @@ export default function SignUpPage() {
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="block w-full appearance-none rounded-lg border border-gray-700 bg-[#1a1a2e] pl-10 pr-3 py-2.5 text-white placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
+                  className="block w-full appearance-none rounded-lg border border-divider bg-inset pl-10 pr-3 py-2.5 text-heading placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
                   placeholder="Repeat password"
                 />
                 <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
+                 className="absolute right-3 top-1/2 -translate-y-1/2 text-faded hover:text-heading">
                  </button>
 
               </div>
@@ -394,10 +411,10 @@ export default function SignUpPage() {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-700" />
+                <div className="w-full border-t border-divider" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-[#0f0f1e] px-2 text-gray-500">Or continue with</span>
+                <span className="bg-panel px-2 text-faded">Or continue with</span>
               </div>
             </div>
 
@@ -405,7 +422,7 @@ export default function SignUpPage() {
               <button
                 onClick={handleGoogleSignUp}
                 disabled={loading}
-                className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#1a1a2e] px-4 py-2.5 text-sm font-semibold text-gray-200 border border-gray-700 hover:bg-[#252540] hover:border-gray-600 transition-colors disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-3 rounded-lg bg-inset px-4 py-2.5 text-sm font-semibold text-copy border border-divider hover:bg-panel hover:border-faded transition-colors disabled:opacity-50"
               >
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M19.8 10.2273C19.8 9.51819 19.7364 8.83637 19.6182 8.18182H10V12.05H15.5818C15.3364 13.3 14.5636 14.3591 13.3864 15.0682V17.5773H16.7182C18.7091 15.8364 19.8 13.2727 19.8 10.2273Z" fill="#4285F4"/>

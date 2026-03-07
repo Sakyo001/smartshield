@@ -1,18 +1,48 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ── Class-based dark mode (Tailwind v4) ── */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Semantic colour tokens → bg-page, text-heading, etc. ── */
+@theme {
+  --color-page: var(--c-page);
+  --color-panel: var(--c-panel);
+  --color-inset: var(--c-inset);
+  --color-heading: var(--c-heading);
+  --color-copy: var(--c-copy);
+  --color-faded: var(--c-faded);
+  --color-divider: var(--c-divider);
 }
 
+/* ── Light palette ── */
+:root {
+  --c-page: #e8ecf2;
+  --c-panel: #f0f2f5;
+  --c-inset: #dce1ea;
+  --c-heading: #050811;
+  --c-copy: #1a202c;
+  --c-faded: #2d3748;
+  --c-divider: #a0aec0;
+  --background: #e8ecf2;
+  --foreground: #050811;
+}
+
+/* ── Dark palette ── */
 :root.dark {
+  --c-page: #0a0a0f;
+  --c-panel: #0f0f1e;
+  --c-inset: #1a1a2e;
+  --c-heading: #ffffff;
+  --c-copy: #d1d5db;
+  --c-faded: #9ca3af;
+  --c-divider: #374151;
   --background: #0a0a0a;
   --foreground: #ededed;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--c-page);
+  color: var(--c-heading);
   font-family:
     system-ui,
     -apple-system,
@@ -23,4 +53,9 @@ body {
 .aurora-container {
   width: 100%;
   height: 100%;
+}
+
+/* Hide Aurora in light mode */
+:root:not(.dark) .aurora-container {
+  display: none;
 }

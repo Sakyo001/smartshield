@@ -29,7 +29,7 @@ export function Tabs({ tabs, defaultValue, children, className = "", onTabChange
   return (
     <div className={`w-full ${className}`}>
       {/* Tab Navigation */}
-      <div className="border-b border-gray-700 mb-8">
+      <div className="border-b border-divider mb-8">
         <nav className="flex flex-wrap gap-2 -mb-px" aria-label="Tabs">
           {tabs.map((tab) => (
             <button
@@ -43,7 +43,7 @@ export function Tabs({ tabs, defaultValue, children, className = "", onTabChange
                 ${
                   activeTab === tab.value
                     ? "border-[#6B73FF] text-[#6B73FF] bg-[#6B73FF]/5"
-                    : "border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600"
+                    : "border-transparent text-faded hover:text-copy hover:border-divider"
                 }
               `}
               aria-current={activeTab === tab.value ? "page" : undefined}

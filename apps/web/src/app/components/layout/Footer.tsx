@@ -4,7 +4,7 @@ import Aurora from "../ui/Aurora";
 
 export default function Footer() {
   return (
-    <footer className="relative bg-[#0a0a0f] border-t border-gray-800 py-8 px-6 overflow-hidden">
+    <footer className="relative bg-page border-t border-divider py-8 px-6 overflow-hidden">
       {/* --- Aurora Background Effect --- */}
       {/* 1. Anchored firmly to bottom (bottom-0) */}
       {/* 2. Fixed height (h-[500px]) to ensure large, visible waves rising up */}
@@ -33,7 +33,7 @@ export default function Footer() {
               height={32}
               className="object-contain"
             />
-            <span className="text-white text-lg font-semibold">
+            <span className="text-heading text-lg font-semibold">
               SmartShield
             </span>
           </div>
@@ -42,19 +42,19 @@ export default function Footer() {
           <div className="flex flex-wrap items-center justify-center gap-8 text-sm">
             <Link
               href="/"
-              className="text-gray-400 hover:text-[#545BFF] transition-colors"
+              className="text-faded hover:text-[#545BFF] transition-colors"
             >
               SmartShield
             </Link>
             <Link
               href="/privacy-policy"
-              className="text-gray-400 hover:text-[#545BFF] transition-colors"
+              className="text-faded hover:text-[#545BFF] transition-colors"
             >
               Privacy Policy
             </Link>
             <Link
               href="/#about"
-              className="text-gray-400 hover:text-[#545BFF] transition-colors"
+              className="text-faded hover:text-[#545BFF] transition-colors"
             >
               About
             </Link>

@@ -1,5 +1,6 @@
 "use client"
 import { useAuth } from "@lib/auth-context"
+import { useTheme } from "@lib/theme-context"
 import { redirect } from "next/navigation"
 import { useEffect, useState } from "react"
 import Image from "next/image"
@@ -23,6 +24,7 @@ interface ScanResult {
     sslCertificates?: any
     communityComments?: number
     riskAdjustment?: any
+    screenshot?: string | null
   }
 }
 
@@ -50,6 +52,7 @@ async function fetchWithTimeout(resource: RequestInfo, options: any = {}) {
 
 export default function UserDashboard() {
   const { user, loading, signOut } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const [urlInput, setUrlInput] = useState("")
   const [urlError, setUrlError] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
@@ -314,6 +317,7 @@ export default function UserDashboard() {
       let dnsRecords = data.dns || null
       let sslInfo = data.ssl || null
       let riskAdjustment = data.risk_adjustment || null
+      let screenshot = data.screenshot || null
 
       console.log(`DEBUG: Full riskAdjustment object:`, JSON.stringify(riskAdjustment, null, 2))
       
@@ -438,7 +442,8 @@ export default function UserDashboard() {
           dnsRecords: dnsRecords,
           sslCertificates: sslInfo,
           communityComments: data.community_comments || 0,
-          riskAdjustment: riskAdjustment
+          riskAdjustment: riskAdjustment,
+          screenshot: screenshot
         }
       }
 
@@ -524,8 +529,8 @@ export default function UserDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
-        <p className="text-white">Loading...</p>
+      <div className="min-h-screen bg-page flex items-center justify-center">
+        <p className="text-heading">Loading...</p>
       </div>
     )
   }
@@ -533,18 +538,18 @@ export default function UserDashboard() {
   if (!user) return null
 
   return (
-    <div className="relative min-h-screen bg-[#0a0a0f] text-gray-100 overflow-x-hidden">
+    <div className="relative min-h-screen bg-page text-copy overflow-x-hidden">
       {/* Background Ambience */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <Aurora colorStops={["#545BFF", "#8B5CF6", "#0a0a0f"]} amplitude={1.0} blend={0.6} />
-        <div className="absolute inset-0 bg-[#0a0a0f]/80 backdrop-blur-[1px]"></div>
+        <div className="absolute inset-0 bg-page/80 backdrop-blur-[1px]"></div>
       </div>
 
       <div className="relative z-10">
       <MultiStepLoader loadingStates={loadingStates} loading={scanning} duration={1500} />
 
       {/* Navbar */}
-      <nav className="border-b border-gray-800/50 bg-[#0a0a0f]/50 backdrop-blur-md sticky top-0 z-50">
+      <nav className="border-b border-divider/50 bg-page/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-3">
 
@@ -557,7 +562,7 @@ export default function UserDashboard() {
   <div className="flex flex-col justify-center">
     
     {/* Title */}
-    <span className="text-white text-base md:text-2xl font-semibold leading-none">
+    <span className="text-heading text-base md:text-2xl font-semibold leading-none">
       SmartShield
     </span>
 
@@ -584,7 +589,7 @@ export default function UserDashboard() {
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     activeDashNav === tab
                       ? "bg-[#7B83FF]/15 text-[#a5adff] border border-[#7B83FF]/30"
-                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                      : "text-faded hover:text-heading hover:bg-heading/5"
                   }`}
                 >
                   {labels[tab]}
@@ -593,9 +598,23 @@ export default function UserDashboard() {
             })}
           </div>
 
-          <button 
-            onClick={() => setShowLogoutModal(true)}
-            className="relative group text-white border border-gray-700 rounded-lg px-3 md:px-4 py-2 hover:border-[#7B83FF] hover:bg-[#7B83FF]/10 transition-all flex items-center gap-2 text-xs md:text-sm"
+          <div className="flex items-center gap-2">
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              className="p-2 rounded-lg border border-divider text-faded hover:text-heading hover:border-[#7B83FF] hover:bg-[#7B83FF]/10 transition-all"
+            >
+              {theme === "dark" ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              )}
+            </button>
+
+            <button 
+              onClick={() => setShowLogoutModal(true)}
+              className="relative group text-heading border border-divider rounded-lg px-3 md:px-4 py-2 hover:border-[#7B83FF] hover:bg-[#7B83FF]/10 transition-all flex items-center gap-2 text-xs md:text-sm"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4">
               <path d="M6 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V3.33333C2 2.97971 2.14048 2.64057 2.39052 2.39052C2.64057 2.14048 2.97971 2 3.33333 2H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -604,6 +623,7 @@ export default function UserDashboard() {
             </svg>
             <span className="hidden sm:inline">Logout</span>
           </button>
+          </div>
         </div>
       </nav>
 
@@ -613,8 +633,8 @@ export default function UserDashboard() {
         {/* ── How to Use View ── */}
         {activeDashNav === "how-to-use" && (
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">How to Use <span className="text-[#7B83FF]">SmartShield</span></h2>
-            <p className="text-gray-400 mb-12">Follow these steps to protect yourself from phishing attacks.</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-heading mb-2">How to Use <span className="text-[#7B83FF]">SmartShield</span></h2>
+            <p className="text-faded mb-12">Follow these steps to protect yourself from phishing attacks.</p>
 
             <div className="space-y-6">
               {[
@@ -649,7 +669,7 @@ export default function UserDashboard() {
                   icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>,
                 },
               ].map(({ step, title, desc, icon }) => (
-                <div key={step} className="flex gap-6 p-6 bg-[#1a1a2e]/60 border border-gray-800 rounded-2xl backdrop-blur-sm">
+                <div key={step} className="flex gap-6 p-6 bg-inset/60 border border-divider rounded-2xl backdrop-blur-sm">
                   <div className="flex-shrink-0 flex flex-col items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-[#7B83FF]/10 border border-[#7B83FF]/30 flex items-center justify-center text-[#7B83FF]">
                       {icon}
@@ -657,16 +677,16 @@ export default function UserDashboard() {
                     <span className="text-[#7B83FF]/40 text-xs font-mono font-bold">{step}</span>
                   </div>
                   <div>
-                    <h3 className="text-white font-semibold text-lg mb-2">{title}</h3>
-                    <p className="text-gray-400 text-sm leading-relaxed">{desc}</p>
+                    <h3 className="text-heading font-semibold text-lg mb-2">{title}</h3>
+                    <p className="text-faded text-sm leading-relaxed">{desc}</p>
                   </div>
                 </div>
               ))}
             </div>
 
             <div className="mt-10 p-6 bg-[#545BFF]/5 border border-[#545BFF]/20 rounded-2xl">
-              <h4 className="text-white font-semibold mb-2">⚠️ Tips for Staying Safe</h4>
-              <ul className="space-y-2 text-sm text-gray-400 list-disc list-inside">
+              <h4 className="text-heading font-semibold mb-2">⚠️ Tips for Staying Safe</h4>
+              <ul className="space-y-2 text-sm text-faded list-disc list-inside">
                 <li>Always verify links before entering personal information.</li>
                 <li>Look for HTTPS — HTTP sites are unencrypted and riskier.</li>
                 <li>Newly registered domains (less than 1 year old) carry higher risk.</li>
@@ -679,8 +699,8 @@ export default function UserDashboard() {
         {/* ── Extension View ── */}
         {activeDashNav === "extension" && (
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">Browser <span className="text-[#7B83FF]">Extension</span></h2>
-            <p className="text-gray-400 mb-12">Get real-time phishing protection directly in your browser.</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-heading mb-2">Browser <span className="text-[#7B83FF]">Extension</span></h2>
+            <p className="text-faded mb-12">Get real-time phishing protection directly in your browser.</p>
 
             <div className="grid sm:grid-cols-2 gap-6 mb-10">
               {[
@@ -689,19 +709,19 @@ export default function UserDashboard() {
                 { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>, title: "Synced with Dashboard", desc: "All scans from the extension sync to your dashboard history automatically." },
                 { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>, title: "Lightweight & Fast", desc: "Minimal performance impact — scans run in milliseconds without slowing your browser." },
               ].map(({ icon, title, desc }) => (
-                <div key={title} className="p-6 bg-[#1a1a2e]/60 border border-gray-800 rounded-2xl">
+                <div key={title} className="p-6 bg-inset/60 border border-divider rounded-2xl">
                   <div className="w-10 h-10 rounded-lg bg-[#7B83FF]/10 border border-[#7B83FF]/20 flex items-center justify-center text-[#7B83FF] mb-4">
                     {icon}
                   </div>
-                  <h3 className="text-white font-semibold mb-1">{title}</h3>
-                  <p className="text-gray-400 text-sm">{desc}</p>
+                  <h3 className="text-heading font-semibold mb-1">{title}</h3>
+                  <p className="text-faded text-sm">{desc}</p>
                 </div>
               ))}
             </div>
 
             <div className="p-8 bg-gradient-to-br from-[#545BFF]/10 to-[#7B83FF]/5 border border-[#545BFF]/20 rounded-2xl text-center">
-              <h3 className="text-white text-xl font-bold mb-3">Ready to Install?</h3>
-              <p className="text-gray-400 text-sm mb-6 max-w-sm mx-auto">The SmartShield extension is available for Chromium-based browsers. Download and load it manually from the project repository.</p>
+              <h3 className="text-heading text-xl font-bold mb-3">Ready to Install?</h3>
+              <p className="text-faded text-sm mb-6 max-w-sm mx-auto">The SmartShield extension is available for Chromium-based browsers. Download and load it manually from the project repository.</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <a
                   href="https://github.com"
@@ -714,7 +734,7 @@ export default function UserDashboard() {
                 </a>
                 <button
                   onClick={() => setActiveDashNav("how-to-use")}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-gray-700 text-white rounded-lg font-medium transition text-sm"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-divider text-heading rounded-lg font-medium transition text-sm"
                 >
                   Setup Guide
                 </button>
@@ -728,7 +748,7 @@ export default function UserDashboard() {
         <>
         {/* Title */}
         {activeDashNav === "scanner" && (
-        <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white text-center mb-8 md:mb-16">
+        <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-heading text-center mb-8 md:mb-16">
           Is This Website <span className="text-[#7B83FF]">Safe</span>? Find Out Instantly
         </h1>
         )}
@@ -739,8 +759,8 @@ export default function UserDashboard() {
           <div className="flex items-start gap-3 mb-6">
             <Image src="/images/logo 1.png" alt="SmartShield" width={54} height={54} />
             <div>
-              <h3 className="text-white text-lg font-semibold mb-1">SmartShield</h3>
-              <p className="text-gray-400 text-sm">
+              <h3 className="text-heading text-lg font-semibold mb-1">SmartShield</h3>
+              <p className="text-faded text-sm">
                 Scan any website link and instantly detect phishing threats with AI-powered accuracy.
               </p>
             </div>
@@ -748,7 +768,7 @@ export default function UserDashboard() {
 
           <form onSubmit={handleScan} className="relative group z-20 mb-6">
             <div className={`absolute -inset-0.5 bg-gradient-to-r from-[#545BFF] to-[#b19eef] rounded-xl opacity-30 blur transition duration-1000 group-hover:opacity-60 pointer-events-none ${scanning ? 'animate-pulse' : ''}`}></div>
-            <div className="relative flex flex-col sm:flex-row items-center gap-2 p-1.5 bg-[#0f0f1e] rounded-xl border border-gray-800">
+            <div className="relative flex flex-col sm:flex-row items-center gap-2 p-1.5 bg-panel rounded-xl border border-divider">
               <div className="flex-1 flex items-center gap-3 px-4 w-full">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-500 flex-shrink-0">
                   <circle cx="11" cy="11" r="8"></circle>
@@ -759,7 +779,7 @@ export default function UserDashboard() {
                   value={urlInput}
                   onChange={(e) => { setUrlInput(e.target.value); setUrlError(null); }}
                   placeholder="Paste a URL to scan (e.g., https://example.com)..."
-                  className={`w-full bg-transparent border-none text-white placeholder-gray-500 focus:outline-none focus:ring-0 py-3 text-base`}
+                  className={`w-full bg-transparent border-none text-heading placeholder-gray-500 focus:outline-none focus:ring-0 py-3 text-base`}
                   required
                 />
               </div>
@@ -812,7 +832,7 @@ export default function UserDashboard() {
 
           {/* API Status Button */}
           <div className="mt-8 flex justify-center">
-            <div className="inline-flex items-center gap-3 px-4 py-2 bg-[#1a1a2e]/60 border border-gray-700/50 rounded-full backdrop-blur-sm">
+            <div className="inline-flex items-center gap-3 px-4 py-2 bg-inset/60 border border-divider/50 rounded-full backdrop-blur-sm">
               <div className="relative flex h-2.5 w-2.5">
                 {apiStatus === 'online' ? (
                   <>
@@ -892,7 +912,7 @@ export default function UserDashboard() {
 
                 {/* Info Section */}
                 <div className="flex-1 w-full text-center lg:text-left">
-                  <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 break-all">{currentScan.url}</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold text-heading mb-2 break-all">{currentScan.url}</h2>
                   
                   <p className={`text-lg mb-6 ${
                       currentScan.status === "Dangerous" 
@@ -923,17 +943,17 @@ export default function UserDashboard() {
 
                    {/* Quick Stats Grid */}
                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mt-6">
-                      <div className="bg-[#1a1a2e]/50 p-4 rounded-xl border border-gray-800">
-                         <div className="text-gray-500 text-xs uppercase tracking-wider mb-1">Registrar</div>
-                         <div className="text-white font-medium truncate">{currentScan.details?.registrar || 'Unknown'}</div>
+                      <div className="bg-inset/50 p-4 rounded-xl border border-divider">
+                         <div className="text-faded text-xs uppercase tracking-wider mb-1">Registrar</div>
+                         <div className="text-heading font-medium truncate">{currentScan.details?.registrar || 'Unknown'}</div>
                       </div>
-                      <div className="bg-[#1a1a2e]/50 p-4 rounded-xl border border-gray-800">
-                         <div className="text-gray-500 text-xs uppercase tracking-wider mb-1">Created</div>
-                         <div className="text-white font-medium">{currentScan.details?.creationDate || 'Unknown'}</div>
+                      <div className="bg-inset/50 p-4 rounded-xl border border-divider">
+                         <div className="text-faded text-xs uppercase tracking-wider mb-1">Created</div>
+                         <div className="text-heading font-medium">{currentScan.details?.creationDate || 'Unknown'}</div>
                       </div>
-                        <div className="bg-[#1a1a2e]/50 p-4 rounded-xl border border-gray-800 col-span-2 md:col-span-1">
-                         <div className="text-gray-500 text-xs uppercase tracking-wider mb-1">Last Analysis</div>
-                         <div className="text-white font-medium">{currentScan.details?.lastAnalysisDate}</div>
+                        <div className="bg-inset/50 p-4 rounded-xl border border-divider col-span-2 md:col-span-1">
+                         <div className="text-faded text-xs uppercase tracking-wider mb-1">Last Analysis</div>
+                         <div className="text-heading font-medium">{currentScan.details?.lastAnalysisDate}</div>
                       </div>
                    </div>
                 </div>
@@ -941,7 +961,7 @@ export default function UserDashboard() {
               </div>
               
               {/* Action Buttons */}
-               <div className="flex justify-center lg:justify-end gap-3 mt-8 pt-6 border-t border-gray-800/50">
+               <div className="flex justify-center lg:justify-end gap-3 mt-8 pt-6 border-t border-divider/50">
                   <button
                     onClick={handleReanalyze}
                     disabled={scanning}
@@ -953,8 +973,8 @@ export default function UserDashboard() {
             </div>
 
             {/* Tabs */}
-            <div className="bg-[#1a1a2e]/60 backdrop-blur-md border border-gray-800 rounded-2xl overflow-hidden shadow-xl mt-8">
-              <div className="flex overflow-x-auto p-2 gap-2 border-b border-gray-800/50 bg-[#0f0f1e]/50 scrollbar-hide">
+            <div className="bg-inset/60 backdrop-blur-md border border-divider rounded-2xl overflow-hidden shadow-xl mt-8">
+              <div className="flex overflow-x-auto p-2 gap-2 border-b border-divider/50 bg-panel/50 scrollbar-hide">
                {["detection", "explanation", "details", "relations", "community"].map((tab) => (
                   <button
                     key={tab}
@@ -962,7 +982,7 @@ export default function UserDashboard() {
                     className={`relative px-5 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 whitespace-nowrap outline-none focus:ring-2 focus:ring-[#7B83FF]/50 ${
                       activeTab === tab
                         ? "text-white bg-[#7B83FF] shadow-lg shadow-[#7B83FF]/25"
-                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                        : "text-faded hover:text-heading hover:bg-heading/5"
                     }`}
                   >
                     {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -970,32 +990,160 @@ export default function UserDashboard() {
                ))}
               </div>
 
-              <div className="p-6 md:p-8 bg-gradient-to-b from-[#0a0a0f]/50 to-[#0a0a0f]">
-                {activeTab === "detection" && (
-                  <div>
-                    <div className="grid grid-cols-1 gap-px bg-gray-800">
-                      {/* Display only scanned URL and status */}
-                      <div className="bg-[#0f0f1e] p-3 md:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                        <span className="text-white text-xs md:text-sm break-all">{currentScan.url}</span>
+              <div className="p-6 md:p-8 bg-gradient-to-b from-page/50 to-page">
+                {activeTab === "detection" && (() => {
+                  const detFlags: string[] = currentScan.details?.riskAdjustment?.deterministic_flags || [];
+                  const allIndicators: string[] = currentScan.details?.riskAdjustment?.indicators || [];
+                  const screenshot = currentScan.details?.screenshot || null;
+                  const isBrandImpersonation = (f: string) => f.includes("Brand Impersonation") || f.includes("Impersonating");
+                  const isSuspiciousTLD = (f: string) => f.includes("Untrusted TLD") || f.includes("Suspicious TLD");
+                  const isCritical = (f: string) =>
+                    f.includes("🚨") || f.includes("CRITICAL") ||
+                    f.includes("VERY NEW DOMAIN") || f.includes("New Domain (Risk Factor)");
+                  const positiveIndicators = allIndicators.filter((i) => !isCritical(i));
+                  const negativeIndicators = allIndicators.filter((i) => isCritical(i));
+
+                  return (
+                    <div className="space-y-6">
+                      {/* URL + Status row */}
+                      <div className="bg-panel border border-divider rounded-xl p-3 md:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                        <span className="text-heading text-xs md:text-sm break-all font-mono">{currentScan.url}</span>
                         <span className={`text-xs px-3 py-1 rounded-full font-medium whitespace-nowrap ${
-                          currentScan.riskScore >= 70 
-                            ? "bg-red-500/20 text-red-400" 
-                            : currentScan.riskScore >= 40
-                            ? "bg-yellow-500/20 text-yellow-400"
-                            : "bg-green-500/20 text-green-400"
+                          currentScan.riskScore >= 70 ? "bg-red-500/20 text-red-400" : currentScan.riskScore >= 40 ? "bg-yellow-500/20 text-yellow-400" : "bg-green-500/20 text-green-400"
                         }`}>
                           {currentScan.riskScore >= 70 ? "Phishing" : currentScan.riskScore >= 40 ? "Suspicious" : "Safe"}
                         </span>
                       </div>
+
+                      {/* Page Screenshot (Warning / Dangerous only) */}
+                      {screenshot && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className={`w-1 h-5 rounded-full ${currentScan.riskScore >= 70 ? "bg-red-500" : "bg-yellow-500"}`} />
+                            <h4 className="text-heading font-semibold text-sm">Page Screenshot</h4>
+                            <span className={`text-xs font-mono px-2 py-0.5 rounded border ${
+                              currentScan.riskScore >= 70
+                                ? "text-red-400 bg-red-500/10 border-red-500/20"
+                                : "text-yellow-400 bg-yellow-500/10 border-yellow-500/20"
+                            }`}>
+                              {currentScan.riskScore >= 70 ? "PHISHING SITE" : "SUSPICIOUS SITE"}
+                            </span>
+                          </div>
+                          <div className={`rounded-xl border overflow-hidden ${currentScan.riskScore >= 70 ? "border-red-500/40" : "border-yellow-500/40"}`}>
+                            <div className={`px-3 py-1.5 text-xs font-mono flex items-center gap-2 ${currentScan.riskScore >= 70 ? "bg-red-500/10 text-red-400" : "bg-yellow-500/10 text-yellow-400"}`}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                              Live capture at time of scan
+                            </div>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={`data:image/png;base64,${screenshot}`}
+                              alt="Screenshot of scanned page"
+                              className="w-full object-cover"
+                              style={{ maxHeight: "400px", objectPosition: "top" }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Threat Flags */}
+                      {detFlags.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-1 h-5 bg-red-500 rounded-full" />
+                            <h4 className="text-heading font-semibold text-sm">Threat Indicators</h4>
+                            <span className="text-xs font-mono text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">{detFlags.length} FLAG{detFlags.length !== 1 ? "S" : ""}</span>
+                          </div>
+                          <div className="space-y-2">
+                            {detFlags.map((flag, i) => {
+                              const isBrand = isBrandImpersonation(flag);
+                              const isTLD = isSuspiciousTLD(flag);
+                              const isRed = isCritical(flag) || isBrand;
+                              return (
+                                <div key={i} className={`flex items-start gap-3 p-3 rounded-lg border ${
+                                  isBrand ? "bg-red-500/10 border-red-500/30" :
+                                  isTLD   ? "bg-orange-500/10 border-orange-500/30" :
+                                  isRed   ? "bg-red-500/10 border-red-500/20" :
+                                            "bg-yellow-500/10 border-yellow-500/20"
+                                }`}>
+                                  {isBrand ? (
+                                    <svg className="shrink-0 mt-0.5 text-red-400" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                                  ) : isTLD ? (
+                                    <svg className="shrink-0 mt-0.5 text-orange-400" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                                  ) : (
+                                    <svg className={`shrink-0 mt-0.5 ${isRed ? "text-red-400" : "text-yellow-400"}`} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    {isBrand && <span className="inline-block text-xs font-bold text-red-400 uppercase tracking-wider mb-1 bg-red-500/20 px-1.5 py-0.5 rounded">Brand Impersonation</span>}
+                                    {isTLD  && <span className="inline-block text-xs font-bold text-orange-400 uppercase tracking-wider mb-1 bg-orange-500/20 px-1.5 py-0.5 rounded">Suspicious TLD</span>}
+                                    <p className={`text-xs leading-relaxed ${
+                                      isBrand ? "text-red-200" : isTLD ? "text-orange-200" : isRed ? "text-red-200" : "text-yellow-200"
+                                    }`}>{flag.replace(/^🚨\s*/, "").replace(/\s*\(legitimate site: [^)]+\)/, "")}</p>
+                                    {isBrand && (() => {
+                                      const m = flag.match(/\(legitimate site: ([^)]+)\)/);
+                                      return m ? (
+                                        <div className="mt-1.5 flex items-center gap-1.5">
+                                          <span className="text-xs text-gray-400">Legitimate site:</span>
+                                          <a href={`https://${m[1]}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:text-blue-300 underline underline-offset-2">{m[1]}</a>
+                                        </div>
+                                      ) : null;
+                                    })()}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Critical indicators from contextual layer */}
+                      {negativeIndicators.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-1 h-5 bg-red-600 rounded-full" />
+                            <h4 className="text-heading font-semibold text-sm">Critical Signals</h4>
+                          </div>
+                          <div className="space-y-2">
+                            {negativeIndicators.map((ind, i) => (
+                              <div key={i} className="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                                <svg className="flex-shrink-0 text-red-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6"/><path d="M9 9l6 6"/></svg>
+                                <span className="text-red-200 text-xs">{ind.replace(/^🚨\s*/, "")}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Trust signals */}
+                      {positiveIndicators.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-1 h-5 bg-green-500 rounded-full" />
+                            <h4 className="text-heading font-semibold text-sm">Trust Signals</h4>
+                            <span className="text-xs font-mono text-green-400 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">{positiveIndicators.length} FOUND</span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {positiveIndicators.map((ind, i) => (
+                              <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-lg text-green-300 text-xs">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                {ind}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {detFlags.length === 0 && allIndicators.length === 0 && (
+                        <p className="text-gray-500 text-sm text-center py-6">No threat indicators detected.</p>
+                      )}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {activeTab === "details" && (
                   <div className="space-y-4 text-xs md:text-sm">
                     <div>
-                      <h4 className="text-gray-400 mb-2 text-xs md:text-sm font-medium">WHOIS Information</h4>
-                      <div className="bg-[#1a1a2e] p-3 md:p-4 rounded border border-gray-800 text-gray-300 font-mono text-xs overflow-x-auto">
+                      <h4 className="text-faded mb-2 text-xs md:text-sm font-medium">WHOIS Information</h4>
+                      <div className="bg-inset p-3 md:p-4 rounded border border-divider text-copy font-mono text-xs overflow-x-auto">
                         {currentScan.details?.whoisInfo ? (
                           <pre className="text-xs">{JSON.stringify(currentScan.details.whoisInfo, null, 2)}</pre>
                         ) : (
@@ -1004,8 +1152,8 @@ export default function UserDashboard() {
                       </div>
                     </div>
                     <div>
-                      <h4 className="text-gray-400 mb-2 text-xs md:text-sm font-medium">DNS Records</h4>
-                      <div className="bg-[#1a1a2e] p-3 md:p-4 rounded border border-gray-800 text-gray-300">
+                      <h4 className="text-faded mb-2 text-xs md:text-sm font-medium">DNS Records</h4>
+                      <div className="bg-inset p-3 md:p-4 rounded border border-divider text-copy">
                         {currentScan.details?.dnsRecords ? (
                           <pre className="text-xs font-mono overflow-x-auto">{JSON.stringify(currentScan.details.dnsRecords, null, 2)}</pre>
                         ) : (
@@ -1014,8 +1162,8 @@ export default function UserDashboard() {
                       </div>
                     </div>
                     <div>
-                      <h4 className="text-gray-400 mb-2 text-xs md:text-sm font-medium">SSL Certificate</h4>
-                      <div className="bg-[#1a1a2e] p-3 md:p-4 rounded border border-gray-800 text-gray-300">
+                      <h4 className="text-faded mb-2 text-xs md:text-sm font-medium">SSL Certificate</h4>
+                      <div className="bg-inset p-3 md:p-4 rounded border border-divider text-copy">
                         {currentScan.details?.sslCertificates && !currentScan.details.sslCertificates.error ? (
                           <pre className="text-xs font-mono overflow-x-auto">{JSON.stringify(currentScan.details.sslCertificates, null, 2)}</pre>
                         ) : (
@@ -1036,14 +1184,14 @@ export default function UserDashboard() {
                            <div className="absolute inset-0 border-t-2 border-[#7B83FF] rounded-full animate-spin"></div>
                            <div className="absolute inset-2 border-r-2 border-[#b19eef] rounded-full animate-spin-reverse"></div>
                         </div>
-                        <p className="text-gray-400 font-mono text-sm tracking-wide animate-pulse">Initializing AI Analysis Protocol...</p>
+                        <p className="text-faded font-mono text-sm tracking-wide animate-pulse">Initializing AI Analysis Protocol...</p>
                       </div>
                     ) : xaiExplanation ? (
                       <>
                        
 
                         {/* Strategic Recommendation Panel */}
-                        <div className={`rounded-xl border border-gray-800 overflow-hidden ${
+                        <div className={`rounded-xl border border-divider overflow-hidden ${
                           currentScan.riskScore >= 70
                             ? 'bg-red-950/10'
                             : currentScan.riskScore >= 40
@@ -1072,7 +1220,7 @@ export default function UserDashboard() {
                                  }`}>
                                     Strategic Recommendation
                                  </h4>
-                                 <p className="text-gray-200 text-sm md:text-lg font-medium">
+                                 <p className="text-copy text-sm md:text-lg font-medium">
                                     {xaiExplanation.recommendation}
                                  </p>
                               </div>
@@ -1087,7 +1235,7 @@ export default function UserDashboard() {
                             <div className="space-y-4">
                               <div className="flex items-center gap-3 mb-2">
                                 <div className="w-1.5 h-6 bg-red-500 rounded-full"></div>
-                                <h4 className="text-white font-bold text-lg">Threat Vectors Detected</h4>
+                                <h4 className="text-heading font-bold text-lg">Threat Vectors Detected</h4>
                                 <span className="text-xs font-mono text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
                                   {xaiExplanation.risk_factors.length} ISSUES
                                 </span>
@@ -1095,7 +1243,7 @@ export default function UserDashboard() {
                               
                               <div className="grid gap-3">
                                 {xaiExplanation.risk_factors.map((factor: any, idx: number) => (
-                                  <div key={idx} className="bg-[#1a1a2e] border border-red-500/20 rounded-lg p-4 hover:border-red-500/40 transition-colors group">
+                                  <div key={idx} className="bg-inset border border-red-500/20 rounded-lg p-4 hover:border-red-500/40 transition-colors group">
                                     <div className="flex items-start gap-4">
                                         <span className="flex-shrink-0 mt-1 text-red-500/50 group-hover:text-red-500 transition-colors font-mono text-xs">
                                            0{idx + 1}
@@ -1104,7 +1252,7 @@ export default function UserDashboard() {
                                            <h5 className="text-red-300 font-medium text-sm mb-1 group-hover:text-red-200 transition-colors">
                                              {factor.title}
                                            </h5>
-                                           <p className="text-gray-500 text-xs leading-relaxed group-hover:text-gray-400 transition-colors">
+                                           <p className="text-faded text-xs leading-relaxed group-hover:text-faded transition-colors">
                                              {factor.description}
                                            </p>
                                         </div>
@@ -1120,7 +1268,7 @@ export default function UserDashboard() {
                             <div className="space-y-4">
                                <div className="flex items-center gap-3 mb-2">
                                 <div className="w-1.5 h-6 bg-green-500 rounded-full"></div>
-                                <h4 className="text-white font-bold text-lg">Trust Signals Validated</h4>
+                                <h4 className="text-heading font-bold text-lg">Trust Signals Validated</h4>
                                 <span className="text-xs font-mono text-green-400 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">
                                   {xaiExplanation.positive_factors.length} VERIFIED
                                 </span>
@@ -1128,7 +1276,7 @@ export default function UserDashboard() {
 
                               <div className="grid gap-3">
                                 {xaiExplanation.positive_factors.map((factor: any, idx: number) => (
-                                  <div key={idx} className="bg-[#1a1a2e] border border-green-500/20 rounded-lg p-4 hover:border-green-500/40 transition-colors group">
+                                  <div key={idx} className="bg-inset border border-green-500/20 rounded-lg p-4 hover:border-green-500/40 transition-colors group">
                                      <div className="flex items-start gap-4">
                                         <span className="flex-shrink-0 mt-1 text-green-500/50 group-hover:text-green-500 transition-colors font-mono text-xs">
                                            0{idx + 1}
@@ -1137,7 +1285,7 @@ export default function UserDashboard() {
                                            <h5 className="text-green-300 font-medium text-sm mb-1 group-hover:text-green-200 transition-colors">
                                              {factor.title}
                                            </h5>
-                                           <p className="text-gray-500 text-xs leading-relaxed group-hover:text-gray-400 transition-colors">
+                                           <p className="text-faded text-xs leading-relaxed group-hover:text-faded transition-colors">
                                              {factor.description}
                                            </p>
                                         </div>
@@ -1152,7 +1300,7 @@ export default function UserDashboard() {
                       </>
                     ) : (
                       <div className="text-center py-12">
-                        <p className="text-gray-400">Unable to generate explanation. Please try again.</p>
+                        <p className="text-faded">Unable to generate explanation. Please try again.</p>
                       </div>
                     )}
                   </div>
@@ -1162,7 +1310,7 @@ export default function UserDashboard() {
                   <div>
                     {loadingHistory && (
                       <div className="text-center py-12">
-                        <p className="text-gray-400">Loading historical data...</p>
+                        <p className="text-faded">Loading historical data...</p>
                       </div>
                     )}
                     
@@ -1171,22 +1319,22 @@ export default function UserDashboard() {
                         {/* JSON Data Sections - Improved Style */}
                         {historicalData.whois_changes && historicalData.whois_changes.length > 0 && (
                           <div>
-                            <h4 className="flex items-center gap-2 text-white font-semibold mb-3 text-sm md:text-base">
+                            <h4 className="flex items-center gap-2 text-heading font-semibold mb-3 text-sm md:text-base">
                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#7B83FF]"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                               WHOIS Changes History
                             </h4>
                             <div className="space-y-3">
                               {historicalData.whois_changes.map((change: any, idx: number) => (
-                                <div key={idx} className="bg-[#1a1a2e]/50 border border-gray-800 rounded-xl p-4 transition-all hover:border-gray-700">
-                                  <div className="flex items-center justify-between mb-3 border-b border-gray-800 pb-2">
-                                    <span className="text-gray-400 text-xs font-mono">
+                                <div key={idx} className="bg-inset/50 border border-divider rounded-xl p-4 transition-all hover:border-divider">
+                                  <div className="flex items-center justify-between mb-3 border-b border-divider pb-2">
+                                    <span className="text-faded text-xs font-mono">
                                       {new Date(change.date).toLocaleString()}
                                     </span>
                                   </div>
                                   <div className="space-y-2">
                                     {Object.entries(change.changes).map(([field, fieldChange]: [string, any]) => (
-                                      <div key={field} className="text-sm border-l-2 border-gray-700 pl-3 py-1">
-                                        <div className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-1">{field}</div>
+                                      <div key={field} className="text-sm border-l-2 border-divider pl-3 py-1">
+                                        <div className="text-faded text-xs font-medium uppercase tracking-wider mb-1">{field}</div>
                                         <div className="flex flex-col gap-1 text-xs">
                                            <div className="flex items-center gap-2 text-red-400">
                                              <span className="w-4 inline-block font-mono">-</span>
@@ -1209,15 +1357,15 @@ export default function UserDashboard() {
                         {/* DNS Changes Timeline */}
                         {historicalData.dns_changes && historicalData.dns_changes.length > 0 && (
                           <div>
-                            <h4 className="flex items-center gap-2 text-white font-semibold mb-3 text-sm md:text-base">
+                            <h4 className="flex items-center gap-2 text-heading font-semibold mb-3 text-sm md:text-base">
                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#b19eef]"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
                               DNS Changes History
                             </h4>
                             <div className="space-y-3">
                               {historicalData.dns_changes.map((change: any, idx: number) => (
-                                <div key={idx} className="bg-[#1a1a2e]/50 border border-gray-800 rounded-xl p-4 transition-all hover:border-gray-700">
-                                  <div className="flex items-center justify-between mb-3 border-b border-gray-800 pb-2">
-                                     <span className="text-gray-400 text-xs font-mono">
+                                <div key={idx} className="bg-inset/50 border border-divider rounded-xl p-4 transition-all hover:border-divider">
+                                  <div className="flex items-center justify-between mb-3 border-b border-divider pb-2">
+                                     <span className="text-faded text-xs font-mono">
                                       {new Date(change.date).toLocaleString()}
                                     </span>
                                   </div>
@@ -1259,36 +1407,36 @@ export default function UserDashboard() {
                         {/* SSL History */}
                         {historicalData.ssl_history && historicalData.ssl_history.length > 0 && (
                           <div>
-                            <h4 className="flex items-center gap-2 text-white font-semibold mb-3 text-sm md:text-base">
+                            <h4 className="flex items-center gap-2 text-heading font-semibold mb-3 text-sm md:text-base">
                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-400"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                                SSL Certificate History
                             </h4>
                             <div className="space-y-3">
                               {historicalData.ssl_history.slice(0, 5).map((cert: any, idx: number) => (
-                                <div key={idx} className="bg-[#1a1a2e]/50 border border-gray-800 rounded-xl p-4 transition-all hover:border-gray-700">
+                                <div key={idx} className="bg-inset/50 border border-divider rounded-xl p-4 transition-all hover:border-divider">
                                   <div className="flex items-center gap-2 mb-3">
                                     <div className="p-1.5 bg-green-500/10 rounded-lg">
                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-500"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                                     </div>
-                                    <span className="text-gray-400 text-xs font-mono">
+                                    <span className="text-faded text-xs font-mono">
                                       Captured: {new Date(cert.snapshot_date).toLocaleString()}
                                     </span>
                                   </div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs ml-0 md:ml-9">
                                     <div className="space-y-1">
-                                      <div className="text-gray-500 uppercase tracking-widest text-[10px]">Issuer</div>
-                                      <div className="text-gray-200 font-medium truncate" title={cert.issuer}>{cert.issuer}</div>
+                                      <div className="text-faded uppercase tracking-widest text-[10px]">Issuer</div>
+                                      <div className="text-copy font-medium truncate" title={cert.issuer}>{cert.issuer}</div>
                                     </div>
                                     <div className="space-y-1">
-                                      <div className="text-gray-500 uppercase tracking-widest text-[10px]">Serial Number</div>
-                                      <div className="text-gray-200 font-mono truncate" title={cert.serial_number}>{cert.serial_number}</div>
+                                      <div className="text-faded uppercase tracking-widest text-[10px]">Serial Number</div>
+                                      <div className="text-copy font-mono truncate" title={cert.serial_number}>{cert.serial_number}</div>
                                     </div>
                                     <div className="space-y-1">
-                                      <div className="text-gray-500 uppercase tracking-widest text-[10px]">Valid From</div>
+                                      <div className="text-faded uppercase tracking-widest text-[10px]">Valid From</div>
                                       <div className="text-green-400 font-mono">{cert.valid_from}</div>
                                     </div>
                                     <div className="space-y-1">
-                                      <div className="text-gray-500 uppercase tracking-widest text-[10px]">Valid Until</div>
+                                      <div className="text-faded uppercase tracking-widest text-[10px]">Valid Until</div>
                                       <div className="text-yellow-400 font-mono">{cert.valid_until}</div>
                                     </div>
                                   </div>
@@ -1303,8 +1451,8 @@ export default function UserDashboard() {
                          (!historicalData.dns_changes || historicalData.dns_changes.length === 0) &&
                          (!historicalData.ssl_history || historicalData.ssl_history.length === 0) && (
                           <div className="text-center py-12">
-                            <p className="text-gray-400">No historical changes detected yet.</p>
-                            <p className="text-gray-500 text-sm mt-2">
+                            <p className="text-faded">No historical changes detected yet.</p>
+                            <p className="text-faded text-sm mt-2">
                               Changes will appear as we track this domain over time.
                             </p>
                           </div>
@@ -1316,27 +1464,27 @@ export default function UserDashboard() {
 
                 {activeTab === "community" && (
                   <div className="py-12 max-w-2xl mx-auto">
-                    <h3 className="text-white font-semibold mb-4 text-center">Community Feedback</h3>
+                    <h3 className="text-heading font-semibold mb-4 text-center">Community Feedback</h3>
                     {loadingComments ? (
-                      <div className="text-gray-400 text-center mb-6">Loading feedback...</div>
+                      <div className="text-faded text-center mb-6">Loading feedback...</div>
                     ) : (
                       <>
                         {communityComments.length === 0 ? (
-                          <div className="text-gray-400 text-center mb-6">No feedback yet. Be the first to share your assessment!</div>
+                          <div className="text-faded text-center mb-6">No feedback yet. Be the first to share your assessment!</div>
                         ) : (
                           <ul className="mb-6 space-y-4">
                             {communityComments.map((cmt, idx) => (
-                              <li key={idx} className="bg-[#1a1a2e]/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-5 hover:border-[#7B83FF]/30 transition-all">
+                              <li key={idx} className="bg-inset/50 backdrop-blur-sm border border-divider/50 rounded-xl p-5 hover:border-[#7B83FF]/30 transition-all">
                                 <div className="flex items-start justify-between mb-3">
                                   <div className="flex items-center gap-3">
                                     <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#7B83FF] to-[#b19eef] p-0.5">
-                                      <div className="w-full h-full rounded-full bg-[#1a1a2e] flex items-center justify-center">
+                                      <div className="w-full h-full rounded-full bg-inset flex items-center justify-center">
                                          <span className="text-[10px] font-bold text-white">{cmt.user_id ? cmt.user_id.substring(0, 2).toUpperCase() : "AN"}</span>
                                       </div>
                                     </div>
                                     <div>
-                                       <div className="text-xs text-gray-400">User: {cmt.user_id ? `${cmt.user_id.substring(0, 8)}...` : "Anonymous"}</div>
-                                       <div className="text-[10px] text-gray-500">{cmt.created_at ? new Date(cmt.created_at).toLocaleString() : ""}</div>
+                                       <div className="text-xs text-faded">User: {cmt.user_id ? `${cmt.user_id.substring(0, 8)}...` : "Anonymous"}</div>
+                                       <div className="text-[10px] text-faded">{cmt.created_at ? new Date(cmt.created_at).toLocaleString() : ""}</div>
                                     </div>
                                   </div>
                                   {cmt.flag && cmt.flag !== 'neutral' && (
@@ -1359,7 +1507,7 @@ export default function UserDashboard() {
                                     </div>
                                   )}
                                 </div>
-                                <div className="text-sm text-gray-200 leading-relaxed pl-11">{cmt.description}</div>
+                                <div className="text-sm text-copy leading-relaxed pl-11">{cmt.description}</div>
                               </li>
                             ))}
                           </ul>
@@ -1379,21 +1527,21 @@ export default function UserDashboard() {
                       </div>
                     )}
                     
-                    <div className="mt-8 pt-8 border-t border-gray-800/50">
-                      <label className="text-white font-semibold text-sm mb-4 block flex items-center gap-2">
+                    <div className="mt-8 pt-8 border-t border-divider/50">
+                      <label className="text-heading font-semibold text-sm mb-4 block flex items-center gap-2">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#7B83FF]"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                         Share Your Assessment
                       </label>
-                      <div className="bg-[#1a1a2e]/60 border border-gray-700/50 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#7B83FF]/50 transition-all">
+                      <div className="bg-inset/60 border border-divider/50 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#7B83FF]/50 transition-all">
                         <textarea
                            placeholder="Share your experience or findings about this URL..."
-                           className="w-full bg-transparent border-none p-4 text-white placeholder-gray-500 focus:outline-none focus:ring-0 text-sm resize-none"
+                           className="w-full bg-transparent border-none p-4 text-heading placeholder-gray-500 focus:outline-none focus:ring-0 text-sm resize-none"
                            rows={4}
                            value={commentInput}
                            onChange={e => setCommentInput(e.target.value)}
                            disabled={submittingComment}
                         />
-                         <div className="bg-[#0f0f1e]/50 px-4 py-3 border-t border-gray-700/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                         <div className="bg-panel/50 px-4 py-3 border-t border-divider/50 flex flex-col sm:flex-row items-center justify-between gap-4">
                            <div className="flex gap-2 w-full sm:w-auto">
                               {[
                                  { id: 'legitimate', label: 'Legitimate', color: 'green' },
@@ -1409,7 +1557,7 @@ export default function UserDashboard() {
                                           ? option.color === 'green' ? 'bg-green-500/10 border-green-500 text-green-400' :
                                             option.color === 'red' ? 'bg-red-500/10 border-red-500 text-red-400' :
                                             'bg-gray-500/10 border-gray-400 text-gray-300'
-                                          : 'border-gray-700 text-gray-500 hover:text-gray-300 hover:border-gray-600'
+                                          : 'border-divider text-faded hover:text-copy hover:border-faded'
                                     }`}
                                  >
                                     {option.label}
@@ -1443,25 +1591,25 @@ export default function UserDashboard() {
             </div>
             {activeDashNav === "history" ? (
               <div>
-                <h2 className="text-2xl font-bold text-white tracking-tight">Scan History</h2>
-                <p className="text-gray-500 text-sm mt-0.5">All URLs you have scanned — click any row to view the full report.</p>
+                <h2 className="text-2xl font-bold text-heading tracking-tight">Scan History</h2>
+                <p className="text-faded text-sm mt-0.5">All URLs you have scanned — click any row to view the full report.</p>
               </div>
             ) : (
-              <h2 className="text-xl font-semibold text-white tracking-tight">Recent Activity</h2>
+              <h2 className="text-xl font-semibold text-heading tracking-tight">Recent Activity</h2>
             )}
           </div>
 
-          <div className="bg-[#1a1a2e]/40 backdrop-blur-md border border-gray-800/50 rounded-2xl overflow-hidden shadow-xl">
+          <div className="bg-inset/40 backdrop-blur-md border border-divider/50 rounded-2xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
             <table className="w-full min-w-[640px]">
               <thead>
-                <tr className="border-b border-gray-800/50 bg-[#0f0f1e]/30">
-                  <th className="text-left px-6 py-4 text-gray-500 font-medium text-xs uppercase tracking-wider">URL / Domain</th>
-                  <th className="text-left px-6 py-4 text-gray-500 font-medium text-xs uppercase tracking-wider whitespace-nowrap">Time</th>
-                  <th className="text-right px-6 py-4 text-gray-500 font-medium text-xs uppercase tracking-wider whitespace-nowrap">Risk Analysis</th>
+                <tr className="border-b border-divider/50 bg-panel/30">
+                  <th className="text-left px-6 py-4 text-faded font-medium text-xs uppercase tracking-wider">URL / Domain</th>
+                  <th className="text-left px-6 py-4 text-faded font-medium text-xs uppercase tracking-wider whitespace-nowrap">Time</th>
+                  <th className="text-right px-6 py-4 text-faded font-medium text-xs uppercase tracking-wider whitespace-nowrap">Risk Analysis</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800/30">
+              <tbody className="divide-y divide-divider/30">
                 {recentScans.length > 0 ? (
                   recentScans.slice(0, 10).map((scan, index) => (
                     <tr 
@@ -1469,18 +1617,18 @@ export default function UserDashboard() {
                       className="group hover:bg-white/[0.02] transition-colors duration-200 cursor-pointer" 
                       onClick={() => setCurrentScan(scan)}
                     >
-                      <td className="px-6 py-4 text-gray-300 text-sm break-all max-w-[300px]">
+                      <td className="px-6 py-4 text-copy text-sm break-all max-w-[300px]">
                         <div className="flex items-center gap-3">
                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                               scan.status === 'Dangerous' ? 'bg-red-500' : scan.status === 'Warning' ? 'bg-yellow-500' : 'bg-green-500'
                            }`}></div>
-                           <span className="group-hover:text-white transition-colors">{scan.url}</span>
+                           <span className="group-hover:text-heading transition-colors">{scan.url}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-gray-400 text-sm whitespace-nowrap font-mono">{scan.date}</td>
+                      <td className="px-6 py-4 text-faded text-sm whitespace-nowrap font-mono">{scan.date}</td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-3">
-                          <span className="text-gray-400 text-sm font-mono">{scan.riskScore}%</span>
+                          <span className="text-faded text-sm font-mono">{scan.riskScore}%</span>
                           <span className={`${
                             scan.status === "Dangerous" ? "bg-red-500/10 text-red-500 border-red-500/20" :
                             scan.status === "Warning" ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" :
@@ -1494,7 +1642,7 @@ export default function UserDashboard() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3} className="px-6 py-16 text-center text-gray-500">
+                    <td colSpan={3} className="px-6 py-16 text-center text-faded">
                       <div className="flex flex-col items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-gray-800/50 flex items-center justify-center">
                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-600"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -1514,26 +1662,32 @@ export default function UserDashboard() {
       </div>
       
       {/* Footer Background blend */}
-      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#0a0a0f] to-transparent pointer-events-none z-0"></div>
+      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-page to-transparent pointer-events-none z-0"></div>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-gray-800/50 bg-[#0a0a0f] py-12 px-6 mt-20">
+      <footer className="relative z-10 border-t border-divider/50 bg-page py-12 px-6 mt-20">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-3">
               <Image src="/images/light-logo.png" alt="SmartShield" width={32} height={32} />
-              <span className="text-white text-lg font-semibold">SmartShield</span>
+              <span className="text-heading text-lg font-semibold">SmartShield</span>
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-8 text-sm">
-              <Link href="/about" className="text-gray-400 hover:text-white transition">
+              <Link href="/about" className="text-faded hover:text-heading transition">
                 SmartShield
               </Link>
-              <Link href="/privacy-policy" className="text-gray-400 hover:text-white transition">
+              <Link href="/terms" className="text-faded hover:text-heading transition">
+                Terms and Condition
+              </Link>
+              <Link href="/privacy" className="text-faded hover:text-heading transition">
                 Privacy Policy
               </Link>
-              <Link href="/about" className="text-gray-400 hover:text-white transition">
+              <Link href="/about" className="text-faded hover:text-heading transition">
                 About
+              </Link>
+              <Link href="/cookies" className="text-faded hover:text-heading transition">
+                Cookies
               </Link>
             </div>
           </div>
@@ -1543,7 +1697,7 @@ export default function UserDashboard() {
       {/* Logout Modal */}
       {showLogoutModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#0f0f1e] border border-gray-800 rounded-xl p-6 md:p-8 max-w-md w-full shadow-2xl">
+          <div className="bg-panel border border-divider rounded-xl p-6 md:p-8 max-w-md w-full shadow-2xl">
             <div className="flex items-start gap-4 mb-6">
               <div className="p-3 bg-[#7B83FF]/10 border border-[#7B83FF]/30 rounded-lg">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#7B83FF]">
@@ -1553,8 +1707,8 @@ export default function UserDashboard() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-white mb-2">Confirm Logout</h3>
-                <p className="text-gray-400 text-sm">
+                <h3 className="text-xl font-bold text-heading mb-2">Confirm Logout</h3>
+                <p className="text-faded text-sm">
                   Are you sure you want to log out of SmartShield? Your scan history will be saved.
                 </p>
               </div>
@@ -1563,7 +1717,7 @@ export default function UserDashboard() {
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => setShowLogoutModal(false)}
-                className="flex-1 px-4 py-2.5 bg-[#1a1a2e] border border-gray-700 text-white rounded-lg hover:bg-[#252540] hover:border-gray-600 transition font-medium text-sm"
+                className="flex-1 px-4 py-2.5 bg-inset border border-divider text-heading rounded-lg hover:bg-[#252540] hover:border-faded transition font-medium text-sm"
               >
                 Cancel
               </button>

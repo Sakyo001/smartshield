@@ -12,7 +12,7 @@ interface Feature {
 
 function FeatureCard({ feature }: { feature: Feature }) {
   return (
-    <div className="group relative bg-[#0f0f1e] rounded-3xl border border-gray-800 hover:border-[#6B73FF]/30 transition-all duration-500 hover:shadow-2xl hover:shadow-[#6B73FF]/10 overflow-hidden min-h-80 flex-shrink-0 w-full sm:w-[440px]">
+    <div className="group relative bg-panel rounded-3xl border border-divider hover:border-[#6B73FF]/30 transition-all duration-500 hover:shadow-2xl hover:shadow-[#6B73FF]/10 overflow-hidden min-h-80 flex-shrink-0 w-full sm:w-[440px]">
       {/* Hover Glow */}
       <div
         className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-500 pointer-events-none`}
@@ -29,7 +29,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
           <div
             className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-10 rounded-2xl blur-lg group-hover:opacity-30 transition-opacity duration-500`}
           ></div>
-          <div className="relative w-full h-full bg-[#1a1a2e] border border-gray-700 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-sm">
+          <div className="relative w-full h-full bg-inset border border-divider rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-sm">
             <Image
               src={feature.icon}
               alt={feature.title}
@@ -40,10 +40,10 @@ function FeatureCard({ feature }: { feature: Feature }) {
           </div>
         </div>
 
-        <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-[#6B73FF] transition-colors duration-300">
+        <h3 className="text-2xl font-bold text-heading mb-4 group-hover:text-[#6B73FF] transition-colors duration-300">
           {feature.title}
         </h3>
-        <p className="text-gray-400 text-base leading-relaxed group-hover:text-gray-300 transition-colors duration-300">
+        <p className="text-faded text-base leading-relaxed group-hover:text-copy transition-colors duration-300">
           {feature.description}
         </p>
       </div>
@@ -104,7 +104,7 @@ export default function FeatureGrid() {
   ];
 
   return (
-    <section className="py-24 md:py-32 px-6 bg-[#0a0a0f] relative overflow-hidden font-sans">
+    <section className="py-24 md:py-32 px-6 bg-page relative overflow-hidden font-sans">
       {/* --- Ambient Background Glow --- */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full pointer-events-none opacity-60">
         <div className="absolute top-[10%] right-[5%] w-96 h-96 bg-[#6B73FF]/10 rounded-full blur-[100px] animate-pulse"></div>
@@ -121,12 +121,12 @@ export default function FeatureGrid() {
             </span>
           </div>
 
-          <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6 tracking-tight">
+          <h2 className="text-3xl md:text-5xl font-extrabold text-heading mb-6 tracking-tight">
             Six Ways <span className="text-[#6B73FF]">SmartShield</span> Keeps
             You Safe
           </h2>
 
-          <p className="text-gray-400 text-base md:text-xl leading-relaxed max-w-2xl mx-auto">
+          <p className="text-faded text-base md:text-xl leading-relaxed max-w-2xl mx-auto">
             We combine cutting-edge technology with proactive defense mechanisms
             to create an impenetrable barrier for your browsing experience.
           </p>
@@ -171,7 +171,7 @@ export default function FeatureGrid() {
       {/* --- BOTTOM SEPARATOR --- */}
       {/* This creates a clean visual break before the next section */}
       <div className="absolute bottom-0 left-0 w-full">
-        <div className="h-px bg-gradient-to-r from-transparent via-gray-800 to-transparent w-full"></div>
+        <div className="h-px bg-gradient-to-r from-transparent via-divider to-transparent w-full"></div>
       </div>
     </section>
   );
