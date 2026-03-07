@@ -23,6 +23,7 @@ interface ScanResult {
     sslCertificates?: any
     communityComments?: number
     riskAdjustment?: any
+    screenshot?: string | null
   }
 }
 
@@ -314,6 +315,7 @@ export default function UserDashboard() {
       let dnsRecords = data.dns || null
       let sslInfo = data.ssl || null
       let riskAdjustment = data.risk_adjustment || null
+      let screenshot = data.screenshot || null
 
       console.log(`DEBUG: Full riskAdjustment object:`, JSON.stringify(riskAdjustment, null, 2))
       
@@ -438,7 +440,8 @@ export default function UserDashboard() {
           dnsRecords: dnsRecords,
           sslCertificates: sslInfo,
           communityComments: data.community_comments || 0,
-          riskAdjustment: riskAdjustment
+          riskAdjustment: riskAdjustment,
+          screenshot: screenshot
         }
       }
 
@@ -974,6 +977,7 @@ export default function UserDashboard() {
                 {activeTab === "detection" && (() => {
                   const detFlags: string[] = currentScan.details?.riskAdjustment?.deterministic_flags || [];
                   const allIndicators: string[] = currentScan.details?.riskAdjustment?.indicators || [];
+                  const screenshot = currentScan.details?.screenshot || null;
                   const isBrandImpersonation = (f: string) => f.includes("Brand Impersonation") || f.includes("Impersonating");
                   const isSuspiciousTLD = (f: string) => f.includes("Untrusted TLD") || f.includes("Suspicious TLD");
                   const isCritical = (f: string) =>
@@ -993,6 +997,36 @@ export default function UserDashboard() {
                           {currentScan.riskScore >= 70 ? "Phishing" : currentScan.riskScore >= 40 ? "Suspicious" : "Safe"}
                         </span>
                       </div>
+
+                      {/* Page Screenshot (Warning / Dangerous only) */}
+                      {screenshot && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className={`w-1 h-5 rounded-full ${currentScan.riskScore >= 70 ? "bg-red-500" : "bg-yellow-500"}`} />
+                            <h4 className="text-white font-semibold text-sm">Page Screenshot</h4>
+                            <span className={`text-xs font-mono px-2 py-0.5 rounded border ${
+                              currentScan.riskScore >= 70
+                                ? "text-red-400 bg-red-500/10 border-red-500/20"
+                                : "text-yellow-400 bg-yellow-500/10 border-yellow-500/20"
+                            }`}>
+                              {currentScan.riskScore >= 70 ? "PHISHING SITE" : "SUSPICIOUS SITE"}
+                            </span>
+                          </div>
+                          <div className={`rounded-xl border overflow-hidden ${currentScan.riskScore >= 70 ? "border-red-500/40" : "border-yellow-500/40"}`}>
+                            <div className={`px-3 py-1.5 text-xs font-mono flex items-center gap-2 ${currentScan.riskScore >= 70 ? "bg-red-500/10 text-red-400" : "bg-yellow-500/10 text-yellow-400"}`}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                              Live capture at time of scan
+                            </div>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={`data:image/png;base64,${screenshot}`}
+                              alt="Screenshot of scanned page"
+                              className="w-full object-cover"
+                              style={{ maxHeight: "400px", objectPosition: "top" }}
+                            />
+                          </div>
+                        </div>
+                      )}
 
                       {/* Threat Flags */}
                       {detFlags.length > 0 && (
