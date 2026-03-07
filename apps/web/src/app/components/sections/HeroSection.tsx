@@ -39,7 +39,7 @@ export default function HeroSection() {
   return (
     <section
       // CHANGED: w-screen -> w-full to prevent horizontal scrollbar
-      className="relative w-full min-h-screen bg-[#0a0a0f] overflow-hidden"
+      className="relative w-full min-h-screen bg-page overflow-hidden"
       suppressHydrationWarning
     >
       <style>{`
@@ -67,19 +67,19 @@ export default function HeroSection() {
       </div>
 
       {/* Overlay for content */}
-      <div className="absolute inset-0 bg-[#0a0a0f]/40"></div>
+      <div className="absolute inset-0 bg-page/40"></div>
 
       <div className="min-h-screen w-full flex items-center justify-center relative z-10 py-24 md:py-0">
         <div className="max-w-7xl mx-auto px-6 md:px-8 w-full mt-0 md:mt-20">
           <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
             {/* Left Content */}
             <div className="text-center md:text-left">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 md:mb-8 leading-tight">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-heading mb-6 md:mb-8 leading-tight">
                 Your{" "}
-                <span className="text-[#b19eef] drop-shadow-lg">AI Shield</span>
+                <span className="text-[#4B3FD8] dark:text-[#b19eef] drop-shadow-lg">AI Shield</span>
                 <br />
                 Against{" "}
-                <span className="text-[#b19eef] drop-shadow-lg">
+                <span className="text-[#4B3FD8] dark:text-[#b19eef] drop-shadow-lg">
                   Suspicious
                 </span>
                 <br />
@@ -88,7 +88,7 @@ export default function HeroSection() {
 
               {/* 3. Applied poppins.className here */}
               <p
-                className={`${poppins.className} text-gray-300 text-base md:text-lg mb-8 md:mb-10 leading-relaxed max-w-xl font-light mx-auto md:mx-0`}
+                className={`${poppins.className} text-copy text-base md:text-lg mb-8 md:mb-10 leading-relaxed max-w-xl font-normal mx-auto md:mx-0`}
               >
                 Our intelligent machine learning engine works around the clock
                 to scan every link you visit, detecting suspicious behavior,
@@ -107,7 +107,7 @@ export default function HeroSection() {
                 {/* Button 2: Scan Website – scrolls to guest scanner */}
                 <a
                   href="#scan"
-                  className="w-full sm:w-auto px-8 h-[42px] flex items-center justify-center text-white border border-gray-500 hover:border-white hover:bg-white/5 rounded-full transition-all duration-300 font-semibold backdrop-blur-sm"
+                  className="w-full sm:w-auto px-8 h-[42px] flex items-center justify-center text-heading border border-divider hover:border-heading hover:bg-heading/5 rounded-full transition-all duration-300 font-semibold backdrop-blur-sm"
                 >
                   Scan Website
                 </a>

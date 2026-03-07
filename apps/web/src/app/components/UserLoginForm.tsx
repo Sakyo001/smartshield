@@ -112,7 +112,16 @@ export default function UserLoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-page flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      {/* Back to home */}
+      <div className="absolute top-4 left-4">
+        <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-faded hover:text-heading transition-colors">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          Back to home
+        </Link>
+      </div>
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <Link href="/">
@@ -125,10 +134,10 @@ export default function UserLoginForm() {
             />
           </Link>
         </div>
-        <h2 className="mt-6 text-center text-2xl font-bold tracking-tight text-white">
+        <h2 className="mt-6 text-center text-2xl font-bold tracking-tight text-heading">
           Log in to SmartShield
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-400">
+        <p className="mt-2 text-center text-sm text-faded">
           Don't have an account?{" "}
           <Link href="/signup" className="font-medium text-[#7B83FF] hover:text-[#a5adff] transition-colors">
             Sign up for free
@@ -137,7 +146,7 @@ export default function UserLoginForm() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-[#0f0f1e] py-8 px-4 sm:rounded-xl sm:px-10 border border-gray-800">
+        <div className="bg-panel py-8 px-4 sm:rounded-xl sm:px-10 border border-divider">
           {error && (
             <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-sm">
               <div className="flex items-start gap-2">
@@ -169,7 +178,7 @@ export default function UserLoginForm() {
 
           <form onSubmit={handleEmailSignIn} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+              <label htmlFor="email" className="block text-sm font-medium text-copy">
                 Email address
               </label>
               <div className="mt-1">
@@ -181,7 +190,7 @@ export default function UserLoginForm() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full appearance-none rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2.5 text-white placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
+                  className="block w-full appearance-none rounded-lg border border-divider bg-inset px-3 py-2.5 text-heading placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
                   placeholder="you@example.com"
                 />
               </div>
@@ -189,7 +198,7 @@ export default function UserLoginForm() {
 
             <div>
               <div className="flex items-center justify-between">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+                <label htmlFor="password" className="block text-sm font-medium text-copy">
                   Password
                 </label>
                 <div className="text-sm">
@@ -207,7 +216,7 @@ export default function UserLoginForm() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full appearance-none rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2.5 text-white placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
+                  className="block w-full appearance-none rounded-lg border border-divider bg-inset px-3 py-2.5 text-heading placeholder-gray-500 focus:border-[#545BFF] focus:outline-none focus:ring-1 focus:ring-[#545BFF] sm:text-sm transition-colors"
                   placeholder="••••••••"
                 />
               </div>
@@ -219,9 +228,9 @@ export default function UserLoginForm() {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 rounded border-gray-600 bg-[#1a1a2e] text-[#545BFF] focus:ring-[#545BFF]"
+                  className="h-4 w-4 rounded border-divider bg-inset text-[#545BFF] focus:ring-[#545BFF]"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-400">
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-faded">
                   Remember me
                 </label>
               </div>
@@ -241,10 +250,10 @@ export default function UserLoginForm() {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-700" />
+                <div className="w-full border-t border-divider" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-[#0f0f1e] px-2 text-gray-500">Or continue with</span>
+                <span className="bg-panel px-2 text-faded">Or continue with</span>
               </div>
             </div>
 
@@ -252,7 +261,7 @@ export default function UserLoginForm() {
               <button
                 onClick={handleGoogleSignIn}
                 disabled={loading}
-                className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#1a1a2e] px-4 py-2.5 text-sm font-semibold text-gray-200 border border-gray-700 hover:bg-[#252540] hover:border-gray-600 transition-colors disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-3 rounded-lg bg-inset px-4 py-2.5 text-sm font-semibold text-copy border border-divider hover:bg-panel hover:border-faded transition-colors disabled:opacity-50"
               >
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M19.8 10.2273C19.8 9.51819 19.7364 8.83637 19.6182 8.18182H10V12.05H15.5818C15.3364 13.3 14.5636 14.3591 13.3864 15.0682V17.5773H16.7182C18.7091 15.8364 19.8 13.2727 19.8 10.2273Z" fill="#4285F4"/>
