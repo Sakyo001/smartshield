@@ -104,10 +104,10 @@ export default function FAQTab() {
       `}</style>
 
       <div className="mb-12 text-center">
-        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+        <h2 className="text-3xl md:text-4xl font-bold text-heading mb-4">
           Frequently Asked <span className="text-[#6B73FF]">Questions</span>
         </h2>
-        <p className="text-gray-400 text-lg">
+        <p className="text-faded text-lg">
           Find answers to common questions about SmartShield and how it protects you
         </p>
       </div>
@@ -116,13 +116,13 @@ export default function FAQTab() {
         {faqs.map((faq, index) => (
           <div
             key={index}
-            className="bg-[#0f0f1e] border border-gray-800 transition-all duration-300 rounded-xl hover:border-[#6B73FF]/30 hover:shadow-lg hover:shadow-[#6B73FF]/10"
+            className="bg-panel border border-divider transition-all duration-300 rounded-xl hover:border-[#6B73FF]/30 hover:shadow-lg hover:shadow-[#6B73FF]/10"
           >
             <button
               onClick={() => setOpenIndex(openIndex === index ? null : index)}
               className="faq-button w-full px-6 py-4 flex items-center justify-between text-left transition-all duration-300"
             >
-              <span className="question-text text-white font-semibold pr-4 text-base transition-colors flex-1">
+              <span className="question-text text-heading font-semibold pr-4 text-base transition-colors flex-1">
                 {faq.question}
               </span>
               <div
@@ -152,8 +152,8 @@ export default function FAQTab() {
               </div>
             </button>
             {openIndex === index && faq.answer && (
-              <div className="faq-answer px-6 pb-4 pt-2 border-t border-gray-200 dark:border-gray-700">
-                <p className="text-gray-600 dark:text-gray-400 text-base leading-relaxed">
+              <div className="faq-answer px-6 pb-4 pt-2 border-t border-divider">
+                <p className="text-faded text-base leading-relaxed">
                   {faq.answer}
                 </p>
               </div>

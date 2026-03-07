@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import Aurora from "../ui/Aurora";
 import { useAuth } from "@lib/auth-context";
+import { useTheme } from "@lib/theme-context";
 
 // Configure Poppins
 const poppins = Poppins({
@@ -19,6 +20,7 @@ export default function Navbar() {
   const [activeSection, setActiveSection] = useState("home");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -72,7 +74,7 @@ export default function Navbar() {
       <nav
         className={`fixed top-0 left-0 z-50 w-full transition-all duration-500 ease-in-out border-b ${
           isScrolled
-            ? "bg-[#0a0a0f]/80 backdrop-blur-xl shadow-lg border-white/5 py-2"
+            ? "bg-page/80 backdrop-blur-xl shadow-lg border-divider/30 py-2"
             : "bg-transparent border-transparent py-4"
         }`}
       >
@@ -106,7 +108,7 @@ export default function Navbar() {
             </div>
 
             <div className="flex flex-col justify-center">
-              <span className="font-nico text-white text-xl md:text-2xl tracking-wide transition-colors duration-300 font-bold leading-none">
+              <span className="font-nico text-heading text-xl md:text-2xl tracking-wide transition-colors duration-300 font-bold leading-none">
                 SmartShield
               </span>
               {/* UPDATED: Removed 'uppercase' class */}
@@ -132,7 +134,7 @@ export default function Navbar() {
                   className={`relative px-5 py-2 text-sm font-medium rounded-full transition-all duration-300 group ${
                     isActive
                       ? "text-[#5667FF] bg-[#5667FF]/10 font-semibold"
-                      : "text-gray-300 hover:text-[#5667FF]"
+                      : "text-faded hover:text-[#5667FF]"
                   }`}
                 >
                   {item}
@@ -145,7 +147,19 @@ export default function Navbar() {
           </div>
 
           {/* --- Right Actions --- */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="hidden md:flex items-center justify-center w-9 h-9 rounded-full text-faded hover:text-heading hover:bg-panel/60 transition-colors"
+              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {theme === "dark" ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              )}
+            </button>
             <Link
               href={user ? `/dashboard/${user.id}` : "/login"}
               className={`hidden md:flex px-8 py-2.5 text-sm font-semibold rounded-full transition-all duration-300 ${poppins.className}
@@ -156,9 +170,21 @@ export default function Navbar() {
             </Link>
 
             {/* Mobile Menu Button */}
+            {/* Mobile Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="md:hidden p-2 text-faded hover:text-heading rounded-lg transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              )}
+            </button>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+              className="md:hidden p-2 text-heading hover:bg-heading/10 rounded-lg transition-colors"
             >
               <svg
                 width="28"
@@ -183,7 +209,7 @@ export default function Navbar() {
 
       {/* --- Mobile Menu Overlay --- */}
       <div
-        className={`fixed inset-0 z-40 bg-[#0a0a0f]/95 backdrop-blur-xl transition-transform duration-300 ease-in-out md:hidden flex flex-col items-center justify-center gap-8 ${
+        className={`fixed inset-0 z-40 bg-page/95 backdrop-blur-xl transition-transform duration-300 ease-in-out md:hidden flex flex-col items-center justify-center gap-8 ${
           isMobileMenuOpen ? "translate-y-0" : "-translate-y-full"
         }`}
       >
@@ -192,7 +218,7 @@ export default function Navbar() {
             key={item}
             href={`#${item.toLowerCase()}`}
             onClick={(e) => handleSmoothScroll(e, `#${item.toLowerCase()}`)}
-            className="text-2xl font-bold text-white hover:text-[#5667FF] transition-colors"
+            className="text-2xl font-bold text-heading hover:text-[#5667FF] transition-colors"
           >
             {item}
           </a>

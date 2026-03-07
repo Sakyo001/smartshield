@@ -54,7 +54,7 @@ export default function Home() {
       </div>
 
       {/* Scanner Section – right after hero */}
-      <section id="scan" className="py-16 md:py-20 px-4 md:px-6 bg-[#0a0a0f] relative overflow-hidden scroll-mt-20">
+      <section id="scan" className="py-16 md:py-20 px-4 md:px-6 bg-page relative overflow-hidden scroll-mt-20">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#6B73FF]/5 to-transparent pointer-events-none"></div>
         <div className="max-w-7xl mx-auto relative z-10">
           <ScanTab />
@@ -66,7 +66,7 @@ export default function Home() {
       <AIBanner />
       
       {/* About / FAQ Tabs */}
-      <section id="about" className="py-16 md:py-24 px-4 md:px-6 bg-[#0a0a0f] relative overflow-hidden scroll-mt-20">
+      <section id="about" className="py-16 md:py-24 px-4 md:px-6 bg-page relative overflow-hidden scroll-mt-20">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#6B73FF]/5 to-transparent pointer-events-none"></div>
         
         <div className="max-w-7xl mx-auto relative z-10">
@@ -77,10 +77,10 @@ export default function Home() {
                 Explore SmartShield
               </span>
             </div>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6 tracking-tight">
+            <h2 className="text-3xl md:text-5xl font-extrabold text-heading mb-6 tracking-tight">
               Everything You Need to Know
             </h2>
-            <p className="text-gray-400 text-base md:text-xl leading-relaxed max-w-3xl mx-auto">
+            <p className="text-faded text-base md:text-xl leading-relaxed max-w-3xl mx-auto">
               Learn about our mission and find answers to your questions
             </p>
           </div>
