@@ -48,7 +48,9 @@ export default function CTASection() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
           <Link
-            href="/login"
+            href="https://chromewebstore.google.com/detail/smartshield/fggfmmhccdeaahhoihgohdjikfobmeeg"
+            target="_blank"
+            rel="noopener noreferrer"
             className="w-full sm:w-auto px-10 h-[41px] flex items-center justify-center bg-[#545BFF] hover:bg-[#4349CC] text-white rounded-full transition-all duration-300 font-medium shadow-[0_0_15px_rgba(84,91,255,0.4)]"
           >
             Get the Extension

@@ -98,7 +98,9 @@ export default function HeroSection() {
               <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-3 sm:gap-4">
                 {/* Button 1: Get the Extension */}
                 <Link
-                  href="/login"
+                  href="https://chromewebstore.google.com/detail/smartshield/fggfmmhccdeaahhoihgohdjikfobmeeg"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-full sm:w-auto px-8 h-[42px] flex items-center justify-center bg-[#545BFF] hover:bg-[#4349dd] text-white rounded-full transition-all duration-300 font-semibold shadow-[0_0_15px_rgba(84,91,255,0.4)] hover:shadow-2xl hover:-translate-y-0.5 transform"
                 >
                   Get the Extension
