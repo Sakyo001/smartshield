@@ -421,6 +421,7 @@ export default function AdminDashboardClient() {
                 src="/images/light-logo.png"
                 alt="SmartShield Logo"
                 fill
+                sizes="80px"
                 className="object-contain"
                 priority
               />
@@ -865,6 +866,7 @@ export default function AdminDashboardClient() {
                 src="/images/light-logo.png"
                 alt="SmartShield"
                 fill
+                sizes="32px"
                 className="object-contain"
               />
             </div>

@@ -47,6 +47,7 @@ export function Tabs({ tabs, defaultValue, children, className = "", onTabChange
                 }
               `}
               aria-current={activeTab === tab.value ? "page" : undefined}
+              suppressHydrationWarning
             >
               {tab.icon && (
                 <span className={`transition-transform duration-300 ${activeTab === tab.value ? "scale-110" : ""}`}>
