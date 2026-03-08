@@ -73,6 +73,7 @@ export default function CTASection() {
             alt="Protected"
             width={500}
             height={500}
+            style={{ width: "auto", height: "auto" }}
             priority
           />
         </div>

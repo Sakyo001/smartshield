@@ -12,6 +12,9 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "SmartShield",
   description: "SmartShield - AI-Powered Cybersecurity for Modern Threats",
+  icons: {
+    icon: "/images/logo 1 (1).png",
+  },
 };
 
 export default function RootLayout({

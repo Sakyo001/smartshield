@@ -132,6 +132,7 @@ export function AdminLoginForm() {
                 src="/images/light-logo.png"
                 alt="SmartShield"
                 fill
+                sizes="40px"
                 className="object-contain"
               />
             </div>

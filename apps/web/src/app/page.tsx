@@ -12,6 +12,7 @@ import { Tabs } from "@components/ui/Tabs"
 import ScanTab from "@components/sections/ScanTab"
 import AboutTab from "@components/sections/AboutTab"
 import FAQTab from "@components/sections/FAQTab"
+import ScrollToTopButton from "@components/ui/ScrollToTopButton"
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('scan');
@@ -47,22 +48,17 @@ export default function Home() {
   return (
    
     <div className="min-h-screen">
-      
+      <ScrollToTopButton />
       <Navbar />
       <div id="home">
         <HeroSection />
       </div>
 
-      {/* Scanner Section – right after hero */}
-      <section id="scan" className="py-16 md:py-20 px-4 md:px-6 bg-page relative overflow-hidden scroll-mt-20">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#6B73FF]/5 to-transparent pointer-events-none"></div>
-        <div className="max-w-7xl mx-auto relative z-10">
-          <ScanTab />
-        </div>
-      </section>
-
       <FeatureGrid />
+
       <HowItWorks />
+
+      <ScanTab />
       <AIBanner />
       
       {/* About / FAQ Tabs */}
