@@ -1,30 +1,22 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 
 export default function AIBanner() {
-  const [rotate, setRotate] = useState({ x: 0, y: 0 });
   const imageRef = useRef<HTMLDivElement>(null);
+  const rotateRef = useRef<HTMLDivElement>(null);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!imageRef.current) return;
-
+    if (!imageRef.current || !rotateRef.current) return;
     const rect = imageRef.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-
-    const mouseX = e.clientX - centerX;
-    const mouseY = e.clientY - centerY;
-
-    const rotateX = (mouseY / (rect.height / 2)) * 15;
-    const rotateY = -(mouseX / (rect.width / 2)) * 15;
-
-    setRotate({ x: rotateX, y: rotateY });
+    const rx = ((e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2)) * 15;
+    const ry = -((e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2)) * 15;
+    rotateRef.current.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
   };
 
   const handleMouseLeave = () => {
-    setRotate({ x: 0, y: 0 });
+    if (rotateRef.current) rotateRef.current.style.transform = "rotateX(0deg) rotateY(0deg)";
   };
 
   const features = [
@@ -37,7 +29,7 @@ export default function AIBanner() {
 
   return (
     // MODIFIED: Removed 'dark:bg-black' so background stays light
-    <section className="py-24 px-6 bg-page">
+    <section className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 bg-page">
       <div className="max-w-7xl mx-auto">
         {/* Main Card Container (Kept dark for contrast) */}
           <div className="relative bg-panel rounded-2xl md:rounded-[2.5rem] overflow-hidden border border-divider shadow-2xl group">
@@ -45,16 +37,16 @@ export default function AIBanner() {
           <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-[#6B7FFF]/10 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
           <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[120px] translate-x-1/2 translate-y-1/2 pointer-events-none"></div>
 
-          <div className="grid md:grid-cols-2 gap-12 items-center relative z-10">
+          <div className="grid md:grid-cols-2 gap-6 sm:gap-8 md:gap-12 items-center relative z-10">
             {/* Left Content */}
-            <div className="p-7 sm:p-10 md:p-16">
-              <div className="inline-block px-3 py-1 mb-6 rounded-full bg-heading/5 border border-heading/10 backdrop-blur-sm">
+            <div className="p-5 sm:p-7 md:p-10 lg:p-16">
+              <div className="inline-block px-3 py-1 mb-4 sm:mb-6 rounded-full bg-heading/5 border border-heading/10 backdrop-blur-sm">
                 <span className="text-xs font-semibold text-[#6B7FFF] uppercase tracking-wider">
                   Next-Gen Security
                 </span>
               </div>
 
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-heading mb-8 leading-[1.1] tracking-tight">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-heading mb-5 sm:mb-8 leading-[1.1] tracking-tight">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6B7FFF] to-[#b19eef]">
                   Smarter
                 </span>{" "}
@@ -66,7 +58,7 @@ export default function AIBanner() {
                 </span>
               </h2>
 
-              <ul className="space-y-5 mb-10">
+              <ul className="space-y-3 sm:space-y-5 mb-6 sm:mb-10">
                 {features.map((feature, index) => (
                   <li
                     key={index}
@@ -90,7 +82,7 @@ export default function AIBanner() {
                         />
                       </svg>
                     </div>
-                    <span className="text-base font-medium">{feature}</span>
+                    <span className="text-[13px] sm:text-base font-medium">{feature}</span>
                   </li>
                 ))}
               </ul>
@@ -103,7 +95,7 @@ export default function AIBanner() {
               ref={imageRef}
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
-              className="relative p-7 sm:p-8 md:p-12 flex items-center justify-center h-full cursor-pointer"
+              className="relative p-5 sm:p-7 md:p-8 lg:p-12 flex items-center justify-center h-full cursor-pointer"
               style={{
                 perspective: "1000px",
               }}
@@ -112,8 +104,9 @@ export default function AIBanner() {
 
               <div className="relative w-full max-w-sm animate-[float_6s_ease-in-out_infinite]">
                 <div
+                  ref={rotateRef}
                   style={{
-                    transform: `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg)`,
+                    transform: "rotateX(0deg) rotateY(0deg)",
                     transition: "transform 0.1s ease-out",
                     transformStyle: "preserve-3d",
                   }}

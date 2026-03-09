@@ -12,24 +12,19 @@ type ThemeContextType = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("theme") as Theme | null;
-      // Only follow OS preference if the user has never explicitly chosen a theme
-      if (saved) return saved;
-    }
-    // Default to dark — the site is designed dark-first
-    return "dark";
-  });
+  // Always start with "dark" so server and client initial renders match.
+  // localStorage sync happens in useEffect after hydration completes.
+  const [theme, setTheme] = useState<Theme>("dark");
 
-  // Only run on mount to sync with initial theme
+  // Sync with saved preference on first mount (runs client-only, after hydration)
   useEffect(() => {
-    const root = document.documentElement;
-    root.classList.remove("light", "dark");
-    root.classList.add(theme);
+    const saved = localStorage.getItem("theme") as Theme | null;
+    if (saved && saved !== "dark") {
+      setTheme(saved);
+    }
   }, []);
 
-  // Apply theme changes
+  // Keep <html> class in sync on every theme change
   useEffect(() => {
     const root = document.documentElement;
     root.classList.remove("light", "dark");
@@ -38,7 +33,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
 
   return (

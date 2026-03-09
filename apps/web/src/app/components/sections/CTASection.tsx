@@ -33,25 +33,25 @@ export default function CTASection() {
   }, []);
 
   return (
-    <section className="py-20 px-6 bg-page relative overflow-hidden">
+    <section className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 bg-page relative overflow-hidden">
       {/* Background glow effect */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="w-[600px] h-[600px] bg-[#545BFF]/10 dark:bg-[#141414]/20 rounded-full blur-[150px]"></div>
       </div>
 
       <div className="max-w-5xl mx-auto text-center relative z-10">
-        <h2 className="text-3xl md:text-5xl font-bold text-heading mb-8">
+        <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-heading mb-6 sm:mb-8">
           Browse Safe.
           <br />
           Stay Smart.
         </h2>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-10 sm:mb-16">
           <Link
             href="https://chromewebstore.google.com/detail/smartshield/fggfmmhccdeaahhoihgohdjikfobmeeg"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full sm:w-auto px-10 h-[41px] flex items-center justify-center bg-[#545BFF] hover:bg-[#4349CC] text-white rounded-full transition-all duration-300 font-medium shadow-[0_0_15px_rgba(84,91,255,0.4)]"
+            className="w-full sm:w-auto px-8 sm:px-10 h-[41px] flex items-center justify-center bg-[#545BFF] hover:bg-[#4349CC] text-white text-[13px] sm:text-base rounded-full transition-all duration-300 font-medium shadow-[0_0_15px_rgba(84,91,255,0.4)]"
           >
             Get the Extension
           </Link>

@@ -47,67 +47,22 @@ export default function FAQTab() {
     <div className="max-w-4xl mx-auto">
       <style>{`
         @keyframes slideDown {
-          from {
-            opacity: 0;
-            max-height: 0;
-            transform: translateY(-10px);
-            overflow: hidden;
-          }
-          to {
-            opacity: 1;
-            max-height: 500px;
-            transform: translateY(0);
-            overflow: visible;
-          }
+          from { opacity: 0; max-height: 0; transform: translateY(-6px); }
+          to   { opacity: 1; max-height: 500px; transform: translateY(0); }
         }
-
-        .faq-answer {
-          animation: slideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        }
-
-        .faq-button {
-          position: relative;
-          overflow: hidden;
-        }
-
-        .faq-button::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(107, 115, 255, 0.1), transparent);
-          transition: left 0.5s ease;
-        }
-
-        .faq-button:hover::before {
-          left: 100%;
-        }
-
-        .faq-button:hover {
-          background-color: rgba(107, 115, 255, 0.08);
-        }
-
-        .faq-icon {
-          transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .question-text {
-          transition: color 0.3s ease, letter-spacing 0.3s ease;
-        }
-
-        .faq-button:hover .question-text {
-          color: #6B73FF;
-          letter-spacing: 0.3px;
-        }
+        .faq-answer  { animation: slideDown 0.3s ease-out forwards; }
+        .faq-button  { position: relative; }
+        .faq-button:hover { background-color: rgba(107, 115, 255, 0.08); }
+        .faq-icon    { transition: transform 0.3s ease; }
+        .question-text { transition: color 0.3s ease; }
+        .faq-button:hover .question-text { color: #6B73FF; }
       `}</style>
 
-      <div className="mb-12 text-center">
-        <h2 className="text-3xl md:text-4xl font-bold text-heading mb-4">
+      <div className="mb-8 sm:mb-12 text-center">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-heading mb-3 sm:mb-4">
           Frequently Asked <span className="text-[#6B73FF]">Questions</span>
         </h2>
-        <p className="text-faded text-lg">
+        <p className="text-faded text-[13px] sm:text-base md:text-lg">
           Find answers to common questions about SmartShield and how it protects you
         </p>
       </div>
@@ -120,13 +75,13 @@ export default function FAQTab() {
           >
             <button
               onClick={() => setOpenIndex(openIndex === index ? null : index)}
-              className="faq-button w-full px-6 py-4 flex items-center justify-between text-left transition-all duration-300"
+              className="faq-button w-full px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between text-left transition-all duration-300"
             >
-              <span className="question-text text-heading font-semibold pr-4 text-base transition-colors flex-1">
+              <span className="question-text text-heading font-semibold pr-3 sm:pr-4 text-[13px] sm:text-base transition-colors flex-1">
                 {faq.question}
               </span>
               <div
-                className="shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-[#6B73FF] to-[#5A62E8] flex items-center justify-center transition-all duration-300 hover:shadow-lg hover:shadow-[#6B73FF]/40 faq-icon flex-shrink-0"
+                className="shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-[#6B73FF] to-[#5A62E8] flex items-center justify-center transition-all duration-300 hover:shadow-lg hover:shadow-[#6B73FF]/40 faq-icon flex-shrink-0"
                 style={{
                   transform:
                     openIndex === index
@@ -152,8 +107,8 @@ export default function FAQTab() {
               </div>
             </button>
             {openIndex === index && faq.answer && (
-              <div className="faq-answer px-6 pb-4 pt-2 border-t border-divider">
-                <p className="text-faded text-base leading-relaxed">
+              <div className="faq-answer px-4 sm:px-6 pb-3 sm:pb-4 pt-2 border-t border-divider">
+                <p className="text-faded text-[13px] sm:text-base leading-relaxed">
                   {faq.answer}
                 </p>
               </div>
