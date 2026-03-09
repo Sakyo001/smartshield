@@ -110,29 +110,15 @@ function DeckDotGrid() {
   );
 }
 
-/* HUD corner brackets — same motif as HeroSection's HudCorners */
-function CardCorners({ color }: { color: string }) {
-  return (
-    <>
-      <span className="absolute top-[10px] left-[10px] w-[14px] h-[14px] border-t-[1.5px] border-l-[1.5px] pointer-events-none" style={{ borderColor: color, opacity: 0.65 }} />
-      <span className="absolute top-[10px] right-[10px] w-[14px] h-[14px] border-t-[1.5px] border-r-[1.5px] pointer-events-none" style={{ borderColor: color, opacity: 0.65 }} />
-      <span className="absolute bottom-[10px] left-[10px] w-[14px] h-[14px] border-b-[1.5px] border-l-[1.5px] pointer-events-none" style={{ borderColor: color, opacity: 0.65 }} />
-      <span className="absolute bottom-[10px] right-[10px] w-[14px] h-[14px] border-b-[1.5px] border-r-[1.5px] pointer-events-none" style={{ borderColor: color, opacity: 0.65 }} />
-    </>
-  );
-}
-
 /* Horizontal scan beam that sweeps top→bottom on the active front card */
 function ScanBeam({ color }: { color: string }) {
   return (
-    <motion.div
+    <div
       className="absolute inset-x-0 h-[2px] pointer-events-none z-20"
       style={{
         background: `linear-gradient(to right, transparent 5%, ${color}60 40%, ${color}90 50%, ${color}60 60%, transparent 95%)`,
+        animation: "ss-card-beam 4.6s linear infinite",
       }}
-      initial={{ y: -2 }}
-      animate={{ y: CARD_H + 2 }}
-      transition={{ duration: 2.8, repeat: Infinity, ease: "linear", repeatDelay: 1.8 }}
     />
   );
 }
@@ -162,9 +148,8 @@ function FeatureCard({
       {/* Dot-grid texture */}
       <DeckDotGrid />
 
-      {/* Scanning beam + HUD corners only on front card */}
+      {/* Scanning beam only on front card */}
       {isFront && <ScanBeam color={feature.from} />}
-      {isFront && <CardCorners color={feature.from} />}
 
       {/* Top gradient wash */}
       <div
@@ -235,11 +220,9 @@ function FeatureCard({
             </div>
             {/* Pulse scan ring around icon — front card only */}
             {isFront && (
-              <motion.div
+              <div
                 className="absolute -inset-1.5 rounded-2xl border pointer-events-none"
-                style={{ borderColor: feature.from }}
-                animate={{ opacity: [0, 0.55, 0], scale: [0.82, 1.12, 1.12] }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut", repeatDelay: 0.6 }}
+                style={{ borderColor: feature.from, animation: "ss-icon-ring 2.8s ease-out infinite" }}
               />
             )}
           </div>
@@ -250,11 +233,9 @@ function FeatureCard({
             </h3>
             {isFront && (
               <div className="flex items-center gap-1.5 mt-0.5">
-                <motion.span
-                  className="w-[5px] h-[5px] rounded-full shrink-0"
+                <span
+                  className="w-[5px] h-[5px] rounded-full shrink-0 animate-pulse"
                   style={{ backgroundColor: feature.from }}
-                  animate={{ opacity: [1, 0.3, 1] }}
-                  transition={{ duration: 1.4, repeat: Infinity }}
                 />
                 <span className="text-[8.5px] font-mono tracking-widest uppercase text-faded/45">
                   Active Shield
@@ -494,11 +475,6 @@ function SectionBridge() {
         ))}
       </div>
 
-      {/* HUD corner brackets */}
-      <span className="absolute top-4 left-4 block w-5 h-5 border-t-2 border-l-2 border-[#545BFF]/35 rounded-tl-sm" />
-      <span className="absolute top-4 right-4 block w-5 h-5 border-t-2 border-r-2 border-[#545BFF]/35 rounded-tr-sm" />
-      <span className="absolute bottom-4 left-4 block w-5 h-5 border-b-2 border-l-2 border-[#545BFF]/35 rounded-bl-sm" />
-      <span className="absolute bottom-4 right-4 block w-5 h-5 border-b-2 border-r-2 border-[#545BFF]/35 rounded-br-sm" />
     </div>
   );
 }
@@ -511,7 +487,7 @@ export default function FeatureGrid() {
     <>
       <section
         id="features"
-        className="min-h-screen py-12 md:py-16 lg:py-20 px-4 md:px-6 bg-page relative overflow-hidden flex flex-col justify-center"
+        className="min-h-screen py-10 sm:py-12 md:py-16 lg:py-20 px-4 sm:px-5 md:px-6 bg-page relative overflow-hidden flex flex-col justify-center"
       >
         {/* Ambient glow blobs */}
         <div className="absolute inset-0 pointer-events-none">
@@ -519,18 +495,10 @@ export default function FeatureGrid() {
           <div className="absolute bottom-0 left-[5%] w-56 h-56 md:w-[360px] md:h-[360px] rounded-full bg-[#b19eef]/5 blur-[120px]" />
         </div>
 
-        {/* Section HUD corners — matching HeroSection's HudCorners motif */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-5 left-5 md:top-7 md:left-7 w-9 h-9 border-t-[1.5px] border-l-[1.5px] border-[#545BFF]/22" />
-          <div className="absolute top-5 right-5 md:top-7 md:right-7 w-9 h-9 border-t-[1.5px] border-r-[1.5px] border-[#545BFF]/22" />
-          <div className="absolute bottom-5 left-5 md:bottom-7 md:left-7 w-9 h-9 border-b-[1.5px] border-l-[1.5px] border-[#545BFF]/22" />
-          <div className="absolute bottom-5 right-5 md:bottom-7 md:right-7 w-9 h-9 border-b-[1.5px] border-r-[1.5px] border-[#545BFF]/22" />
-        </div>
-
         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#545BFF]/35 to-transparent" />
 
         <div ref={contentRef} className="max-w-7xl mx-auto relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 xl:gap-24 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-16 xl:gap-24 items-center">
 
             {/* Left: copy + stats — shown first on mobile */}
             <motion.div
@@ -544,7 +512,7 @@ export default function FeatureGrid() {
                 initial={{ opacity: 0, y: -10 }}
                 animate={inView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: 0.05 }}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full mb-5
+                className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full mb-4 sm:mb-5
                   dark:bg-[#545BFF]/10 bg-[#545BFF]/12
                   dark:border-[#545BFF]/20 border-[#545BFF]/30 border
                   backdrop-blur-sm shadow-sm dark:shadow-none"
@@ -553,7 +521,7 @@ export default function FeatureGrid() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#545BFF] opacity-70" />
                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#545BFF]" />
                 </span>
-                <span className="text-[#545BFF] dark:text-[#a89de8] text-[11px] font-semibold tracking-widest uppercase">
+                <span className="text-[#545BFF] dark:text-[#a89de8] text-[10px] sm:text-[11px] font-semibold tracking-widest uppercase">
                   Core Capabilities
                 </span>
               </motion.div>
@@ -563,7 +531,7 @@ export default function FeatureGrid() {
                 initial={{ opacity: 0, y: 14 }}
                 animate={inView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.55, delay: 0.13 }}
-                className="text-[1.75rem] sm:text-3xl md:text-[2.5rem] font-extrabold text-heading tracking-tight leading-[1.1] mb-4"
+                className="text-2xl sm:text-3xl md:text-[2.5rem] font-extrabold text-heading tracking-tight leading-[1.1] mb-3 sm:mb-4"
               >
                 Six Ways{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#545BFF] to-[#b19eef]">
@@ -577,21 +545,21 @@ export default function FeatureGrid() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={inView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                className="text-copy/70 text-base md:text-[17px] leading-relaxed mb-8 max-w-[400px]"
+                className="text-copy/70 text-[13px] sm:text-sm md:text-base leading-relaxed mb-6 sm:mb-8 max-w-[400px]"
               >
                 We combine cutting-edge technology with proactive defense mechanisms
                 to create an impenetrable barrier for your browsing experience.
               </motion.p>
 
               {/* Stats — matches HeroSection stat card pattern exactly */}
-              <div className="grid grid-cols-3 gap-2.5 md:gap-3 mb-6">
+              <div className="grid grid-cols-3 gap-2 sm:gap-2.5 md:gap-3 mb-5 sm:mb-6">
                 {STATS.map((stat, i) => (
                   <motion.div
                     key={stat.label}
                     initial={{ opacity: 0, y: 18, scale: 0.92 }}
                     animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
                     transition={{ duration: 0.45, delay: 0.28 + i * 0.09, ease: [0.22, 1, 0.36, 1] }}
-                    className="group relative overflow-hidden px-3 py-3 md:py-3.5 rounded-xl cursor-default
+                    className="group relative overflow-hidden px-2.5 py-2.5 sm:px-3 sm:py-3 md:py-3.5 rounded-xl cursor-default
                       dark:bg-[#0c0d1c]/60 bg-white/85 backdrop-blur-sm
                       border border-[#545BFF]/18 hover:border-[#545BFF]/45
                       shadow-[0_1px_10px_rgba(84,91,255,0.07)]
@@ -599,11 +567,11 @@ export default function FeatureGrid() {
                   >
                     {/* Left accent bar — same as HeroSection stat cards */}
                     <div className="absolute left-0 top-2 bottom-2 w-[2px] rounded-full bg-gradient-to-b from-[#545BFF] to-[#b19eef] opacity-70 group-hover:opacity-100 transition-opacity" />
-                    <div className="text-xl md:text-2xl font-bold tracking-tight mb-0.5 pl-1
+                    <div className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight mb-0.5 pl-1
                       text-transparent bg-clip-text bg-gradient-to-r from-[#545BFF] to-[#b19eef]">
                       {stat.value}
                     </div>
-                    <div className="text-[9px] md:text-[10px] text-faded font-medium tracking-wide pl-1">
+                    <div className="text-[9px] sm:text-[10px] text-faded font-medium tracking-wide pl-1">
                       {stat.label}
                     </div>
                   </motion.div>

@@ -46,35 +46,21 @@ async function fetchWithTimeout(resource: RequestInfo, options: any = {}) {
 }
 
 /* ─────────────────────────────────────────────
-   Futuristic HUD corner brackets
-───────────────────────────────────────────── */
-function HudCorners() {
-  const base = "absolute w-8 h-8 md:w-10 md:h-10 border-[#545BFF]/30";
-  return (
-    <>
-      <div className={`${base} top-5 left-5 border-t-[1.5px] border-l-[1.5px]`} />
-      <div className={`${base} top-5 right-5 border-t-[1.5px] border-r-[1.5px]`} />
-      <div className={`${base} bottom-5 left-5 border-b-[1.5px] border-l-[1.5px]`} />
-      <div className={`${base} bottom-5 right-5 border-b-[1.5px] border-r-[1.5px]`} />
-    </>
-  );
-}
-
-/* ─────────────────────────────────────────────
    Animated dot-grid background
 ───────────────────────────────────────────── */
 function DotGrid() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const nodesRef = useRef<{ x: number; y: number; vx: number; vy: number }[]>([]);
+  const lastRef = useRef(0);
 
   const initNodes = useCallback((w: number, h: number) => {
-    const count = Math.min(Math.floor((w * h) / 28000), 38);
+    const count = Math.min(Math.floor((w * h) / 36000), 22);
     nodesRef.current = Array.from({ length: count }, () => ({
       x: Math.random() * w,
       y: Math.random() * h,
-      vx: (Math.random() - 0.5) * 0.2,
-      vy: (Math.random() - 0.5) * 0.2,
+      vx: (Math.random() - 0.5) * 0.18,
+      vy: (Math.random() - 0.5) * 0.18,
     }));
   }, []);
 
@@ -91,7 +77,10 @@ function DotGrid() {
       initNodes(w, h);
     };
     window.addEventListener("resize", onResize);
-    const draw = () => {
+    const draw = (ts: number) => {
+      animRef.current = requestAnimationFrame(draw);
+      if (ts - lastRef.current < 34) return; // ~30 fps cap
+      lastRef.current = ts;
       ctx.clearRect(0, 0, w, h);
       const nodes = nodesRef.current;
       for (const n of nodes) {
@@ -99,7 +88,7 @@ function DotGrid() {
         if (n.x < 0 || n.x > w) n.vx *= -1;
         if (n.y < 0 || n.y > h) n.vy *= -1;
       }
-      const maxDist = 110;
+      const maxDist = 80;
       const maxDist2 = maxDist * maxDist;
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
@@ -123,7 +112,6 @@ function DotGrid() {
         ctx.fillStyle = "rgba(84,91,255,0.45)";
         ctx.fill();
       }
-      animRef.current = requestAnimationFrame(draw);
     };
     animRef.current = requestAnimationFrame(draw);
     return () => {
@@ -140,9 +128,8 @@ function DotGrid() {
 ───────────────────────────────────────────── */
 function ScanRings() {
   const rings = [
-    { size: 240, delay: 0 },
-    { size: 400, delay: 1.4 },
-    { size: 560, delay: 2.8 },
+    { size: 260, delay: 0 },
+    { size: 460, delay: 1.8 },
   ];
   return (
     <>
@@ -189,19 +176,22 @@ function useTypingPlaceholder(enabled: boolean) {
     if (!enabled) { setText(""); return; }
     const url = EXAMPLE_URLS[urlIdx];
     const delay = deleting
-      ? 32
-      : charIdx === url.length
-      ? 1700
-      : 55 + Math.random() * 25;
+      ? 22
+      : charIdx >= url.length
+      ? 1600
+      : 48;
     const t = setTimeout(() => {
       if (!deleting && charIdx < url.length) {
-        setText(url.slice(0, charIdx + 1));
-        setCharIdx((c) => c + 1);
-      } else if (!deleting && charIdx === url.length) {
+        // advance 2 chars at a time to halve setState frequency
+        const next = Math.min(charIdx + 2, url.length);
+        setText(url.slice(0, next));
+        setCharIdx(next);
+      } else if (!deleting && charIdx >= url.length) {
         setDeleting(true);
       } else if (deleting && charIdx > 0) {
-        setText(url.slice(0, charIdx - 1));
-        setCharIdx((c) => c - 1);
+        const next = Math.max(charIdx - 2, 0);
+        setText(url.slice(0, next));
+        setCharIdx(next);
       } else {
         setDeleting(false);
         setUrlIdx((i) => (i + 1) % EXAMPLE_URLS.length);
@@ -590,7 +580,7 @@ function GuestScanner({ inView }: { inView: boolean }) {
   };
 
   return (
-    <div ref={contentRef} onMouseMove={handleMouseMove} className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div ref={contentRef} onMouseMove={handleMouseMove} className="max-w-4xl mx-auto px-4 sm:px-6">
 
       {/* ─── Shield Logo (mouse-parallax + rotating HUD rings) ─── */}
       <motion.div
@@ -598,25 +588,20 @@ function GuestScanner({ inView }: { inView: boolean }) {
         animate={inView ? { y: 0, opacity: 1, scale: 1 } : {}}
         transition={{ type: "spring", stiffness: 58, damping: 14, delay: 0.05 }}
         style={{ x: shieldX, y: shieldY }}
-        className="relative flex justify-center mb-8 will-change-transform"
+        className="relative flex justify-center mb-6 sm:mb-8 will-change-transform"
       >
-        <div className="relative w-28 h-28 md:w-36 md:h-36">
+        <div className="relative w-20 h-20 sm:w-28 sm:h-28 md:w-36 md:h-36">
           {/* Slow-rotating dashed outer ring */}
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
             className="absolute -inset-5 rounded-full border border-dashed border-[#545BFF]/20 pointer-events-none"
           />
-          {/* Counter-rotating conic-gradient ring */}
+          {/* Counter-rotating dashed accent ring */}
           <motion.div
             animate={{ rotate: -360 }}
-            transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
-            className="absolute -inset-2.5 pointer-events-none"
-            style={{
-              borderRadius: "50%",
-              background: "conic-gradient(from 0deg, rgba(84,91,255,0.18) 0deg, transparent 140deg, transparent 220deg, rgba(177,158,239,0.12) 360deg)",
-              border: "1px solid rgba(84,91,255,0.10)",
-            }}
+            transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+            className="absolute -inset-2.5 rounded-full border border-dashed border-[#545BFF]/12 pointer-events-none"
           />
           {/* The 3D shield */}
           <Image
@@ -658,18 +643,18 @@ function GuestScanner({ inView }: { inView: boolean }) {
       </motion.div>
 
       {/* ─── Header ─── */}
-      <div className="mb-8 text-center">
+      <div className="mb-6 sm:mb-8 text-center">
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.4, delay: 0.6 }}
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full dark:bg-[#545BFF]/10 bg-[#545BFF]/12 dark:border-[#545BFF]/20 border-[#545BFF]/30 border backdrop-blur-sm mb-5 shadow-sm dark:shadow-none"
+          className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full dark:bg-[#545BFF]/10 bg-[#545BFF]/12 dark:border-[#545BFF]/20 border-[#545BFF]/30 border backdrop-blur-sm mb-3 sm:mb-5 shadow-sm dark:shadow-none"
         >
           <span className="relative flex h-1.5 w-1.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#545BFF] opacity-75" />
             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#545BFF]" />
           </span>
-          <span className="text-[#545BFF] dark:text-[#a89de8] text-[11px] font-semibold tracking-widest uppercase">
+          <span className="text-[#545BFF] dark:text-[#a89de8] text-[10px] sm:text-[11px] font-semibold tracking-widest uppercase">
             Guest Mode
           </span>
         </motion.div>
@@ -678,7 +663,7 @@ function GuestScanner({ inView }: { inView: boolean }) {
           initial={{ opacity: 0, y: 18 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5, delay: 0.7 }}
-          className="text-[1.7rem] sm:text-3xl md:text-[2.75rem] font-extrabold text-heading tracking-tight leading-[1.1] mb-3"
+          className="text-2xl sm:text-3xl md:text-[2.75rem] font-extrabold text-heading tracking-tight leading-[1.1] mb-2 sm:mb-3"
         >
           Try SmartShield{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#545BFF] to-[#b19eef]">
@@ -690,7 +675,7 @@ function GuestScanner({ inView }: { inView: boolean }) {
           initial={{ opacity: 0, y: 14 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5, delay: 0.8 }}
-          className="text-copy/80 text-sm md:text-base max-w-2xl mx-auto leading-relaxed"
+          className="text-copy/80 text-[13px] sm:text-sm md:text-base max-w-2xl mx-auto leading-relaxed"
         >
           Scan any URL with no account needed. Results are not saved.{" "}
           <Link href="/signup" className="text-[#545BFF] dark:text-[#7c83ff] hover:underline font-medium">
@@ -1536,11 +1521,6 @@ export default function ScanTab() {
         <div className="absolute inset-0 bg-gradient-to-r from-page/35 via-transparent to-page/35 hidden md:block" />
       </div>
 
-      {/* ── Layer 3: HUD corners ── */}
-      <div className="absolute inset-0 z-[3] pointer-events-none">
-        <HudCorners />
-      </div>
-
       {/* ── HUD corner data labels (desktop) ── */}
       <motion.div
         className="absolute top-12 left-6 z-[15] pointer-events-none hidden lg:block"
@@ -1618,7 +1598,7 @@ export default function ScanTab() {
       />
 
       {/* ── Content ── */}
-      <div className="relative z-[10] w-full pt-[calc(5rem+1px)] pb-20 md:pt-[calc(7rem+1px)] md:pb-28 lg:pt-[calc(8rem+1px)] lg:pb-32">
+      <div className="relative z-[10] w-full pt-[calc(4rem+1px)] pb-16 sm:pt-[calc(5rem+1px)] sm:pb-20 md:pt-[calc(7rem+1px)] md:pb-28 lg:pt-[calc(8rem+1px)] lg:pb-32">
         <GuestScanner inView={inView} />
       </div>
     </section>

@@ -63,6 +63,14 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  // `mounted` prevents theme-sensitive elements from diverging between SSR and client.
+  // Before mount both sides agree: logo = dark-theme logo, icon = sun.
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  // Derive the effective theme only after mount; pre-mount defaults match server
+  const effectiveTheme = mounted ? theme : "dark";
 
   useEffect(() => {
     const onScroll = () => {
@@ -137,12 +145,12 @@ export default function Navbar() {
           {/* ── Logo ──────────────────────────────────────────────────────── */}
           <Link
             href="/"
-            className="flex items-center gap-3 group"
+            className="flex items-center gap-2.5 sm:gap-3 group"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           >
             {/* Image area — all hover FX scoped here */}
             <div
-              className="relative w-14 h-14 md:w-16 md:h-16 shrink-0
+              className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 shrink-0
                 transition-all duration-500
                 group-hover:scale-105
                 group-hover:drop-shadow-[0_0_22px_rgba(84,91,255,0.65)]"
@@ -181,7 +189,7 @@ export default function Navbar() {
 
               {/* Logo image */}
               <Image
-                src={theme === "dark" ? "/images/light-logo.png" : "/images/dark-logo (1).png"}
+                src={effectiveTheme === "dark" ? "/images/light-logo.png" : "/images/dark-logo (1).png"}
                 alt="SmartShield Logo"
                 fill
                 sizes="64px"
@@ -201,10 +209,10 @@ export default function Navbar() {
 
             {/* Text block — subtle rightward nudge on hover */}
             <div className="flex flex-col justify-center transition-transform duration-300 group-hover:translate-x-0.5">
-              <span className="text-heading text-xl md:text-2xl tracking-wide font-bold leading-none">
+              <span className="text-heading text-lg sm:text-xl md:text-2xl tracking-wide font-bold leading-none">
                 SmartShield
               </span>
-              <span className={`${poppins.className} font-medium text-[#545BFF] dark:text-[#a89de8] tracking-wide text-[10px] md:text-xs mt-0.5 transition-colors duration-300 group-hover:text-[#6B73FF] dark:group-hover:text-[#b19eef]`}>
+              <span className={`${poppins.className} font-medium text-[#545BFF] dark:text-[#a89de8] tracking-wide text-[9px] sm:text-[10px] md:text-xs mt-0.5 transition-colors duration-300 group-hover:text-[#6B73FF] dark:group-hover:text-[#b19eef]`}>
                 AI-Powered Phishing Detector
               </span>
             </div>
@@ -254,17 +262,17 @@ export default function Navbar() {
             <button
               onClick={toggleTheme}
               className="hidden md:flex items-center justify-center w-9 h-9 rounded-full text-faded hover:text-heading hover:bg-[#545BFF]/10 transition-all duration-200 overflow-hidden"
-              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+              aria-label={`Switch to ${effectiveTheme === "dark" ? "light" : "dark"} mode`}
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
-                  key={theme}
+                  key={effectiveTheme}
                   initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
                   animate={{ rotate: 0, opacity: 1, scale: 1 }}
                   exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
                   transition={{ duration: 0.18, ease: "easeOut" }}
                 >
-                  {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+                  {effectiveTheme === "dark" ? <SunIcon /> : <MoonIcon />}
                 </motion.div>
               </AnimatePresence>
             </button>
@@ -294,13 +302,13 @@ export default function Navbar() {
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
-                  key={theme}
+                  key={effectiveTheme}
                   initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
                   animate={{ rotate: 0, opacity: 1, scale: 1 }}
                   exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
                   transition={{ duration: 0.18 }}
                 >
-                  {theme === "dark" ? <SunIcon size={20} /> : <MoonIcon size={20} />}
+                  {effectiveTheme === "dark" ? <SunIcon size={20} /> : <MoonIcon size={20} />}
                 </motion.div>
               </AnimatePresence>
             </button>
