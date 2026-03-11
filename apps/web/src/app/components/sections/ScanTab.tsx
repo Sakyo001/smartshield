@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { motion, useInView, AnimatePresence, useMotionValue, useSpring, useTransform } from "motion/react";
 
@@ -677,11 +676,7 @@ function GuestScanner({ inView }: { inView: boolean }) {
           transition={{ duration: 0.5, delay: 0.8 }}
           className="text-copy/80 text-[13px] sm:text-sm md:text-base max-w-2xl mx-auto leading-relaxed"
         >
-          Scan any URL with no account needed. Results are not saved.{" "}
-          <Link href="/signup" className="text-[#545BFF] dark:text-[#7c83ff] hover:underline font-medium">
-            Create a free account
-          </Link>{" "}
-          to save your history.
+          Scan any URL with no account needed.
         </motion.p>
       </div>
 
@@ -901,8 +896,7 @@ function GuestScanner({ inView }: { inView: boolean }) {
             <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-divider/50">
               <div className="flex items-center gap-2 text-xs sm:text-sm text-faded flex-wrap justify-center sm:justify-start">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#545BFF] shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
-                <span>Results not saved.</span>
-                <Link href="/signup" className="text-[#545BFF] dark:text-[#7c83ff] hover:underline font-medium">Sign up to save history</Link>
+                <span>Results are not saved.</span>
               </div>
               <button
                 onClick={handleReanalyze}
@@ -1411,28 +1405,7 @@ function GuestScanner({ inView }: { inView: boolean }) {
                     </ul>
                   )}
 
-                  {/* Guest CTA */}
-                  <div className="mt-6 p-4 sm:p-5 dark:bg-inset/60 bg-white/70 border border-[#545BFF]/20 rounded-xl text-center backdrop-blur-sm">
-                    <div className="w-10 h-10 rounded-full dark:bg-[#545BFF]/15 bg-[#545BFF]/10 flex items-center justify-center mx-auto mb-3">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#545BFF" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                    </div>
-                    <p className="text-copy text-sm font-medium mb-1">Want to share your assessment?</p>
-                    <p className="text-faded text-xs mb-4">Create a free account to post community feedback and flag URLs.</p>
-                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                      <Link
-                        href="/signup"
-                        className="bg-gradient-to-r from-[#545BFF] to-[#6B73FF] hover:from-[#4349dd] hover:to-[#5a62ff] text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition shadow-lg shadow-[#545BFF]/20 text-center"
-                      >
-                        Create Account
-                      </Link>
-                      <Link
-                        href="/login"
-                        className="dark:bg-inset bg-white/80 hover:bg-white dark:hover:bg-panel text-[#545BFF] border border-[#545BFF]/30 dark:border-[#545BFF]/40 px-6 py-2.5 rounded-lg text-sm font-semibold transition text-center"
-                      >
-                        Sign In
-                      </Link>
-                    </div>
-                  </div>
+
                 </div>
               )}
             </div>
