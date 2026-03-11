@@ -2,12 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(5, "60 s"),
-  analytics: false,
-  prefix: "smartshield:scan",
-});
+// Lazily initialised so a missing env var doesn't crash the module at build/boot
+// time — it only fails at request time when we can return a proper error.
+let ratelimit: Ratelimit | null = null;
+function getRatelimit(): Ratelimit | null {
+  if (ratelimit) return ratelimit;
+  try {
+    ratelimit = new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(5, "60 s"),
+      analytics: false,
+      prefix: "smartshield:scan",
+    });
+    return ratelimit;
+  } catch {
+    return null;
+  }
+}
 
 export async function POST(req: NextRequest) {
   // Prefer the client-generated device ID (stored in localStorage) so every
@@ -20,26 +31,29 @@ export async function POST(req: NextRequest) {
     "anonymous";
   const rateLimitKey = deviceId ? `device:${deviceId}` : `ip:${ip}`;
 
-  const { success, limit, remaining, reset } = await ratelimit.limit(rateLimitKey);
-
-  if (!success) {
-    const retryAfter = Math.ceil((reset - Date.now()) / 1000);
-    return NextResponse.json(
-      {
-        error: `Rate limit exceeded. You can perform up to ${limit} scans per minute. Please wait ${retryAfter} second${retryAfter !== 1 ? "s" : ""} before trying again.`,
-        retryAfter,
-      },
-      {
-        status: 429,
-        headers: {
-          "X-RateLimit-Limit": String(limit),
-          "X-RateLimit-Remaining": "0",
-          "X-RateLimit-Reset": String(reset),
-          "Retry-After": String(retryAfter),
+  const rl = getRatelimit();
+  if (rl) {
+    const { success, limit, remaining, reset } = await rl.limit(rateLimitKey);
+    if (!success) {
+      const retryAfter = Math.ceil((reset - Date.now()) / 1000);
+      return NextResponse.json(
+        {
+          error: `Rate limit exceeded. You can perform up to ${limit} scans per minute. Please wait ${retryAfter} second${retryAfter !== 1 ? "s" : ""} before trying again.`,
+          retryAfter,
         },
-      }
-    );
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": String(limit),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": String(reset),
+            "Retry-After": String(retryAfter),
+          },
+        }
+      );
+    }
   }
+  // If Redis is unavailable we skip rate limiting and let the scan proceed
 
   // Proxy to the Python backend
   const backendUrl = process.env.NEXT_PUBLIC_WHOIS_API_URL;
