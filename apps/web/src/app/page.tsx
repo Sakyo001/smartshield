@@ -13,6 +13,7 @@ import ScanTab from "@components/sections/ScanTab"
 import AboutTab from "@components/sections/AboutTab"
 import FAQTab from "@components/sections/FAQTab"
 import ScrollToTopButton from "@components/ui/ScrollToTopButton"
+import ChatbotWidget from "@components/ui/ChatbotWidget"
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('scan');
@@ -49,6 +50,7 @@ export default function Home() {
    
     <div className="min-h-screen">
       <ScrollToTopButton />
+      <ChatbotWidget />
       <Navbar />
       <div id="home">
         <HeroSection />
