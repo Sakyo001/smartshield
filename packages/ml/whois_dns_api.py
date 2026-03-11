@@ -52,8 +52,38 @@ from data_fetchers import get_whois_info, get_dns_records, get_ssl_info
 from database import supabase_request, save_whois_history, save_dns_history, save_ssl_history
 from risk_assessment import apply_deterministic_rules, calculate_contextual_risk_adjustment
 from xai_explainer import generate_explanation
+import time as _time
 
 app = Flask(__name__)
+
+# ---------------------------------------------------------------------------
+# Rate limiting — 5 scans / 60 s per device, backed by Upstash Redis REST API.
+# ---------------------------------------------------------------------------
+def _check_rate_limit(device_id: str):
+    rest_url = os.getenv('UPSTASH_REDIS_REST_URL', '').rstrip('/')
+    token    = os.getenv('UPSTASH_REDIS_REST_TOKEN', '')
+    if not rest_url or not token:
+        return True, 5, 0
+    limit  = 5
+    bucket = int(_time.time() / 60)
+    key    = f'smartshield:scan:{device_id}:{bucket}'
+    headers = {'Authorization': f'Bearer {token}'}
+    try:
+        resp  = _requests.post(
+            f'{rest_url}/pipeline',
+            json=[['INCR', key], ['EXPIRE', key, 120]],
+            headers=headers,
+            timeout=2,
+        )
+        count = resp.json()[0]['result']
+        remaining = max(0, limit - count)
+        if count > limit:
+            retry_after = 60 - (int(_time.time()) % 60) or 60
+            return False, 0, retry_after
+        return True, remaining, 0
+    except Exception as exc:
+        print(f'[SmartShield] Rate limit check error: {exc}')
+        return True, 5, 0
 
 # Configure CORS to allow production and development origins
 CORS(app, origins=[
@@ -75,6 +105,23 @@ def domain_info():
     # Handle CORS preflight
     if request.method == 'OPTIONS':
         return '', 204
+
+    # ── Per-device rate limiting ──────────────────────────────────────────────
+    device_id = (
+        request.headers.get('X-Device-ID') or
+        request.headers.get('X-Forwarded-For', '').split(',')[0].strip() or
+        request.remote_addr or
+        'anonymous'
+    )
+    allowed, remaining, retry_after = _check_rate_limit(device_id)
+    if not allowed:
+        plural = 's' if retry_after != 1 else ''
+        return jsonify({
+            'error': f'Rate limit exceeded. You can perform up to 5 scans per minute. '
+                     f'Please wait {retry_after} second{plural} before trying again.',
+            'retryAfter': retry_after,
+        }), 429
+
     try:
         data = request.get_json()
         url = data.get('url', '')

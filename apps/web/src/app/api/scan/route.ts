@@ -98,7 +98,11 @@ export async function POST(req: NextRequest) {
   try {
     const upstream = await fetch(`${backendUrl}/api/scan`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        // Forward device ID so the Flask backend can apply per-device rate limiting
+        ...(deviceId ? { "X-Device-ID": deviceId } : {}),
+      },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(50000),
     });
