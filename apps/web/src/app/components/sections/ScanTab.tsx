@@ -333,6 +333,8 @@ function GuestScanner({ inView }: { inView: boolean }) {
   const [scanning, setScanning] = useState(false);
   const [currentScan, setCurrentScan] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [rateLimited, setRateLimited] = useState<{ retryAfter: number } | null>(null);
+  const [retryCountdown, setRetryCountdown] = useState(0);
   const [apiStatus, setApiStatus] = useState<"checking" | "online" | "offline">("checking");
   const [activeTab, setActiveTab] = useState<"detection" | "explanation" | "details" | "relations" | "community">("detection");
 
@@ -363,6 +365,14 @@ function GuestScanner({ inView }: { inView: boolean }) {
     mxRaw.set((e.clientX - rect.left) / rect.width - 0.5);
     myRaw.set((e.clientY - rect.top) / rect.height - 0.5);
   }, [mxRaw, myRaw]);
+
+  // Countdown for rate-limit banner
+  useEffect(() => {
+    if (!rateLimited) return;
+    if (retryCountdown <= 0) { setRateLimited(null); return; }
+    const t = setTimeout(() => setRetryCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [rateLimited, retryCountdown]);
 
   // Score counter animation
   const [scoreActive, setScoreActive] = useState(false);
@@ -465,24 +475,47 @@ function GuestScanner({ inView }: { inView: boolean }) {
     })();
   }, [activeTab, currentScan]);
 
+  /* Persistent per-device ID so every browser gets its own rate-limit bucket */
+  const getDeviceId = (): string => {
+    try {
+      let id = localStorage.getItem("smartshield-device-id");
+      if (!id) {
+        id = crypto.randomUUID();
+        localStorage.setItem("smartshield-device-id", id);
+      }
+      return id;
+    } catch {
+      return "";
+    }
+  };
+
   /* Core scan logic */
   const doScan = async (url: string) => {
     setScanning(true);
     setError(null);
+    setRateLimited(null);
+    setRetryCountdown(0);
     setCurrentScan(null);
     setUrlInput(url);
 
     try {
+      const deviceId = getDeviceId();
       const response = await fetchWithTimeout(`/api/scan`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(deviceId ? { "X-Device-ID": deviceId } : {}),
+        },
         body: JSON.stringify({ url }),
         timeout: 55000,
       });
 
       if (response.status === 429) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error ?? "Rate limit exceeded. Please wait before scanning again.");
+        const retryAfter = errData.retryAfter ?? 60;
+        setRateLimited({ retryAfter });
+        setRetryCountdown(retryAfter);
+        return;
       }
 
       if (!response.ok) throw new Error("Failed to scan URL");
@@ -780,6 +813,55 @@ function GuestScanner({ inView }: { inView: boolean }) {
           </span>
         </div>
       </motion.div>
+
+      {/* ─── Rate Limit Banner ─── */}
+      <AnimatePresence>
+        {rateLimited && (
+          <motion.div
+            key="rate-limit"
+            initial={{ opacity: 0, y: -10, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.97 }}
+            transition={{ duration: 0.3 }}
+            className="mb-6 rounded-2xl border border-amber-400/30 bg-amber-500/10 dark:bg-amber-900/20 p-4 flex items-start gap-3"
+          >
+            {/* flame / clock icon */}
+            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-400/20">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500">
+                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-amber-700 dark:text-amber-300 text-sm">Scan limit reached</p>
+              <p className="text-amber-600/90 dark:text-amber-400/80 text-xs mt-0.5">
+                You&apos;ve used all <span className="font-semibold">5 scans</span> allowed per minute.
+                {retryCountdown > 0 && (
+                  <> Try again in&nbsp;<span className="font-semibold tabular-nums">{retryCountdown}s</span>.</>
+                )}
+              </p>
+            </div>
+            {/* circular countdown ring */}
+            <div className="relative shrink-0 flex items-center justify-center">
+              <svg width="40" height="40" className="-rotate-90" viewBox="0 0 40 40">
+                <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" strokeWidth="3" className="text-amber-400/20" />
+                <circle
+                  cx="20" cy="20" r="16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  className="text-amber-500 transition-all duration-1000"
+                  strokeDasharray={`${2 * Math.PI * 16}`}
+                  strokeDashoffset={`${2 * Math.PI * 16 * (1 - retryCountdown / (rateLimited.retryAfter || 60))}`}
+                />
+              </svg>
+              <span className="absolute text-[10px] font-bold tabular-nums text-amber-600 dark:text-amber-400">
+                {retryCountdown}
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ─── Error ─── */}
       {error && (
