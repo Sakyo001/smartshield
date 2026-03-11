@@ -31,7 +31,6 @@ const DEMOS = [
       { name: "Random Forest",   confidence: 97, color: "#ef4444" },
       { name: "Decision Tree",   confidence: 91, color: "#ef4444" },
       { name: "Naive Bayes",     confidence: 88, color: "#ef4444" },
-      { name: "Meta Learner (LR)", confidence: 94, color: "#ef4444" },
     ],
     xaiReasons: [
       { factor: "PayPal brand impersonation",   weight: 0.38, color: "#ef4444" },
@@ -57,7 +56,6 @@ const DEMOS = [
       { name: "Random Forest",   confidence: 99, color: "#22c55e" },
       { name: "Decision Tree",   confidence: 97, color: "#22c55e" },
       { name: "Naive Bayes",     confidence: 95, color: "#22c55e" },
-      { name: "Meta Learner (LR)", confidence: 97, color: "#22c55e" },
     ],
     xaiReasons: [
       { factor: "Established domain (26+ years)",   weight: 0.42, color: "#22c55e" },
@@ -83,7 +81,6 @@ const DEMOS = [
       { name: "Random Forest",   confidence: 95, color: "#ef4444" },
       { name: "Decision Tree",   confidence: 89, color: "#ef4444" },
       { name: "Naive Bayes",     confidence: 86, color: "#ef4444" },
-      { name: "Meta Learner (LR)", confidence: 91, color: "#ef4444" },
     ],
     xaiReasons: [
       { factor: "GCash brand impersonation",    weight: 0.41, color: "#ef4444" },
@@ -121,9 +118,9 @@ const STEPS = [
     from: "#f97316",
     to: "#fb923c",
     label: "ENSEMBLE VOTE",
-    title: "4 AI models vote",
-    desc: "Random Forest, Decision Tree, Naive Bayes, and a meta-learner each cast an independent verdict.",
-    metric: "4-model",
+    title: "3 AI models vote",
+    desc: "Random Forest, Decision Tree, and Naive Bayes each cast an independent verdict, combining their strengths for higher accuracy.",
+    metric: "3-model",
     metricLabel: "ensemble vote",
   },
   {
@@ -389,7 +386,7 @@ function ScannerDemo({
       <div className="px-4 py-2 border-t dark:border-white/[0.05] border-slate-100 dark:bg-[#0c0d17] bg-slate-50 flex items-center gap-2">
         <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e] animate-pulse" />
         <span className="hidden sm:block font-mono text-[9px] dark:text-slate-600 text-slate-400 flex-1 truncate">
-          Random Forest · Decision Tree · Naive Bayes · LR Meta
+          Random Forest · Decision Tree · Naive Bayes
         </span>
         <div className="flex gap-1 ml-auto shrink-0">
           {DEMOS.map((_, i) => (

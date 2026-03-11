@@ -18,9 +18,9 @@ const poppins = Poppins({
 });
 
 const stats = [
-  { value: "50K+", label: "Threats Blocked" },
-  { value: "99.2%", label: "Detection Rate" },
-  { value: "<0.5s", label: "Scan Speed" },
+  { value: "600K+", label: "Total Datasets" },
+  { value: "96.9%", label: "Detection Rate" },
+  { value: "<200ms", label: "Scan Speed" },
   { value: "24/7", label: "Active Monitoring" },
 ];
 
@@ -265,7 +265,7 @@ export default function HeroSection() {
           className="absolute inset-0 z-[10] flex flex-col md:items-center pointer-events-none transform-gpu"
           style={{ opacity: heroOpacity, y: heroY }}
         >
-          <div className="w-full max-w-7xl mx-auto px-5 sm:px-6 lg:px-16 flex flex-col justify-end md:justify-center h-full">
+          <div className="w-full max-w-7xl mx-auto px-5 sm:px-6 lg:px-16 flex flex-col justify-end md:justify-center h-full md:pt-20 lg:pt-24 xl:pt-16 2xl:pt-0">
             <div className="max-w-[360px] sm:max-w-[420px] md:max-w-[520px] pb-11 sm:pb-12 md:pb-0">
 
               {/* Badge */}

@@ -61,7 +61,7 @@ export default function Navbar() {
   const [activeSection, setActiveSection] = useState("home");
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
-  // `mounted` prevents theme-sensitive elements from diverging between SSR and client.
+  // mounted prevents theme-sensitive elements from diverging between SSR and client.
   // Before mount both sides agree: logo = dark-theme logo, icon = sun.
   const [mounted, setMounted] = useState(false);
 
