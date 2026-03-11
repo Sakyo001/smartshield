@@ -5,8 +5,10 @@ import { Redis } from "@upstash/redis";
 // Lazily initialised so a missing env var doesn't crash the module at build/boot
 // time — it only fails at request time when we can return a proper error.
 let ratelimit: Ratelimit | null = null;
+let rateLimitInitialised = false;
 function getRatelimit(): Ratelimit | null {
-  if (ratelimit) return ratelimit;
+  if (rateLimitInitialised) return ratelimit;
+  rateLimitInitialised = true;
   try {
     ratelimit = new Ratelimit({
       redis: Redis.fromEnv(),
@@ -15,9 +17,25 @@ function getRatelimit(): Ratelimit | null {
       prefix: "smartshield:scan",
     });
     return ratelimit;
-  } catch {
+  } catch (e) {
+    console.warn(
+      "[SmartShield] Rate limiting DISABLED — missing UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN env vars.",
+      e instanceof Error ? e.message : e
+    );
     return null;
   }
+}
+
+// Handle CORS pre-flight (needed if API is ever called cross-origin)
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, X-Device-ID",
+    },
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -35,6 +53,9 @@ export async function POST(req: NextRequest) {
   let rlHeaders: Record<string, string> = {};
 
   const rl = getRatelimit();
+  // X-RateLimit-Active lets you confirm in DevTools whether limiting is running
+  rlHeaders["X-RateLimit-Active"] = rl ? "true" : "false";
+
   try {
     if (rl) {
       const { success, limit, remaining, reset } = await rl.limit(rateLimitKey);
