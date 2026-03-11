@@ -518,7 +518,10 @@ function GuestScanner({ inView }: { inView: boolean }) {
         return;
       }
 
-      if (!response.ok) throw new Error("Failed to scan URL");
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error ?? `Scan failed (${response.status})`);
+      }
 
       const data = await response.json();
 
