@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { useAuth } from "@lib/auth-context";
 import { useTheme } from "@lib/theme-context";
 
 const poppins = Poppins({
@@ -61,7 +60,6 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   // `mounted` prevents theme-sensitive elements from diverging between SSR and client.
   // Before mount both sides agree: logo = dark-theme logo, icon = sun.
@@ -278,8 +276,9 @@ export default function Navbar() {
             </button>
 
             {/* CTA button — desktop */}
-            <Link
-              href={user ? `/dashboard/${user.id}` : "/login"}
+            <a
+              href="#scan"
+              onClick={(e) => handleSmoothScroll(e as React.MouseEvent<HTMLAnchorElement>, "#scan")}
               className={`group relative hidden md:inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-full overflow-hidden
                 bg-gradient-to-r from-[#545BFF] to-[#6B73FF] hover:from-[#4349dd] hover:to-[#545BFF]
                 text-white
@@ -287,12 +286,12 @@ export default function Navbar() {
                 hover:-translate-y-0.5 transition-all duration-300 ${poppins.className}`}
             >
               <span className="relative z-10 flex items-center gap-2">
-                {user ? "Dashboard" : "Sign In"}
+                Scan Now
                 <ArrowIcon />
               </span>
               {/* Shimmer sweep */}
               <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-            </Link>
+            </a>
 
             {/* Theme toggle — mobile, with rotation swap */}
             <button
@@ -422,20 +421,20 @@ export default function Navbar() {
 
               {/* Drawer footer — CTA */}
               <div className="px-5 py-5 border-t border-[#545BFF]/12 space-y-2.5">
-                <Link
-                  href={user ? `/dashboard/${user.id}` : "/login"}
-                  onClick={() => setMobileOpen(false)}
+                <a
+                  href="#scan"
+                  onClick={(e) => { handleSmoothScroll(e as React.MouseEvent<HTMLAnchorElement>, "#scan"); setMobileOpen(false); }}
                   className={`group relative flex items-center justify-center gap-2 w-full py-3 rounded-full text-sm font-semibold overflow-hidden
                     bg-gradient-to-r from-[#545BFF] to-[#6B73FF] text-white
                     shadow-[0_0_20px_rgba(84,91,255,0.38)] hover:shadow-[0_0_34px_rgba(84,91,255,0.58)]
                     hover:-translate-y-0.5 transition-all duration-300 ${poppins.className}`}
                 >
                   <span className="relative z-10 flex items-center gap-2">
-                    {user ? "Dashboard" : "Sign In"}
+                    Scan Now
                     <ArrowIcon />
                   </span>
                   <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-                </Link>
+                </a>
 
                 {/* Version tag */}
                 <p className={`${poppins.className} text-center text-[10px] text-faded/60 tracking-widest uppercase`}>
