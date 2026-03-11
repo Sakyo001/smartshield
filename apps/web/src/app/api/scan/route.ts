@@ -10,13 +10,17 @@ const ratelimit = new Ratelimit({
 });
 
 export async function POST(req: NextRequest) {
-  // Identify by IP — prefer the forwarded header set by Railway / Vercel / CDN
+  // Prefer the client-generated device ID (stored in localStorage) so every
+  // browser/device gets its own independent bucket regardless of shared NAT IPs.
+  // Fall back to IP if the header is missing (e.g. direct API calls).
+  const deviceId = req.headers.get("x-device-id");
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
     req.headers.get("x-real-ip") ??
     "anonymous";
+  const rateLimitKey = deviceId ? `device:${deviceId}` : `ip:${ip}`;
 
-  const { success, limit, remaining, reset } = await ratelimit.limit(ip);
+  const { success, limit, remaining, reset } = await ratelimit.limit(rateLimitKey);
 
   if (!success) {
     const retryAfter = Math.ceil((reset - Date.now()) / 1000);

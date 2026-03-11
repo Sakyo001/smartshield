@@ -475,6 +475,20 @@ function GuestScanner({ inView }: { inView: boolean }) {
     })();
   }, [activeTab, currentScan]);
 
+  /* Persistent per-device ID so every browser gets its own rate-limit bucket */
+  const getDeviceId = (): string => {
+    try {
+      let id = localStorage.getItem("smartshield-device-id");
+      if (!id) {
+        id = crypto.randomUUID();
+        localStorage.setItem("smartshield-device-id", id);
+      }
+      return id;
+    } catch {
+      return "";
+    }
+  };
+
   /* Core scan logic */
   const doScan = async (url: string) => {
     setScanning(true);
@@ -485,9 +499,13 @@ function GuestScanner({ inView }: { inView: boolean }) {
     setUrlInput(url);
 
     try {
+      const deviceId = getDeviceId();
       const response = await fetchWithTimeout(`/api/scan`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(deviceId ? { "X-Device-ID": deviceId } : {}),
+        },
         body: JSON.stringify({ url }),
         timeout: 55000,
       });
