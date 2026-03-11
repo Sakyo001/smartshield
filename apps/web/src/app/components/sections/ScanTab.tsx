@@ -9,6 +9,7 @@ import { motion, useInView, AnimatePresence, useMotionValue, useSpring, useTrans
 ───────────────────────────────────────────── */
 interface ScanResult {
   url: string;
+  expandedUrl?: string;
   riskScore: number;
   status: "Safe" | "Warning" | "Dangerous";
   date: string;
@@ -537,6 +538,7 @@ function GuestScanner({ inView }: { inView: boolean }) {
 
       setCurrentScan({
         url,
+        expandedUrl: data.expanded_url || undefined,
         riskScore,
         status,
         date: new Date().toLocaleString(),
@@ -849,6 +851,32 @@ function GuestScanner({ inView }: { inView: boolean }) {
               {/* Info */}
               <div className="flex-1 w-full text-center lg:text-left">
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-heading mb-2 break-all">{currentScan.url}</h2>
+
+                {/* Expanded URL banner — shown when a shortened URL was resolved */}
+                {currentScan.expandedUrl && (
+                  <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-[#545BFF]/8 dark:bg-[#545BFF]/12 border border-[#545BFF]/25 rounded-xl flex items-start gap-3 text-left">
+                    <div className="p-1.5 bg-[#545BFF]/15 rounded-lg text-[#545BFF] shrink-0 mt-0.5">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[#545BFF] dark:text-[#7c83ff] font-semibold text-xs sm:text-sm mb-0.5">Shortened URL — Real Destination Revealed</p>
+                      <p className="text-copy/70 text-[11px] sm:text-xs mb-1">This link redirected to:</p>
+                      <a
+                        href={currentScan.expandedUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-heading text-xs sm:text-sm font-mono break-all hover:text-[#545BFF] transition-colors"
+                      >
+                        {currentScan.expandedUrl}
+                      </a>
+                      <p className="text-faded text-[10px] sm:text-xs mt-1.5">Risk analysis was performed on the destination URL above.</p>
+                    </div>
+                  </div>
+                )}
+
                 <p
                   className={`text-sm sm:text-base md:text-lg mb-4 sm:mb-6 ${
                     currentScan.status === "Dangerous" ? "text-red-700 dark:text-red-300" : currentScan.status === "Warning" ? "text-yellow-700 dark:text-yellow-300" : "text-green-700 dark:text-green-300"
