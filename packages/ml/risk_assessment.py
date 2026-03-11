@@ -168,12 +168,6 @@ def apply_deterministic_rules(url, domain):
                 risk_increase += 10
                 flags.append(f'Suspicious short filename: {last_segment}')
     
-    # URL shorteners
-    shortener_domains = ['bit.ly', 'tinyurl.com', 'goo.gl', 't.co', 'ow.ly', 'is.gd']
-    if any(shortener in domain for shortener in shortener_domains):
-        risk_increase += 15
-        flags.append('URL shortener (destination hidden)')
-    
     # REAL-TIME: Analyze HTML content of the actual page
     print(f"🔍 Performing real-time content analysis...")
     html_analysis = brand_service.analyze_html_content(url)
