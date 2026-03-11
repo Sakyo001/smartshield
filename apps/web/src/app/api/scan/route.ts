@@ -31,9 +31,17 @@ export async function POST(req: NextRequest) {
     "anonymous";
   const rateLimitKey = deviceId ? `device:${deviceId}` : `ip:${ip}`;
 
+  // Rate-limit headers to attach to every successful response
+  let rlHeaders: Record<string, string> = {};
+
   const rl = getRatelimit();
   if (rl) {
     const { success, limit, remaining, reset } = await rl.limit(rateLimitKey);
+    rlHeaders = {
+      "X-RateLimit-Limit": String(limit),
+      "X-RateLimit-Remaining": String(remaining),
+      "X-RateLimit-Reset": String(reset),
+    };
     if (!success) {
       const retryAfter = Math.ceil((reset - Date.now()) / 1000);
       return NextResponse.json(
@@ -43,12 +51,7 @@ export async function POST(req: NextRequest) {
         },
         {
           status: 429,
-          headers: {
-            "X-RateLimit-Limit": String(limit),
-            "X-RateLimit-Remaining": "0",
-            "X-RateLimit-Reset": String(reset),
-            "Retry-After": String(retryAfter),
-          },
+          headers: { ...rlHeaders, "X-RateLimit-Remaining": "0", "Retry-After": String(retryAfter) },
         }
       );
     }
@@ -79,11 +82,7 @@ export async function POST(req: NextRequest) {
     const data = await upstream.json();
     return NextResponse.json(data, {
       status: upstream.status,
-      headers: {
-        "X-RateLimit-Limit": String(limit),
-        "X-RateLimit-Remaining": String(remaining),
-        "X-RateLimit-Reset": String(reset),
-      },
+      headers: rlHeaders,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Upstream request failed";
