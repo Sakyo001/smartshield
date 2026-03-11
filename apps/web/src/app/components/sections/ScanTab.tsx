@@ -473,12 +473,17 @@ function GuestScanner({ inView }: { inView: boolean }) {
     setUrlInput(url);
 
     try {
-      const response = await fetchWithTimeout(`${WHOIS_API_URL}/api/scan`, {
+      const response = await fetchWithTimeout(`/api/scan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
-        timeout: 45000,
+        timeout: 55000,
       });
+
+      if (response.status === 429) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error ?? "Rate limit exceeded. Please wait before scanning again.");
+      }
 
       if (!response.ok) throw new Error("Failed to scan URL");
 
