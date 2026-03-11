@@ -608,6 +608,10 @@ function GuestScanner({ inView }: { inView: boolean }) {
   const handleScan = (e: React.FormEvent) => {
     e.preventDefault();
     if (!urlInput) return;
+    if (urlInput.trim().length > 100) {
+      setUrlError("URL must be 100 characters or fewer.");
+      return;
+    }
     if (!/^https?:\/\//i.test(urlInput.trim())) {
       setUrlError("Please include the full URL starting with http:// or https://");
       return;
@@ -745,9 +749,10 @@ function GuestScanner({ inView }: { inView: boolean }) {
             <input
               type="text"
               value={urlInput}
-              onChange={(e) => { setUrlInput(e.target.value); setUrlError(null); }}
+              onChange={(e) => { if (e.target.value.length <= 100) { setUrlInput(e.target.value); setUrlError(null); } }}
               placeholder={urlInput ? "Paste a URL to scan..." : (typingPlaceholder || "Paste a URL to scan (e.g. https://example.com)...")}
               className="w-full bg-transparent border-none text-heading placeholder:text-faded focus:outline-none focus:ring-0 py-3 text-sm sm:text-base"
+              maxLength={100}
               required
               suppressHydrationWarning
             />
@@ -781,6 +786,13 @@ function GuestScanner({ inView }: { inView: boolean }) {
           </button>
         </div>
       </motion.form>
+
+      {/* character counter — only visible once the user starts typing */}
+      {urlInput.length > 0 && (
+        <p className={`text-xs mt-1.5 px-1 text-right tabular-nums ${urlInput.length >= 100 ? "text-red-500 dark:text-red-400 font-semibold" : urlInput.length >= 80 ? "text-amber-500 dark:text-amber-400" : "text-faded"}`}>
+          {urlInput.length}/100
+        </p>
+      )}
 
       <ScanProgress scanning={scanning} />
 
@@ -837,7 +849,7 @@ function GuestScanner({ inView }: { inView: boolean }) {
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-amber-700 dark:text-amber-300 text-sm">Scan limit reached</p>
               <p className="text-amber-600/90 dark:text-amber-400/80 text-xs mt-0.5">
-                You&apos;ve used all <span className="font-semibold">5 scans</span> allowed per minute.
+                You&apos;ve used all <span className="font-semibold">3 scans</span> allowed per minute.
                 {retryCountdown > 0 && (
                   <> Try again in&nbsp;<span className="font-semibold tabular-nums">{retryCountdown}s</span>.</>
                 )}
