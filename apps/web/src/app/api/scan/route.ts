@@ -35,28 +35,31 @@ export async function POST(req: NextRequest) {
   let rlHeaders: Record<string, string> = {};
 
   const rl = getRatelimit();
-  if (rl) {
-    const { success, limit, remaining, reset } = await rl.limit(rateLimitKey);
-    rlHeaders = {
-      "X-RateLimit-Limit": String(limit),
-      "X-RateLimit-Remaining": String(remaining),
-      "X-RateLimit-Reset": String(reset),
-    };
-    if (!success) {
-      const retryAfter = Math.ceil((reset - Date.now()) / 1000);
-      return NextResponse.json(
-        {
-          error: `Rate limit exceeded. You can perform up to ${limit} scans per minute. Please wait ${retryAfter} second${retryAfter !== 1 ? "s" : ""} before trying again.`,
-          retryAfter,
-        },
-        {
-          status: 429,
-          headers: { ...rlHeaders, "X-RateLimit-Remaining": "0", "Retry-After": String(retryAfter) },
-        }
-      );
+  try {
+    if (rl) {
+      const { success, limit, remaining, reset } = await rl.limit(rateLimitKey);
+      rlHeaders = {
+        "X-RateLimit-Limit": String(limit),
+        "X-RateLimit-Remaining": String(remaining),
+        "X-RateLimit-Reset": String(reset),
+      };
+      if (!success) {
+        const retryAfter = Math.ceil((reset - Date.now()) / 1000);
+        return NextResponse.json(
+          {
+            error: `Rate limit exceeded. You can perform up to ${limit} scans per minute. Please wait ${retryAfter} second${retryAfter !== 1 ? "s" : ""} before trying again.`,
+            retryAfter,
+          },
+          {
+            status: 429,
+            headers: { ...rlHeaders, "X-RateLimit-Remaining": "0", "Retry-After": String(retryAfter) },
+          }
+        );
+      }
     }
+  } catch {
+    // Redis unavailable or rate-limit call failed — skip limiting and let the scan proceed
   }
-  // If Redis is unavailable we skip rate limiting and let the scan proceed
 
   // Proxy to the Python backend
   const backendUrl = process.env.NEXT_PUBLIC_WHOIS_API_URL;
