@@ -8,9 +8,38 @@ from flask_cors import CORS
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
+import requests as _requests
 
 # Import our modules
 from utils import extract_domain
+
+# ── Known URL shortener domains ──────────────────────────────────────────────
+_SHORTENER_DOMAINS = {
+    "bit.ly", "bitly.com", "t.co", "tinyurl.com", "goo.gl", "ow.ly",
+    "buff.ly", "is.gd", "rb.gy", "short.io", "tiny.cc", "shorturl.at",
+    "bl.ink", "rebrand.ly", "cutt.ly", "lnkd.in", "clck.ru", "qr.ae",
+    "adf.ly", "shrinkonce.com", "smarturl.it", "su.pr", "dlvr.it",
+    "snip.ly", "zws.im", "v.gd", "x.co", "po.st", "mcaf.ee",
+}
+
+def expand_shortened_url(url: str) -> str:
+    """
+    Follow HTTP redirects to resolve shortened/redirecting URLs.
+    Returns the final destination URL, or the original URL if expansion fails.
+    """
+    try:
+        resp = _requests.head(
+            url if url.startswith(("http://", "https://")) else "https://" + url,
+            allow_redirects=True,
+            timeout=8,
+            headers={"User-Agent": "Mozilla/5.0 SmartShield-Bot/1.0"},
+        )
+        final_url = resp.url
+        if final_url and final_url != url:
+            return final_url
+    except Exception as e:
+        print(f"URL expansion failed for {url}: {e}")
+    return url
 from data_fetchers import get_whois_info, get_dns_records, get_ssl_info
 from database import supabase_request, save_whois_history, save_dns_history, save_ssl_history
 from risk_assessment import apply_deterministic_rules, calculate_contextual_risk_adjustment
@@ -45,6 +74,13 @@ def domain_info():
         if not url:
             return jsonify({'error': 'URL is required'}), 400
         
+        # ── Expand shortened URLs before scanning ────────────────────────
+        original_url = url
+        expanded_url = expand_shortened_url(url)
+        if expanded_url != original_url:
+            print(f"Shortened URL expanded: {original_url} → {expanded_url}")
+            url = expanded_url
+
         # Extract domain from URL
         domain = extract_domain(url)
         
@@ -137,6 +173,8 @@ def domain_info():
         
         response_data = {
             'domain': domain,
+            'original_url': original_url,
+            'expanded_url': expanded_url if expanded_url != original_url else None,
             'whois': whois_info,
             'dns': dns_records,
             'ssl': ssl_info,
