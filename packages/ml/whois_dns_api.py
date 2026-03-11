@@ -24,10 +24,18 @@ _SHORTENER_DOMAINS = {
 
 def expand_shortened_url(url: str) -> str:
     """
-    Follow HTTP redirects to resolve shortened/redirecting URLs.
-    Returns the final destination URL, or the original URL if expansion fails.
+    Resolve shortened URLs by following redirects — but ONLY for known shortener
+    domains. Regular URLs that happen to redirect (http→https, www canonicalization,
+    trailing slashes) are returned unchanged to avoid false positives.
     """
     try:
+        from urllib.parse import urlparse
+        parsed = urlparse(url if url.startswith(("http://", "https://")) else "https://" + url)
+        host = parsed.netloc.lower()
+        bare_host = host.removeprefix("www.")
+        if bare_host not in _SHORTENER_DOMAINS:
+            # Not a known shortener — skip expansion entirely
+            return url
         resp = _requests.head(
             url if url.startswith(("http://", "https://")) else "https://" + url,
             allow_redirects=True,
