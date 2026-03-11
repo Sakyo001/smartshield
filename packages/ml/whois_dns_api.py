@@ -63,8 +63,8 @@ def _check_rate_limit(device_id: str):
     rest_url = os.getenv('UPSTASH_REDIS_REST_URL', '').rstrip('/')
     token    = os.getenv('UPSTASH_REDIS_REST_TOKEN', '')
     if not rest_url or not token:
-        return True, 5, 0
-    limit  = 5
+        return True, 3, 0
+    limit  = 3
     bucket = int(_time.time() / 60)
     key    = f'smartshield:scan:{device_id}:{bucket}'
     headers = {'Authorization': f'Bearer {token}'}
@@ -83,7 +83,7 @@ def _check_rate_limit(device_id: str):
         return True, remaining, 0
     except Exception as exc:
         print(f'[SmartShield] Rate limit check error: {exc}')
-        return True, 5, 0
+        return True, 3, 0
 
 # Configure CORS to allow production and development origins
 CORS(app, origins=[
@@ -117,7 +117,7 @@ def domain_info():
     if not allowed:
         plural = 's' if retry_after != 1 else ''
         return jsonify({
-            'error': f'Rate limit exceeded. You can perform up to 5 scans per minute. '
+            'error': f'Rate limit exceeded. You can perform up to 3 scans per minute. '
                      f'Please wait {retry_after} second{plural} before trying again.',
             'retryAfter': retry_after,
         }), 429

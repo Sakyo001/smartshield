@@ -12,7 +12,7 @@ function getRatelimit(): Ratelimit | null {
   try {
     ratelimit = new Ratelimit({
       redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(5, "60 s"),
+      limiter: Ratelimit.slidingWindow(3, "60 s"),
       analytics: false,
       prefix: "smartshield:scan",
     });
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
         const retryAfter = Math.ceil((reset - Date.now()) / 1000);
         return NextResponse.json(
           {
-            error: `Rate limit exceeded. You can perform up to ${limit} scans per minute. Please wait ${retryAfter} second${retryAfter !== 1 ? "s" : ""} before trying again.`,
+            error: `Rate limit exceeded. You can perform up to 3 scans per minute. Please wait ${retryAfter} second${retryAfter !== 1 ? "s" : ""} before trying again.`,
             retryAfter,
           },
           {
@@ -78,8 +78,9 @@ export async function POST(req: NextRequest) {
         );
       }
     }
-  } catch {
+  } catch (err) {
     // Redis unavailable or rate-limit call failed — skip limiting and let the scan proceed
+    console.error("[SmartShield] Rate limit check failed:", err instanceof Error ? err.message : err);
   }
 
   // Proxy to the Python backend
