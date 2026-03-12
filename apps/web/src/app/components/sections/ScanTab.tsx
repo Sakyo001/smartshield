@@ -344,25 +344,25 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
 
   const verdictColor = status === "Dangerous" ? "red" : status === "Warning" ? "yellow" : "green";
 
-  // 1 — Verdict + overall assessment (IMPROVED - no redundant score)
+  // 1 — Greeting + overall verdict
   const verdictPhrase =
     status === "Dangerous"
-      ? `**Bottom line:** This site is **highly dangerous**. I strongly recommend you **do not visit** this website. Multiple serious threats were detected during our analysis.`
+      ? `**Bottom line:** This site is **highly dangerous**. I strongly recommend you **do not visit** it.`
       : status === "Warning"
-      ? `**Bottom line:** This site looks **suspicious**. You should be careful before interacting with it. We found some warning signs that need attention.`
-      : `**Bottom line:** This site looks **safe**. No major threats were detected. You can browse normally, but always stay alert.`;
+      ? `**Bottom line:** This site looks **suspicious**. You should be careful before interacting with it.`
+      : `**Bottom line:** This site looks **safe**. You can browse it normally, but always stay alert.`;
   msgs.push({ id: "verdict", text: verdictPhrase, accent: verdictColor });
 
-  // 2 — Score meaning (IMPROVED - unified traffic light metaphor)
+  // 2 — Score meaning (contextual - unified traffic light metaphor)
   const scoreMeaning =
     s >= 67
-      ? `**Bottom line:** Danger zone — Red light. A score of **${s}** is very high, meaning I detected serious red flags. Think of it like a traffic light turned red — the site has multiple warning signs and should be avoided entirely. This is likely a scam or phishing site designed to steal information.`
+      ? `**Bottom line:** Red light zone — score of **${s}**. Our AI model and multiple security layers detected serious threats. This is likely a scam or phishing site designed to steal your information.`
       : s >= 34
-      ? `**Bottom line:** Caution zone — Yellow light. A score of **${s}** is in the middle range, meaning I found some warning signs. Think of it like a yellow traffic light — slow down and verify everything before proceeding. Don't enter personal information unless you're absolutely certain the site is legitimate.`
-      : `**Bottom line:** Safe zone — Green light. A score of **${s}** is low, which is good. The site passed my security checks without raising major concerns. Think of it like a green traffic light — you can proceed normally. Just always stay alert for unusual requests.`;
+      ? `**Bottom line:** Yellow light zone — score of **${s}**. We spotted some warning signs. Proceed with caution and verify legitimacy before entering any personal information.`
+      : `**Bottom line:** Green light zone — score of **${s}**. The site passed our security checks. You can browse it normally.`;
   msgs.push({ id: "score-meaning", text: scoreMeaning, accent: "blue" });
 
-  // 3 — Specific threat flags (IMPROVED - consistent tone)
+  // 3 — Specific threat flags
   if (flags.length > 0) {
     const flagLines = flags.map((f) => {
       const clean = f.replace(/^\u{1F6A8}\s*/u, "").replace(/\s*\(legitimate site: [^)]+\)/, "");
@@ -397,77 +397,73 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
     });
   }
 
-  // 5 — HTTP warning (IMPROVED - with TL;DR)
+  // 5 — HTTP warning
   if (isHTTP) {
     msgs.push({
       id: "http",
-      text: "**Bottom line:** Always use HTTPS websites. This site uses **HTTP instead of HTTPS**, which means your connection is **not encrypted**. Anyone on the same network (like public Wi-Fi) could intercept what you type — including passwords and credit card numbers. Avoid entering ANY personal information on this site.",
+      text: "**Bottom line:** Always use HTTPS websites. This site uses **HTTP**, which means your connection is **not encrypted**. Anyone on the same network (like public Wi-Fi) could intercept what you type — passwords, credit cards, personal information.",
       accent: "yellow",
     });
   }
 
-  // 6 — WHOIS insights (IMPROVED - consistent language, unified TL;DR)
+  // 6 — WHOIS insights
   if (whois) {
     const reg = whois.registrar || null;
     const created = whois.creation_date || null;
     if (reg || created) {
-      let whoisText = "I found information about who owns this website: ";
+      let whoisText = "Here's what I found about who owns this website: ";
       if (reg) whoisText += `It's registered through **${reg}**. `;
       if (created) {
         const d = new Date(created);
         const now = new Date();
         const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
-        if (diffDays < 30) {
-          whoisText += `Created only **${diffDays} day${diffDays !== 1 ? "s" : ""} ago** — very new, so domain ownership history is limited.`;
-        } else if (diffDays < 365) {
-          whoisText += `Created **${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) !== 1 ? "s" : ""} ago** — moderately established.`;
-        } else {
-          whoisText += `Established for **${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) !== 1 ? "s" : ""}** — well-established, indicating longevity.`;
-        }
+        if (diffDays < 30)
+          whoisText += `Domain age: **very new** (${diffDays} day${diffDays !== 1 ? "s" : ""} old), so ownership history is limited.`;
+        else if (diffDays < 365)
+          whoisText += `Domain age: **moderately established** (${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) !== 1 ? "s" : ""} old).`;
+        else
+          whoisText += `Domain age: **well-established** (${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) !== 1 ? "s" : ""} old), indicating longevity.`;
       }
-      whoisText += ` **Bottom line:** Domain age provides useful context for assessing the site's credibility.`;
-      msgs.push({ id: "whois", text: whoisText.trim(), accent: "blue" });
+      msgs.push({ id: "whois", text: whoisText.trim(), accent: status === "Dangerous" && whois.creation_date ? "yellow" : "blue" });
     }
   }
 
-  // 7 — SSL (IMPROVED - unified message with status-specific caveat)
+  // 7 — SSL (unified message with status-specific caveat)
   if (ssl && !ssl.error) {
     const rawIssuer = ssl.issuer || ssl.issuer_organization || null;
     const issuer = rawIssuer && typeof rawIssuer === "object"
       ? (rawIssuer.O || rawIssuer.CN || rawIssuer.organizationName || Object.values(rawIssuer).find((v: unknown) => typeof v === "string") || null) as string | null
       : rawIssuer;
 
-    let sslText = `**Bottom line:** Connection is encrypted (good), but SSL doesn't prove legitimacy. `;
+    let sslText = `**Bottom line:** Connection is encrypted (good), but SSL doesn't guarantee legitimacy. `;
     if (issuer) {
-      sslText += `This site has an SSL certificate issued by **${issuer}**, which means your connection is encrypted and no one else can see your data in transit. `;
-    } else {
-      sslText += `This site has an SSL certificate, which means your connection is encrypted and no one else can see your data in transit. `;
+      sslText += `SSL certificate verified by **${issuer}**. `;
     }
-    sslText += `However, scammers can also get free SSL certificates, so an encrypted connection doesn't guarantee a site is legitimate. `;
+    sslText += `An encrypted connection prevents eavesdropping, but scammers can also get SSL certificates. `;
 
-    // Add status-specific caveat
     if (status === "Dangerous") {
-      sslText += `Given this site's risk profile with multiple security red flags, I still recommend avoiding it completely.`;
+      sslText += `However, given this site's risk profile, I still recommend avoiding it.`;
     } else if (status === "Warning") {
-      sslText += `Combined with other warning signs we found, this encrypted connection is a positive factor, but proceed with caution.`;
+      sslText += `Combined with the other warning signs we found, proceed with caution.`;
     } else {
-      sslText += `Combined with other positive security indicators, this is a good sign that the site takes security seriously.`;
+      sslText += `This is a positive security indicator along with the other checks.`;
     }
 
+    const sslAccent = status === "Dangerous" ? "yellow" : status === "Warning" ? "yellow" : "green";
     msgs.push({
       id: "ssl",
       text: sslText,
-      accent: status === "Dangerous" ? "yellow" : "green",
+      accent: sslAccent,
     });
   } else if (ssl?.error) {
     msgs.push({
       id: "ssl-err",
-      text: `**Bottom line:** SSL certificate verification failed. I couldn't verify this site's SSL certificate — **${ssl.error}**. Without proper encryption, any data you send (passwords, personal info) could be intercepted by attackers. I recommend avoiding this site.`,
+      text: `I couldn't verify this site's SSL certificate — **${ssl.error}**. Without proper encryption, any data you send (passwords, personal info) could be intercepted by attackers.`,
       accent: "red",
     });
   }
 
-  // 8 — Trust signals (improved tone consistency)
+  // 8 — Trust signals (only for non-dangerous sites, and be honest about them)
   const positive = indicators.filter(
     (i) => !i.includes("CRITICAL") && !i.includes("\u{1F6A8}") && !i.includes("VERY NEW") && !i.includes("New Domain (Risk Factor)")
   );
@@ -485,7 +481,7 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
     });
   }
 
-  // 9 — Final advice (IMPROVED - already uses "Bottom line:" format)
+  // 9 — Final advice (ALWAYS uses frontend verdict, never XAI)
   const finalAdvice =
     status === "Dangerous"
       ? "**Bottom line:** Do not enter any personal information on this site. Do not download anything from it. If you received this link via email or text message, it's very likely a phishing attempt — let the sender know their account may be compromised."
