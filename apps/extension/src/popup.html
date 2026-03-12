@@ -124,7 +124,8 @@
         box-shadow: var(--shadow);
         overflow: hidden;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        animation: status-card-enter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        animation: status-card-enter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)
+          forwards;
       }
 
       .status-card::after {
@@ -212,7 +213,10 @@
         justify-content: center;
         background: rgba(255, 255, 255, 0.03);
         position: relative;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transition:
+          color 0.4s,
+          background 0.4s,
+          box-shadow 0.4s;
         color: var(--text-muted);
         box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
       }
@@ -233,13 +237,6 @@
         background: rgba(52, 211, 153, 0.15);
         color: var(--success);
         box-shadow: 0 0 30px rgba(52, 211, 153, 0.2);
-      }
-
-      .status-card.warning .status-ring {
-        background: rgba(245, 158, 11, 0.15);
-        color: var(--warning);
-        box-shadow: 0 0 30px rgba(245, 158, 11, 0.2);
-        animation: pulse-ring 2s infinite;
       }
 
       .status-card.danger .status-ring {
@@ -309,18 +306,6 @@
         100% {
           background-position: 120% 0;
         }
-      }
-
-      .status-ring.scanning::after {
-        content: "";
-        position: absolute;
-        inset: -6px;
-        border-radius: 50%;
-        border: 2px solid transparent;
-        border-top-color: var(--primary);
-        border-left-color: var(--primary);
-        opacity: 0.6;
-        animation: spin 1.5s linear infinite;
       }
 
       .status-title {
@@ -1821,7 +1806,8 @@
         transition:
           border-color 0.3s ease,
           transform 0.1s ease;
-        animation: metrics-cascade 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        animation: metrics-cascade 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)
+          forwards;
         opacity: 0;
       }
 
@@ -2410,7 +2396,7 @@
       .sp-bot-header {
         display: flex;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: space-between;
         gap: 8px;
         font-size: 8px;
         font-weight: 700;
@@ -2423,6 +2409,45 @@
         opacity: 0.9;
         min-height: 14px;
         line-height: 1;
+      }
+
+      .sp-bot-header-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+        min-width: 0;
+      }
+
+      .sp-bot-chevron-btn {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--muted2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: all 0.25s ease;
+        padding: 0;
+      }
+
+      .sp-bot-chevron-btn svg {
+        transition: transform 0.25s ease;
+        display: block;
+      }
+
+      .sp-bot-chevron-btn:hover {
+        background: rgba(84, 91, 255, 0.15);
+        border-color: rgba(84, 91, 255, 0.3);
+        color: var(--primary);
+      }
+
+      .sp-bot-chevron-btn.sp-bot-chevron-open svg {
+        transform: rotate(180deg);
       }
 
       .sp-bot-icon {
@@ -2506,9 +2531,15 @@
 
       /* New animation for button press feedback */
       @keyframes button-press {
-        0% { transform: scale(1); }
-        50% { transform: scale(0.95); }
-        100% { transform: scale(1); }
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(0.95);
+        }
+        100% {
+          transform: scale(1);
+        }
       }
 
       /* Status card entrance animation */
@@ -2537,8 +2568,13 @@
 
       /* Accent bar glow for messages */
       @keyframes accent-pulse {
-        0%, 100% { box-shadow: inset 4px 0 0 rgba(var(--accent-rgb), 0.3); }
-        50% { box-shadow: inset 4px 0 0 rgba(var(--accent-rgb), 0.6); }
+        0%,
+        100% {
+          box-shadow: inset 4px 0 0 rgba(var(--accent-rgb), 0.3);
+        }
+        50% {
+          box-shadow: inset 4px 0 0 rgba(var(--accent-rgb), 0.6);
+        }
       }
 
       .sp-bot-message[data-message-index="0"] .sp-bot-header {
@@ -2655,6 +2691,226 @@
         padding: 0;
         margin: 0;
         line-height: 1.75;
+      }
+
+      /* ── Expand/Collapse Functionality ── */
+      .sp-bot-preview {
+        margin: 0;
+        padding: 0;
+      }
+
+      .sp-bot-full {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        line-height: 1.7;
+        color: var(--muted);
+        display: none;
+      }
+
+      .sp-bot-message.sp-bot-expanded .sp-bot-full {
+        display: block;
+        animation: fadeIn 0.3s ease-in-out;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .sp-bot-expand-btn {
+        margin-top: 10px;
+        padding: 6px 12px;
+        background: rgba(84, 91, 255, 0.15);
+        border: 1px solid rgba(84, 91, 255, 0.3);
+        color: var(--primary);
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: var(--font);
+        display: inline-block;
+      }
+
+      .sp-bot-expand-btn:hover {
+        background: rgba(84, 91, 255, 0.25);
+        border-color: rgba(84, 91, 255, 0.5);
+      }
+
+      .sp-bot-expand-btn:active {
+        transform: scale(0.95);
+      }
+
+      .sp-bot-explain-btn {
+        padding: 6px 12px;
+        background: rgba(245, 158, 11, 0.12);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        color: var(--warning);
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: var(--font);
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .sp-bot-explain-btn::before {
+        content: "?";
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: rgba(245, 158, 11, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9px;
+        font-weight: 800;
+        flex-shrink: 0;
+      }
+
+      .sp-bot-explain-btn:hover {
+        background: rgba(245, 158, 11, 0.22);
+        border-color: rgba(245, 158, 11, 0.55);
+        transform: translateY(-1px);
+      }
+
+      .sp-bot-explain-btn:active {
+        transform: scale(0.95);
+      }
+
+      /* ── Explanation Modal ── */
+      .sp-explain-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.55);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        animation: explain-fade-in 0.2s ease-out;
+        padding: 16px;
+      }
+
+      .sp-explain-box {
+        background: var(--bg-card2);
+        border: 1.5px solid rgba(84, 91, 255, 0.3);
+        border-radius: 16px;
+        padding: 22px;
+        width: 100%;
+        max-width: 340px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+        animation: explain-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        scrollbar-width: thin;
+        scrollbar-color: rgba(84, 91, 255, 0.2) transparent;
+      }
+
+      .sp-explain-box::-webkit-scrollbar {
+        width: 4px;
+      }
+
+      .sp-explain-box::-webkit-scrollbar-thumb {
+        background: rgba(84, 91, 255, 0.2);
+        border-radius: 2px;
+      }
+
+      .sp-explain-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 14px;
+      }
+
+      .sp-explain-accent {
+        width: 4px;
+        height: 22px;
+        background: var(--primary);
+        border-radius: 2px;
+        flex-shrink: 0;
+      }
+
+      .sp-explain-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--warning);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .sp-explain-text {
+        font-size: 12.5px;
+        line-height: 1.75;
+        color: var(--muted);
+        margin-bottom: 18px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .sp-explain-close {
+        width: 100%;
+        padding: 10px 16px;
+        background: rgba(84, 91, 255, 0.15);
+        border: 1px solid rgba(84, 91, 255, 0.35);
+        border-radius: 9px;
+        color: var(--primary);
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: var(--font);
+      }
+
+      .sp-explain-close:hover {
+        background: rgba(84, 91, 255, 0.25);
+        border-color: rgba(84, 91, 255, 0.55);
+      }
+
+      @keyframes explain-fade-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes explain-fade-out {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+        }
+      }
+
+      @keyframes explain-slide-up {
+        from {
+          transform: translateY(24px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
       }
 
       /* ── WHOIS Stats Grid ── */
@@ -2926,7 +3182,6 @@
           transform: translateX(0);
         }
       }
-      
 
       /* Alert Modal */
       .modal-overlay {
@@ -3263,6 +3518,112 @@
         border-color: rgba(52, 211, 153, 0.65);
         box-shadow: 0 8px 24px rgba(52, 211, 153, 0.25);
       }
+
+      /* ── Tab Navigation ── */
+      .tab-nav {
+        display: flex;
+        gap: 4px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 4px;
+        margin-bottom: 18px;
+      }
+      .tab-btn {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: var(--muted);
+        font-family: var(--font);
+        font-size: 12px;
+        font-weight: 600;
+        padding: 8px 12px;
+        border-radius: 9px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        position: relative;
+      }
+      .tab-btn:hover {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .tab-btn.active {
+        background: var(--primary);
+        color: #fff;
+        box-shadow: 0 2px 10px rgba(84, 91, 255, 0.35);
+      }
+      .tab-badge {
+        background: var(--warning);
+        color: #000;
+        font-size: 10px;
+        font-weight: 700;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        animation: pulse 2s infinite;
+      }
+      .tab-panel {
+        display: block;
+      }
+      .tab-panel.hidden {
+        display: none !important;
+      }
+
+      /* ── Report Nudge ── */
+      .report-nudge {
+        margin-top: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        background: linear-gradient(
+          135deg,
+          rgba(84, 91, 255, 0.12) 0%,
+          rgba(84, 91, 255, 0.05) 100%
+        );
+        border: 1px solid rgba(84, 91, 255, 0.25);
+        border-radius: 10px;
+        padding: 10px 14px;
+        animation: slideDown 0.3s ease;
+      }
+      .report-nudge-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .report-nudge-info svg {
+        color: var(--primary);
+        flex-shrink: 0;
+      }
+      .report-nudge-btn {
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        font-family: var(--font);
+        font-size: 11px;
+        font-weight: 600;
+        padding: 6px 12px;
+        border-radius: 7px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+      }
+      .report-nudge-btn:hover {
+        background: var(--primary-d);
+        box-shadow: 0 4px 12px rgba(84, 91, 255, 0.4);
+        transform: translateY(-1px);
+      }
     </style>
   </head>
   <body>
@@ -3461,33 +3822,112 @@
           </div>
           <div class="online-pill"><span class="pip"></span>Online</div>
         </header>
-        <!-- Status Card -->
-        <div class="status-card" id="status-card">
-          <div class="card-glow"></div>
-          <div class="status-ring scanning" id="status-icon">
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+          <button class="tab-btn active" data-tab="overview">Overview</button>
+          <button class="tab-btn" data-tab="report">
+            Scan Report
+            <span class="tab-badge hidden" id="report-tab-badge">!</span>
+          </button>
+        </div>
+        <!-- Tab 1: Overview -->
+        <div class="tab-panel" id="tab-overview">
+          <!-- Status Card -->
+          <div class="status-card" id="status-card">
+            <div class="card-glow"></div>
+            <div class="status-ring scanning" id="status-icon">
+              <svg
+                width="26"
+                height="26"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </div>
+            <div class="status-title" id="status-title">Scanning…</div>
+            <div class="status-desc" id="status-desc">
+              Analyzing domain reputation and threat signals
+            </div>
+            <div class="url-chip hidden" id="url-display">
+              <div class="url-chip-icon">
+                <svg
+                  width="11"
+                  height="11"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="2" y1="12" x2="22" y2="12" />
+                  <path
+                    d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+                  />
+                </svg>
+              </div>
+              <span class="url-chip-text" id="url-text"></span>
+            </div>
+          </div>
+          <!-- Metrics Row -->
+          <div class="metrics-row hidden" id="metrics-grid">
+            <div class="metric-tile">
+              <div class="metric-label">Risk Score</div>
+              <div class="metric-val" id="risk-score-val">0</div>
+              <div class="risk-bar-track">
+                <div class="risk-bar-fill" id="risk-bar-fill"></div>
+              </div>
+              <div class="metric-sub" id="risk-sub">Analyzing…</div>
+            </div>
+            <div class="metric-tile">
+              <div class="metric-label">Confidence</div>
+              <div class="metric-val" id="confidence-score">–</div>
+              <div class="metric-sub">Model certainty</div>
+            </div>
+          </div>
+          <!-- Safe Mode Toggle -->
+          <div class="safe-mode-row">
+            <div class="safe-mode-info">
+              <strong>Safe Mode</strong><span>Real-time threat blocking</span>
+            </div>
+            <label class="tog"
+              ><input type="checkbox" id="safe-mode-toggle" /><span
+                class="tog-track"
+              ></span
+            ></label>
+          </div>
+          <!-- Show Badge on Page -->
+          <button class="locate-badge-btn" id="locate-badge-btn">
             <svg
-              width="26"
-              height="26"
+              width="14"
+              height="14"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              stroke-width="2"
+              stroke-width="2.2"
               stroke-linecap="round"
               stroke-linejoin="round"
             >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M12 1v3M12 20v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M1 12h3M20 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"
+              />
             </svg>
-          </div>
-          <div class="status-title" id="status-title">Scanning…</div>
-          <div class="status-desc" id="status-desc">
-            Analyzing domain reputation and threat signals
-          </div>
-          <div class="url-chip hidden" id="url-display">
-            <div class="url-chip-icon">
+            Show Badge on Page
+          </button>
+          <!-- View Report Nudge -->
+          <div class="report-nudge hidden" id="report-nudge">
+            <div class="report-nudge-info">
               <svg
-                width="11"
-                height="11"
+                width="14"
+                height="14"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -3496,86 +3936,48 @@
                 stroke-linejoin="round"
               >
                 <circle cx="12" cy="12" r="10" />
-                <line x1="2" y1="12" x2="22" y2="12" />
-                <path
-                  d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
-                />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
+              <span>Scan complete — view full analysis</span>
             </div>
-            <span class="url-chip-text" id="url-text"></span>
+            <button class="report-nudge-btn" id="view-report-btn">
+              View Report →
+            </button>
           </div>
         </div>
-        <!-- Metrics Row -->
-        <div class="metrics-row hidden" id="metrics-grid">
-          <div class="metric-tile">
-            <div class="metric-label">Risk Score</div>
-            <div class="metric-val" id="risk-score-val">0</div>
-            <div class="risk-bar-track">
-              <div class="risk-bar-fill" id="risk-bar-fill"></div>
+        <!-- end tab-overview -->
+        <!-- Tab 2: Scan Report -->
+        <div class="tab-panel hidden" id="tab-report">
+          <!-- Warnings -->
+          <div class="warn-banner hidden" id="scan-warnings">
+            <svg
+              class="warn-banner-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+              />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <div class="warn-banner-text" id="warning-list"></div>
+          </div>
+          <!-- Scan Detail Panel -->
+          <div class="sp-panel hidden" id="details-container">
+            <div id="sp-content">
+              <div class="detail-placeholder">
+                Scan details will appear here…
+              </div>
             </div>
-            <div class="metric-sub" id="risk-sub">Analyzing…</div>
-          </div>
-          <div class="metric-tile">
-            <div class="metric-label">Confidence</div>
-            <div class="metric-val" id="confidence-score">–</div>
-            <div class="metric-sub">Model certainty</div>
           </div>
         </div>
-        <!-- Safe Mode Toggle -->
-        <div class="safe-mode-row">
-          <div class="safe-mode-info">
-            <strong>Safe Mode</strong><span>Real-time threat blocking</span>
-          </div>
-          <label class="tog"
-            ><input type="checkbox" id="safe-mode-toggle" /><span
-              class="tog-track"
-            ></span
-          ></label>
-        </div>
-        <!-- Show Badge on Page -->
-        <button class="locate-badge-btn" id="locate-badge-btn">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="12" cy="12" r="3" />
-            <path
-              d="M12 1v3M12 20v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M1 12h3M20 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"
-            />
-          </svg>
-          Show Badge on Page
-        </button>
-        <!-- Warnings -->
-        <div class="warn-banner hidden" id="scan-warnings">
-          <svg
-            class="warn-banner-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path
-              d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
-            />
-            <line x1="12" y1="9" x2="12" y2="13" />
-            <line x1="12" y1="17" x2="12.01" y2="17" />
-          </svg>
-          <div class="warn-banner-text" id="warning-list"></div>
-        </div>
-        <!-- Scan Detail Panel -->
-        <div class="sp-panel hidden" id="details-container">
-          <div id="sp-content">
-            <div class="detail-placeholder">Scan details will appear here…</div>
-          </div>
-        </div>
+        <!-- end tab-report -->
       </div>
       <footer class="app-footer">
         <span class="app-footer-text">SmartShield AI Engine</span>

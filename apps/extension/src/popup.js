@@ -115,6 +115,46 @@ document.addEventListener("DOMContentLoaded", () => {
     const alertLeaveBtn = document.getElementById("alert-leave");
     const alertDismissBtn = document.getElementById("alert-dismiss");
 
+    // ── Tab refs ──
+    const tabOverview = document.getElementById("tab-overview");
+    const tabReport = document.getElementById("tab-report");
+    const tabBtns = document.querySelectorAll(".tab-btn");
+    const reportTabBadge = document.getElementById("report-tab-badge");
+    const reportNudge = document.getElementById("report-nudge");
+    const viewReportBtn = document.getElementById("view-report-btn");
+
+    // ── Tab Switching ──
+    function switchTab(tabId) {
+      tabBtns.forEach((btn) =>
+        btn.classList.toggle("active", btn.dataset.tab === tabId),
+      );
+      tabOverview.classList.toggle("hidden", tabId !== "overview");
+      tabReport.classList.toggle("hidden", tabId !== "report");
+      // Clear badge when user opens report tab
+      if (tabId === "report" && reportTabBadge) {
+        reportTabBadge.classList.add("hidden");
+      }
+    }
+    tabBtns.forEach((btn) => {
+      btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+    });
+    if (viewReportBtn) {
+      viewReportBtn.addEventListener("click", () => switchTab("report"));
+    }
+
+    // If popup was opened by clicking the badge, jump straight to report tab
+    chrome.storage.local.get(["openOnTab"], (r) => {
+      if (r.openOnTab) {
+        switchTab(r.openOnTab);
+        chrome.storage.local.remove("openOnTab");
+      }
+    });
+
+    function showReportIndicator() {
+      if (reportNudge) reportNudge.classList.remove("hidden");
+      if (reportTabBadge) reportTabBadge.classList.remove("hidden");
+    }
+
     // ── State ──
     let currentRootDomain = null;
     let lastScanResult = null;
@@ -266,7 +306,7 @@ document.addEventListener("DOMContentLoaded", () => {
     async function scanCurrentPage() {
       // Reset UI to scanning state
       if (statusIcon) {
-        statusIcon.className = "status-icon scanning";
+        statusIcon.className = "status-ring scanning";
         statusIcon.innerHTML = Icons.search;
       }
       if (statusCard) statusCard.className = "status-card";
@@ -281,6 +321,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (scanWarnings) scanWarnings.classList.add("hidden");
       if (detailsContainer) detailsContainer.classList.add("hidden");
       if (metricsGrid) metricsGrid.classList.add("hidden");
+      if (reportNudge) reportNudge.classList.add("hidden");
+      if (reportTabBadge) reportTabBadge.classList.add("hidden");
 
       try {
         const tabs = await chrome.tabs.query({
@@ -364,7 +406,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (result.isSuspicious) {
         if (result.riskLevel === "high" || riskScore >= 70) {
           if (statusIcon) {
-            statusIcon.className = "status-icon danger";
+            statusIcon.className = "status-ring danger";
             statusIcon.innerHTML = Icons.danger;
           }
           if (statusCard) statusCard.className = "status-card danger";
@@ -382,7 +424,7 @@ document.addEventListener("DOMContentLoaded", () => {
           );
         } else {
           if (statusIcon) {
-            statusIcon.className = "status-icon warn";
+            statusIcon.className = "status-ring warn";
             statusIcon.innerHTML = Icons.warn;
           }
           if (statusCard) statusCard.className = "status-card warn";
@@ -408,7 +450,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       } else {
         if (statusIcon) {
-          statusIcon.className = "status-icon safe";
+          statusIcon.className = "status-ring safe";
           statusIcon.innerHTML = Icons.safe;
         }
         if (statusCard) statusCard.className = "status-card safe";
@@ -431,6 +473,8 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         lazyLoadDetails();
       }
+      // Show nudge + badge to let user know report is ready
+      showReportIndicator();
     }
 
     // ── Helper: Format relative date ──
@@ -575,10 +619,10 @@ document.addEventListener("DOMContentLoaded", () => {
         otherMsgs.forEach((msg, idx) => {
           const msgDiv = document.createElement("div");
           msgDiv.className = `sp-bot-message sp-bot-accent-${msg.accent}`;
-          msgDiv.dataset.messageIndex = idx;
-          msgDiv.style.animationDelay = `${600 + idx * 900}ms`;
+          msgDiv.dataset.messageIndex = idx + 1; // offset by 1 so idx=0 doesn't match summary card CSS
+          msgDiv.style.animationDelay = `${100 + idx * 150}ms`;
 
-          const categoryIcons = {
+          const inlineIcons = {
             verdict: {
               label: "Verdict",
               icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
@@ -609,13 +653,19 @@ document.addEventListener("DOMContentLoaded", () => {
             },
           };
 
-          const catInfo = categoryIcons[msg.id] || {
+          const catInfo = inlineIcons[msg.id] || {
             label: "Info",
             icon: '<circle cx="12" cy="12" r="10"/>',
           };
 
-          msgDiv.innerHTML = `
-            <div class="sp-bot-header">
+          // Expand button (if full text exists)
+          const hasFullText = msg.fullText && msg.fullText !== msg.text;
+
+          // Header — with optional chevron toggle on the right
+          const header = document.createElement("div");
+          header.className = "sp-bot-header";
+          header.innerHTML = `
+            <div class="sp-bot-header-left">
               <div class="sp-bot-icon">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   ${catInfo.icon}
@@ -623,8 +673,47 @@ document.addEventListener("DOMContentLoaded", () => {
               </div>
               <span>${catInfo.label}</span>
             </div>
-            <div class="sp-bot-content">${renderMarkdown(msg.text)}</div>
+            ${
+              hasFullText
+                ? `<button class="sp-bot-chevron-btn" type="button" title="Expand" aria-expanded="false">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>`
+                : ""
+            }
           `;
+
+          // Content wrapper
+          const contentDiv = document.createElement("div");
+          contentDiv.className = "sp-bot-content";
+
+          // Preview
+          const previewDiv = document.createElement("div");
+          previewDiv.className = "sp-bot-preview";
+          previewDiv.innerHTML = renderMarkdown(msg.text);
+          contentDiv.appendChild(previewDiv);
+
+          msgDiv.appendChild(header);
+          msgDiv.appendChild(contentDiv);
+
+          // Wire up chevron expand toggle
+          if (hasFullText) {
+            const fullDiv = document.createElement("div");
+            fullDiv.className = "sp-bot-full";
+            fullDiv.innerHTML = renderMarkdown(msg.fullText);
+            contentDiv.appendChild(fullDiv);
+
+            const chevronBtn = header.querySelector(".sp-bot-chevron-btn");
+            if (chevronBtn) {
+              chevronBtn.addEventListener("click", function () {
+                const isExpanded = msgDiv.classList.contains("sp-bot-expanded");
+                msgDiv.classList.toggle("sp-bot-expanded", !isExpanded);
+                chevronBtn.classList.toggle("sp-bot-chevron-open", !isExpanded);
+                chevronBtn.setAttribute("aria-expanded", String(!isExpanded));
+              });
+            }
+          }
 
           botContainer.appendChild(msgDiv);
         });
@@ -690,28 +779,52 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       // 1 — Verdict + overall assessment
-      const verdictPhrase =
+      const verdictPreview =
         status === "Dangerous"
-          ? `**Bottom line:** This site is **highly dangerous**. I strongly recommend you **do not visit** it.`
+          ? `This site is **highly dangerous**`
           : status === "Warning"
-            ? `**Bottom line:** This site looks **suspicious**. You should be careful before interacting with it.`
-            : `**Bottom line:** This site looks **safe**. You can browse it normally, but always stay alert.`;
-      msgs.push({ id: "verdict", text: verdictPhrase, accent: verdictColor });
+            ? `This site looks **suspicious**`
+            : `This site looks **safe**`;
+      const verdictFull =
+        status === "Dangerous"
+          ? `This site is **highly dangerous**. I strongly recommend you **do not visit** it.`
+          : status === "Warning"
+            ? `This site looks **suspicious**. You should be careful before interacting with it.`
+            : `This site looks **safe**. You can browse it normally, but always stay alert.`;
+      msgs.push({
+        id: "verdict",
+        text: verdictPreview,
+        fullText: verdictFull,
+        accent: verdictColor,
+      });
 
       // 2 — Score meaning (contextual - unified traffic light metaphor)
-      const scoreMeaning =
+      const scoreMeaningPreview =
         s >= 67
-          ? `**Bottom line:** Red light zone — score of **${s}**. Our AI model and multiple security layers detected serious threats. This is likely a scam or phishing site designed to steal your information.`
+          ? `Score of **${s}** — Red light zone`
           : s >= 34
-            ? `**Bottom line:** Yellow light zone — score of **${s}**. We spotted some warning signs. Proceed with caution and verify legitimacy before entering any personal information.`
-            : `**Bottom line:** Green light zone — score of **${s}**. The site passed our security checks. You can browse it normally.`;
-      msgs.push({ id: "score-meaning", text: scoreMeaning, accent: "blue" });
+            ? `Score of **${s}** — Yellow light zone`
+            : `Score of **${s}** — Green light zone`;
+      const scoreMeaningFull =
+        s >= 67
+          ? `Red light zone — score of **${s}**. Our AI model and multiple security layers detected serious threats. This is likely a scam or phishing site designed to steal your information.`
+          : s >= 34
+            ? `Yellow light zone — score of **${s}**. We spotted some warning signs. Proceed with caution and verify legitimacy before entering any personal information.`
+            : `Green light zone — score of **${s}**. The site passed our security checks. You can browse it normally.`;
+      msgs.push({
+        id: "score-meaning",
+        text: scoreMeaningPreview,
+        fullText: scoreMeaningFull,
+        accent: "blue",
+      });
 
       // 3 — HTTP warning
       if (isHTTP) {
         msgs.push({
           id: "http",
-          text: "**Bottom line:** Always use HTTPS websites. This site uses **HTTP**, which means your connection is **not encrypted**. Anyone on the same network (like public Wi-Fi) could intercept what you type — passwords, credit cards, personal information.",
+          text: "Unencrypted connection (**HTTP**)",
+          fullText:
+            "This site uses **HTTP**, which means your connection is **not encrypted**. Anyone on the same network (like public Wi-Fi) could intercept what you type — passwords, credit cards, personal information.",
           accent: "yellow",
         });
       }
@@ -722,8 +835,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const created =
           whois.creationDate || whois.CreationDate || whois["Creation Date"];
         if (reg || created) {
-          let whoisText = "Here's what I found about who owns this website: ";
-          if (reg) whoisText += `It's registered through **${reg}**. `;
+          // Build preview from available data
+          let whoisPreview = "";
+          if (reg) whoisPreview = `Registered through **${reg}**`;
+
+          // Build full explanation
+          let whoisFull = "Here's what I found about who owns this website: ";
+          if (reg) whoisFull += `It's registered through **${reg}**. `;
           if (created) {
             const d = new Date(created);
             const now = new Date();
@@ -731,15 +849,17 @@ document.addEventListener("DOMContentLoaded", () => {
               (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24),
             );
             if (diffDays < 30)
-              whoisText += `Domain age: **very new** (${diffDays} day${diffDays !== 1 ? "s" : ""} old), so ownership history is limited.`;
+              whoisFull += `Domain age: **very new** (${diffDays} day${diffDays !== 1 ? "s" : ""} old), so ownership history is limited.`;
             else if (diffDays < 365)
-              whoisText += `Domain age: **moderately established** (${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) !== 1 ? "s" : ""} old).`;
+              whoisFull += `Domain age: **moderately established** (${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) !== 1 ? "s" : ""} old).`;
             else
-              whoisText += `Domain age: **well-established** (${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) !== 1 ? "s" : ""} old), indicating longevity.`;
+              whoisFull += `Domain age: **well-established** (${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) !== 1 ? "s" : ""} old), indicating longevity.`;
           }
+
           msgs.push({
             id: "whois",
-            text: whoisText.trim(),
+            text: whoisPreview || "Domain information available",
+            fullText: whoisFull.trim(),
             accent: status === "Dangerous" && created ? "yellow" : "blue",
           });
         }
@@ -759,42 +879,62 @@ document.addEventListener("DOMContentLoaded", () => {
           issuer = rawIssuer;
         }
 
-        let sslText = `**Bottom line:** Connection is encrypted (good), but SSL doesn't guarantee legitimacy. `;
+        const sslPreview = issuer
+          ? `SSL verified by **${issuer}**`
+          : `SSL certificate verified`;
+        let sslFull = `Connection is encrypted (good), but SSL doesn't guarantee legitimacy. `;
         if (issuer) {
-          sslText += `SSL certificate verified by **${issuer}**. `;
+          sslFull += `SSL certificate verified by **${issuer}**. `;
         }
-        sslText += `An encrypted connection prevents eavesdropping, but scammers can also get SSL certificates. `;
-
+        sslFull += `An encrypted connection prevents eavesdropping, but scammers can also get SSL certificates. `;
         if (status === "Dangerous") {
-          sslText += `However, given this site's risk profile, I still recommend avoiding it.`;
+          sslFull += `However, given this site's risk profile, I still recommend avoiding it.`;
         } else if (status === "Warning") {
-          sslText += `Combined with the other warning signs we found, proceed with caution.`;
+          sslFull += `Combined with the other warning signs we found, proceed with caution.`;
         } else {
-          sslText += `This is a positive security indicator along with the other checks.`;
+          sslFull += `This is a positive security indicator along with the other checks.`;
         }
 
-        const sslAccent = status === "Dangerous" ? "yellow" : status === "Warning" ? "yellow" : "green";
+        const sslAccent =
+          status === "Dangerous"
+            ? "yellow"
+            : status === "Warning"
+              ? "yellow"
+              : "green";
         msgs.push({
           id: "ssl",
-          text: sslText,
+          text: sslPreview,
+          fullText: sslFull,
           accent: sslAccent,
         });
       } else if (ssl?.error) {
         msgs.push({
           id: "ssl-err",
-          text: `I couldn't verify this site's SSL certificate — **${ssl.error}**. Without proper encryption, any data you send (passwords, personal info) could be intercepted by attackers.`,
+          text: `SSL encryption unavailable`,
+          fullText: `I couldn't verify this site's SSL certificate — **${ssl.error}**. Without proper encryption, any data you send (passwords, personal info) could be intercepted by attackers.`,
           accent: "red",
         });
       }
 
       // 6 — Final advice
-      const finalAdvice =
+      const finalPreview =
         status === "Dangerous"
-          ? "**Bottom line:** Do not enter any personal information on this site. Do not download anything from it. If you received this link via email or text message, it's very likely a phishing attempt — let the sender know their account may be compromised."
+          ? `Do not interact with this site`
           : status === "Warning"
-            ? "**Bottom line:** Be cautious. Don't enter sensitive info like passwords or payment details unless you're absolutely sure this is a legitimate site you trust. When in doubt, visit the official website directly by typing the URL yourself."
-            : "**Bottom line:** This site appears to be legitimate based on our analysis. You can browse it normally, but always stay alert for unusual requests for personal information.";
-      msgs.push({ id: "final", text: finalAdvice, accent: verdictColor });
+            ? `Be cautious before visiting`
+            : `Site appears legitimate`;
+      const finalFull =
+        status === "Dangerous"
+          ? `Do not enter any personal information on this site. Do not download anything from it. If you received this link via email or text message, it's very likely a phishing attempt — let the sender know their account may be compromised.`
+          : status === "Warning"
+            ? `Be cautious. Don't enter sensitive info like passwords or payment details unless you're absolutely sure this is a legitimate site you trust. When in doubt, visit the official website directly by typing the URL yourself.`
+            : `This site appears to be legitimate based on our analysis. You can browse it normally, but always stay alert for unusual requests for personal information.`;
+      msgs.push({
+        id: "final",
+        text: finalPreview,
+        fullText: finalFull,
+        accent: verdictColor,
+      });
 
       return msgs;
     }
@@ -854,8 +994,14 @@ document.addEventListener("DOMContentLoaded", () => {
           iconSvg: '<circle cx="12" cy="12" r="10"/>',
         };
 
-        msgDiv.innerHTML = `
-          <div class="sp-bot-header">
+        // Check if message has expanded content
+        const hasFullText = msg.fullText && msg.fullText !== msg.text;
+
+        // Create header — with chevron on right if expandable
+        const header = document.createElement("div");
+        header.className = "sp-bot-header";
+        header.innerHTML = `
+          <div class="sp-bot-header-left">
             <div class="sp-bot-icon">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 ${catInfo.iconSvg}
@@ -863,8 +1009,47 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
             <span>${catInfo.label}</span>
           </div>
-          <div class="sp-bot-content">${renderMarkdown(msg.text)}</div>
+          ${
+            hasFullText
+              ? `<button class="sp-bot-chevron-btn" type="button" title="Expand" aria-expanded="false">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>`
+              : ""
+          }
         `;
+
+        // Create content wrapper
+        const contentDiv = document.createElement("div");
+        contentDiv.className = "sp-bot-content";
+
+        // Create preview div
+        const previewDiv = document.createElement("div");
+        previewDiv.className = "sp-bot-preview";
+        previewDiv.innerHTML = renderMarkdown(msg.text);
+        contentDiv.appendChild(previewDiv);
+
+        msgDiv.appendChild(header);
+        msgDiv.appendChild(contentDiv);
+
+        // Wire up chevron expand toggle
+        if (hasFullText) {
+          const fullDiv = document.createElement("div");
+          fullDiv.className = "sp-bot-full";
+          fullDiv.innerHTML = renderMarkdown(msg.fullText);
+          contentDiv.appendChild(fullDiv);
+
+          const chevronBtn = header.querySelector(".sp-bot-chevron-btn");
+          if (chevronBtn) {
+            chevronBtn.addEventListener("click", function () {
+              const isExpanded = msgDiv.classList.contains("sp-bot-expanded");
+              msgDiv.classList.toggle("sp-bot-expanded", !isExpanded);
+              chevronBtn.classList.toggle("sp-bot-chevron-open", !isExpanded);
+              chevronBtn.setAttribute("aria-expanded", String(!isExpanded));
+            });
+          }
+        }
 
         container.appendChild(msgDiv);
       });
@@ -913,7 +1098,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ── Error state ──
     function displayError(message) {
       if (statusIcon) {
-        statusIcon.className = "status-icon";
+        statusIcon.className = "status-ring";
         statusIcon.innerHTML = Icons.error;
       }
       if (statusCard) statusCard.className = "status-card";
