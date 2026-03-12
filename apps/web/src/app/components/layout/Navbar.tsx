@@ -61,7 +61,7 @@ export default function Navbar() {
   const [activeSection, setActiveSection] = useState("home");
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
-  // `mounted` prevents theme-sensitive elements from diverging between SSR and client.
+  // mounted prevents theme-sensitive elements from diverging between SSR and client.
   // Before mount both sides agree: logo = dark-theme logo, icon = sun.
   const [mounted, setMounted] = useState(false);
 
@@ -93,8 +93,7 @@ export default function Navbar() {
     e.preventDefault();
     setMobileOpen(false);
     const targetId = href.replace("#", "");
-    const scrollTargetId = targetId === "faq" ? "about" : targetId;
-    const el = document.getElementById(scrollTargetId);
+    const el = document.getElementById(targetId);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
       setActiveSection(targetId);
@@ -256,23 +255,35 @@ export default function Navbar() {
           {/* ── Right actions ─────────────────────────────────────────────── */}
           <div className="flex items-center gap-2">
 
-            {/* Theme toggle — desktop, with rotation swap */}
+            {/* Theme toggle — futuristic pill (desktop) */}
             <button
               onClick={toggleTheme}
-              className="hidden md:flex items-center justify-center w-9 h-9 rounded-full text-faded hover:text-heading hover:bg-[#545BFF]/10 transition-all duration-200 overflow-hidden"
               aria-label={`Switch to ${effectiveTheme === "dark" ? "light" : "dark"} mode`}
+              className="relative hidden md:flex items-center w-[72px] h-9 rounded-full overflow-hidden
+                dark:bg-[#0c0d1a]/80 bg-slate-100/90
+                border border-[#545BFF]/20 hover:border-[#545BFF]/50
+                backdrop-blur-sm shadow-inner
+                transition-all duration-300 hover:shadow-[0_0_18px_rgba(84,91,255,0.25)]"
             >
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={effectiveTheme}
-                  initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
-                  animate={{ rotate: 0, opacity: 1, scale: 1 }}
-                  exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
-                  transition={{ duration: 0.18, ease: "easeOut" }}
-                >
-                  {effectiveTheme === "dark" ? <SunIcon /> : <MoonIcon />}
-                </motion.div>
-              </AnimatePresence>
+              {/* Sliding glowing knob */}
+              <motion.div
+                className="absolute top-[4px] h-[28px] w-[28px] rounded-full bg-gradient-to-br from-[#545BFF] to-[#8B5CF6]"
+                style={{ boxShadow: "0 0 14px rgba(84,91,255,0.65), 0 0 4px rgba(139,92,246,0.4)" }}
+                animate={{ x: effectiveTheme === "light" ? 4 : 40 }}
+                transition={{ type: "spring", stiffness: 300, damping: 26 }}
+              />
+              {/* Sun — left slot (light mode) */}
+              <span className={`relative z-10 flex-1 flex justify-center transition-colors duration-300 ${
+                effectiveTheme === "light" ? "text-white" : "text-faded/40"
+              }`}>
+                <SunIcon size={14} />
+              </span>
+              {/* Moon — right slot (dark mode) */}
+              <span className={`relative z-10 flex-1 flex justify-center transition-colors duration-300 ${
+                effectiveTheme === "dark" ? "text-white" : "text-faded/40"
+              }`}>
+                <MoonIcon size={14} />
+              </span>
             </button>
 
             {/* CTA button — desktop */}
@@ -293,21 +304,25 @@ export default function Navbar() {
               <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
             </a>
 
-            {/* Theme toggle — mobile, with rotation swap */}
+            {/* Theme toggle — futuristic icon button (mobile) */}
             <button
               onClick={toggleTheme}
-              className="md:hidden p-2 text-faded hover:text-heading rounded-lg transition-colors overflow-hidden"
               aria-label="Toggle theme"
+              className="md:hidden relative flex items-center justify-center w-9 h-9 rounded-lg overflow-hidden
+                dark:bg-[#0c0d1a]/60 bg-slate-100/80
+                border border-[#545BFF]/20 hover:border-[#545BFF]/50
+                transition-all duration-300 hover:shadow-[0_0_12px_rgba(84,91,255,0.3)]"
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={effectiveTheme}
-                  initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
+                  initial={{ rotate: -90, opacity: 0, scale: 0.6 }}
                   animate={{ rotate: 0, opacity: 1, scale: 1 }}
-                  exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
-                  transition={{ duration: 0.18 }}
+                  exit={{ rotate: 90, opacity: 0, scale: 0.6 }}
+                  transition={{ duration: 0.2 }}
+                  className={effectiveTheme === "dark" ? "text-[#a89de8]" : "text-[#545BFF]"}
                 >
-                  {effectiveTheme === "dark" ? <SunIcon size={20} /> : <MoonIcon size={20} />}
+                  {effectiveTheme === "dark" ? <SunIcon size={18} /> : <MoonIcon size={18} />}
                 </motion.div>
               </AnimatePresence>
             </button>

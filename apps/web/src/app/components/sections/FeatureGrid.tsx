@@ -81,7 +81,7 @@ const FEATURES = [
 ] as const;
 
 const STATS = [
-  { value: "99.7%", label: "Detection rate" },
+  { value: "96.9%", label: "Detection rate" },
   { value: "<200ms", label: "Scan speed" },
   { value: "6×",    label: "Layered defense" },
 ];
@@ -403,6 +403,7 @@ function CardSwapDeck() {
             aria-label={feat.title}
             aria-current={i === front ? "true" : undefined}
             className="rounded-full"
+            suppressHydrationWarning={true}
             style={{
               width:      i === front ? 24 : 8,
               height:     8,
