@@ -2346,7 +2346,7 @@
       }
 
       .sp-bot-message {
-        padding: 14px 15px;
+        padding: 12px 15px;
         border-radius: 11px;
         border: 1.5px solid;
         border-left: 4px solid;
@@ -2411,24 +2411,27 @@
         display: flex;
         align-items: center;
         justify-content: flex-start;
-        gap: 10px;
-        font-size: 9px;
+        gap: 8px;
+        font-size: 8px;
         font-weight: 700;
-        letter-spacing: 0.12em;
+        letter-spacing: 0.15em;
         text-transform: uppercase;
         color: var(--muted2);
-        margin-bottom: 11px;
+        margin: 0;
+        margin-bottom: 10px;
+        padding: 0;
         opacity: 0.9;
-        min-height: 16px;
+        min-height: 14px;
+        line-height: 1;
       }
 
       .sp-bot-icon {
-        width: 18px;
-        height: 18px;
+        width: 16px;
+        height: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 5px;
+        border-radius: 4px;
         flex-shrink: 0;
         transition: all 0.3s ease;
       }
@@ -2593,12 +2596,13 @@
       /* Stagger animations for other messages */
       .sp-bot-message[data-message-index="1"] {
         animation-delay: 100ms !important;
-        padding: 16px;
+        padding: 12px 15px;
         border-radius: 10px;
       }
 
       .sp-bot-message[data-message-index="1"] .sp-bot-header {
-        margin-bottom: 12px;
+        margin-bottom: 10px;
+        margin-top: 0;
       }
 
       .sp-bot-message[data-message-index="1"] .sp-bot-content {
