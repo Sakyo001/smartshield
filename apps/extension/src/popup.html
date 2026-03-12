@@ -2356,6 +2356,8 @@
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         transform: translateY(8px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
       }
 
       @keyframes bot-fade-in-smooth {
@@ -2419,14 +2421,16 @@
       .sp-bot-header {
         display: flex;
         align-items: center;
+        justify-content: flex-start;
         gap: 10px;
         font-size: 9px;
         font-weight: 700;
         letter-spacing: 0.12em;
         text-transform: uppercase;
         color: var(--muted2);
-        margin-bottom: 10px;
+        margin-bottom: 12px;
         opacity: 0.9;
+        min-height: 18px;
       }
 
       .sp-bot-icon {
@@ -2644,13 +2648,24 @@
 
       .sp-bot-content {
         font-size: 12px;
-        line-height: 1.65;
+        line-height: 1.7;
         color: var(--text);
+        text-align: left;
+        word-wrap: break-word;
+        word-break: break-word;
+        display: block;
       }
 
       .sp-bot-content strong {
         font-weight: 700;
         color: var(--text);
+        display: inline;
+      }
+
+      /* Verdict message specific styling */
+      [data-message-index="0"] .sp-bot-content {
+        padding: 2px 0;
+        line-height: 1.75;
       }
 
       /* ── WHOIS Stats Grid ── */
