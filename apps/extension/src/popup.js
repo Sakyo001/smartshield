@@ -657,13 +657,6 @@ document.addEventListener("DOMContentLoaded", () => {
             : "green";
 
       // 0 — Quick Summary Card (NEW - Compact)
-      const summaryEmoji =
-        status === "Dangerous"
-          ? "🚨"
-          : status === "Warning"
-            ? "⚠️"
-            : "✅";
-
       const summaryTitle =
         status === "Dangerous"
           ? "Highly Dangerous"
@@ -680,10 +673,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const summaryAction =
         status === "Dangerous"
-          ? "⛔ Avoid this site"
+          ? "Avoid this site"
           : status === "Warning"
-            ? "⚠️ Be cautious"
-            : "✅ Looks good";
+            ? "Be cautious"
+            : "Looks good";
 
       msgs.push({
         id: "summary",
