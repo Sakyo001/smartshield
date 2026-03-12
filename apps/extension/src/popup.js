@@ -106,12 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const warningList = document.getElementById("warning-list");
     const detailsContainer = document.getElementById("details-container");
 
-    const whoisBlock = document.getElementById("whois-block");
-    const dnsBlock = document.getElementById("dns-block");
-    const sslBlock = document.getElementById("ssl-block");
-    const whoisToggle = document.getElementById("whois-toggle");
-    const dnsToggle = document.getElementById("dns-toggle");
-    const sslToggle = document.getElementById("ssl-toggle");
+    const spContent = document.getElementById("sp-content");
 
     const alertModal = document.getElementById("alert-modal");
     const alertContent = document.getElementById("alert-content");
@@ -122,6 +117,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ── State ──
     let currentRootDomain = null;
+    let lastScanResult = null;
     let detailsFetched = false;
     let dismissedDomains = new Set();
 
@@ -171,6 +167,20 @@ document.addEventListener("DOMContentLoaded", () => {
     // ── Show Badge on Page button ──
     const locateBadgeBtn = document.getElementById("locate-badge-btn");
     if (locateBadgeBtn) {
+      // Glow effect on mousemove
+      locateBadgeBtn.addEventListener("mousemove", (e) => {
+        const rect = locateBadgeBtn.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        locateBadgeBtn.style.setProperty("--glow-x", `${x}%`);
+        locateBadgeBtn.style.setProperty("--glow-y", `${y}%`);
+      });
+
+      // Reset glow on mouseleave
+      locateBadgeBtn.addEventListener("mouseleave", () => {
+        locateBadgeBtn.style.setProperty("--glow-intensity", "0");
+      });
+
       locateBadgeBtn.addEventListener("click", async () => {
         const tabs = await chrome.tabs.query({
           active: true,
@@ -191,6 +201,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 2000);
       });
     }
+
+    // ── Spotlight effect for warning banner ──
+    if (scanWarnings) {
+      scanWarnings.addEventListener("mousemove", (e) => {
+        const rect = scanWarnings.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        scanWarnings.style.setProperty("--mouse-x", `${x}px`);
+        scanWarnings.style.setProperty("--mouse-y", `${y}px`);
+      });
+
+      scanWarnings.addEventListener("mouseleave", () => {
+        scanWarnings.style.setProperty("--mouse-x", "0px");
+        scanWarnings.style.setProperty("--mouse-y", "0px");
+      });
+    }
+
     function dismissAlert() {
       if (alertModal) alertModal.classList.add("hidden");
       if (currentRootDomain) {
@@ -214,43 +241,20 @@ document.addEventListener("DOMContentLoaded", () => {
       alertDismissBtn.addEventListener("click", () => dismissAlert());
     }
 
-    // ── Accordion toggles (lazy detail load) ──
-    function toggleBlock(block, toggle) {
-      if (!block) return;
-      const isOpen = block.classList.toggle("open");
-      if (isOpen) lazyLoadDetails();
-    }
-    if (whoisToggle)
-      whoisToggle.addEventListener("click", () =>
-        toggleBlock(whoisBlock, whoisToggle),
-      );
-    if (dnsToggle)
-      dnsToggle.addEventListener("click", () =>
-        toggleBlock(dnsBlock, dnsToggle),
-      );
-    if (sslToggle)
-      sslToggle.addEventListener("click", () =>
-        toggleBlock(sslBlock, sslToggle),
-      );
-
     // ── Lazy-load detail data ──
     function lazyLoadDetails() {
       if (detailsFetched || !currentRootDomain) return;
       detailsFetched = true;
-      ["whois-data", "dns-data", "ssl-data"].forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = '<div class="detail-placeholder">Loading…</div>';
-      });
+      if (spContent)
+        spContent.innerHTML =
+          '<div class="sp-loading"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10" opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10" /></svg> Loading details…</div>';
       chrome.runtime.sendMessage(
         { action: "getDetails", url: currentRootDomain },
         (details) => {
           if (chrome.runtime.lastError || !details) {
-            ["whois-data", "dns-data", "ssl-data"].forEach((id) => {
-              const el = document.getElementById(id);
-              if (el)
-                el.innerHTML =
-                  '<div class="detail-placeholder">Could not load data</div>';
-            });
+            if (spContent)
+              spContent.innerHTML =
+                '<div class="sp-empty">Could not load scan details.</div>';
             return;
           }
           populateDetails(details);
@@ -329,6 +333,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ── Render scan results ──
     function displayResult(result) {
       if (!result) return;
+      lastScanResult = result;
       const riskScore = result.riskScore || 0;
       const confidence = result.confidence || 0;
 
@@ -417,67 +422,475 @@ document.addEventListener("DOMContentLoaded", () => {
         if (scanWarnings) scanWarnings.classList.add("hidden");
       }
 
-      // Show details accordion
+      // Show scan detail panel and auto-load details
+      detailsFetched = false;
       if (detailsContainer) detailsContainer.classList.remove("hidden");
       if (result.details) {
         detailsFetched = true;
         populateDetails(result.details);
+      } else {
+        lazyLoadDetails();
       }
     }
 
-    // ── Populate WHOIS / DNS / SSL accordion bodies ──
+    // ── Helper: Format relative date ──
+    function formatRelativeDate(dateStr) {
+      if (!dateStr || dateStr === "—") return "Not available";
+      try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return "Not available";
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const diffWeeks = Math.floor(diffDays / 7);
+        const diffMonths = Math.floor(diffDays / 30);
+        const diffYears = Math.floor(diffDays / 365);
+
+        if (diffDays === 0) return "Today";
+        if (diffDays === 1) return "1 day ago";
+        if (diffDays < 7) return `${diffDays} days ago`;
+        if (diffWeeks === 1) return "1 week ago";
+        if (diffWeeks < 4) return `${diffWeeks} weeks ago`;
+        if (diffMonths === 1) return "1 month ago";
+        if (diffMonths < 12) return `${diffMonths} months ago`;
+        if (diffYears === 1) return "1 year ago";
+        return `${diffYears} years ago`;
+      } catch {
+        return "Not available";
+      }
+    }
+
+    // ── Render ScanTab-style detail panel ──
     function populateDetails(details) {
-      if (!details) return;
+      if (!details || !spContent) return;
 
-      const whoisData = document.getElementById("whois-data");
-      const dnsData = document.getElementById("dns-data");
-      const sslData = document.getElementById("ssl-data");
+      const r = lastScanResult || {};
+      const w = details.whois || {};
+      const score = r.riskScore || 0;
+      const statusCls =
+        score >= 70 ? "danger" : score >= 40 ? "warning" : "safe";
+      const statusTxt =
+        score >= 70 ? "Phishing Detected" : score >= 40 ? "Suspicious" : "Safe";
+      const isHTTP = (r.url || "").toLowerCase().startsWith("http://");
 
-      if (details.whois && whoisData) {
-        const w = details.whois;
-        whoisData.innerHTML = rows([
-          ["Registrar", w.registrar || "Unknown"],
-          ["Created", w.creationDate || "Unknown"],
-          ["Expires", w.expirationDate || "Unknown"],
-          ["Country", w.country || "Unknown"],
-        ]);
+      // Domain hostname
+      let domainLabel = "—";
+      try {
+        const raw = r.url || currentRootDomain || "";
+        domainLabel = raw ? new URL(raw).hostname : "—";
+      } catch (_) {
+        domainLabel = currentRootDomain || "—";
       }
 
-      if (details.dns && dnsData) {
-        const d = details.dns;
-        const pairs = [];
-        if (d.A && d.A.length) pairs.push(["A Records", d.A.join(", ")]);
-        if (d.MX && d.MX.length) pairs.push(["MX Records", d.MX.join(", ")]);
-        if (d.NS && d.NS.length) pairs.push(["NS Records", d.NS.join(", ")]);
-        if (d.TXT && d.TXT.length)
-          pairs.push(["TXT", d.TXT.slice(0, 2).join(" | ")]);
-        dnsData.innerHTML = pairs.length
-          ? rows(pairs)
-          : '<div class="detail-placeholder">No DNS records available</div>';
+      // WHOIS fields with better handling
+      const registrar = w.registrar || w.Registrar || null;
+      const created =
+        w.creationDate || w.CreationDate || w["Creation Date"] || null;
+      const lastAnalysis = new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+
+      // DNS / SSL data
+      const d = details.dns;
+      const hasDNS = d && Object.keys(d).some((k) => d[k] && d[k].length > 0);
+      const s = details.ssl;
+      const hasSSL = s && !s.error;
+
+      const svgIcon = (path) =>
+        `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+
+      const spStat = (iconPath, label, value) => `
+        <div class="sp-stat">
+          <div class="sp-stat-hd">${svgIcon(iconPath)}<span class="sp-stat-label">${label}</span></div>
+          <div class="sp-stat-val${!value ? " placeholder" : ""}">${value || "Not available"}</div>
+        </div>`;
+
+      spContent.innerHTML = `
+        <!-- URL + Status -->
+        <div class="sp-url-row">
+          <div class="sp-url-inner">
+            <div class="sp-url-dot ${statusCls}"></div>
+            <span class="sp-url-text">${domainLabel}</span>
+          </div>
+          <span class="sp-url-badge ${statusCls}">${statusTxt}</span>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="sp-stats">
+          ${spStat('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>', "Registrar", registrar || "Not available")}
+          ${spStat('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>', "Created", created ? formatRelativeDate(created) : "Not available")}
+          ${spStat('<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>', "Last Analysis", lastAnalysis)}
+        </div>
+
+        <!-- HTTP Warning -->
+        ${
+          isHTTP
+            ? `<div class="sp-http-warn">
+          <div class="sp-http-warn-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/>
+            </svg>
+          </div>
+          <div>
+            <div class="sp-http-warn-title">Insecure Connection (HTTP)</div>
+            <div class="sp-http-warn-desc">Data sent to this site is not encrypted and could be intercepted.</div>
+          </div>
+        </div>`
+            : ""
+        }
+      `;
+
+      // Render bot explainer messages below the stats
+      const botMsgs = generateBotMessages(r, details);
+      const botContainer = document.createElement("div");
+      botContainer.className = "sp-bot-container";
+
+      botMsgs.forEach((msg, idx) => {
+        const msgDiv = document.createElement("div");
+        msgDiv.className = `sp-bot-message sp-bot-accent-${msg.accent}`;
+        msgDiv.dataset.messageIndex = idx;
+        msgDiv.style.animationDelay =
+          idx === 0 ? "0s" : `${600 + (idx - 1) * 900}ms`;
+
+        const categoryIcons = {
+          summary: {
+            label: "Analysis Summary",
+            icon: '<circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/>',
+          },
+          verdict: {
+            label: "Verdict",
+            icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+          },
+          "score-meaning": {
+            label: "Risk Score",
+            icon: '<path d="M3 3v18h18M7 16l4-7 4 4 5-9"/>',
+          },
+          http: {
+            label: "Connection",
+            icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM12 8v4M12 16h.01"/>',
+          },
+          whois: {
+            label: "Domain Info",
+            icon: '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+          },
+          ssl: {
+            label: "SSL Certificate",
+            icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4"/>',
+          },
+          "ssl-err": {
+            label: "SSL Warning",
+            icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM15 9l-6 6M9 9l6 6"/>',
+          },
+          final: {
+            label: "Recommendation",
+            icon: '<path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>',
+          },
+        };
+
+        const catInfo = categoryIcons[msg.id] || {
+          label: "Info",
+          icon: '<circle cx="12" cy="12" r="10"/>',
+        };
+
+        msgDiv.innerHTML = `
+          <div class="sp-bot-header">
+            <div class="sp-bot-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                ${catInfo.icon}
+              </svg>
+            </div>
+            <span>${catInfo.label}</span>
+          </div>
+          <div class="sp-bot-content">${renderMarkdown(msg.text)}</div>
+        `;
+
+        botContainer.appendChild(msgDiv);
+      });
+
+      spContent.appendChild(botContainer);
+
+      // Auto-scroll to bottom
+      setTimeout(() => {
+        if (botContainer) {
+          botContainer.scrollTop = botContainer.scrollHeight;
+        }
+      }, 100);
+    }
+
+    // ── Bot Explainer: Generate natural language messages ──
+    function generateBotMessages(scan, details) {
+      const msgs = [];
+      const s = scan.riskScore || 0;
+      const status = scan.status || "Safe";
+      const whois = details?.whois || {};
+      const ssl = details?.ssl || {};
+      const isHTTP = (scan.url || "").toLowerCase().startsWith("http://");
+
+      const verdictColor =
+        status === "Dangerous"
+          ? "red"
+          : status === "Warning"
+            ? "yellow"
+            : "green";
+
+      // 0 — Quick Summary Card (NEW - Compact)
+      const summaryEmoji =
+        status === "Dangerous"
+          ? "🚨"
+          : status === "Warning"
+            ? "⚠️"
+            : "✅";
+
+      const summaryTitle =
+        status === "Dangerous"
+          ? "Highly Dangerous"
+          : status === "Warning"
+            ? "Suspicious Activity"
+            : "Site is Safe";
+
+      const summaryDesc =
+        status === "Dangerous"
+          ? "Multiple red flags detected. Do not interact."
+          : status === "Warning"
+            ? "Some warning signs. Proceed with caution."
+            : "No major threats detected. Safe to browse.";
+
+      const summaryAction =
+        status === "Dangerous"
+          ? "⛔ Avoid this site"
+          : status === "Warning"
+            ? "⚠️ Be cautious"
+            : "✅ Looks good";
+
+      msgs.push({
+        id: "summary",
+        text: `**${summaryTitle}** (${s}/100)\n${summaryDesc}\n_${summaryAction}_`,
+        accent:
+          status === "Dangerous"
+            ? "red"
+            : status === "Warning"
+              ? "yellow"
+              : "green",
+      });
+
+      // 1 — Verdict + overall assessment
+      const verdictPhrase =
+        status === "Dangerous"
+          ? `This site is **highly dangerous** with a risk score of **${s} out of 100**. I strongly recommend you **do not visit** this website.`
+          : status === "Warning"
+            ? `This site looks **suspicious** — it scored **${s} out of 100** on our risk scale. You should be careful before interacting with it.`
+            : `Good news — this site looks **safe**! It scored only **${s} out of 100** on our risk scale, meaning no major threats were detected.`;
+      msgs.push({ id: "verdict", text: verdictPhrase, accent: verdictColor });
+
+      // 2 — Score meaning (contextual)
+      const scoreMeaning =
+        s >= 70
+          ? `A score of **${s}** is very high. This means our AI model and multiple security layers detected serious red flags. Think of it like a danger meter — the higher the number, the more likely this is a scam or phishing site designed to steal your information.`
+          : s >= 40
+            ? `A score of **${s}** is in the caution zone. We spotted some warning signs, but nothing definitively confirmed as malicious. Think of it like a yellow traffic light — slow down and look both ways before proceeding.`
+            : `A score of **${s}** is low, which is good. The site passed our security checks without raising major concerns. It's like getting a clean bill of health from a doctor.`;
+      msgs.push({ id: "score-meaning", text: scoreMeaning, accent: "blue" });
+
+      // 3 — HTTP warning
+      if (isHTTP) {
+        msgs.push({
+          id: "http",
+          text: "This site uses **HTTP instead of HTTPS**, which means your connection is **not encrypted**. Anyone on the same network (like public Wi-Fi) could potentially intercept what you type — including passwords and credit card numbers.",
+          accent: "yellow",
+        });
       }
 
-      if (details.ssl && sslData) {
-        const s = details.ssl;
-        if (s.error) {
-          sslData.innerHTML = `<div class="detail-placeholder">${s.error}</div>`;
-        } else {
-          sslData.innerHTML = rows([
-            ["Issuer", s.issuer || "Unknown"],
-            ["Valid From", s.valid_from || "Unknown"],
-            ["Valid Until", s.valid_to || "Unknown"],
-            ["Subject", s.subject || "Unknown"],
-          ]);
+      // 4 — WHOIS insights
+      if (Object.keys(whois).length > 0) {
+        const reg = whois.registrar || whois.Registrar;
+        const created =
+          whois.creationDate || whois.CreationDate || whois["Creation Date"];
+        if (reg || created) {
+          let whoisText = "Here's what I found about who owns this website: ";
+          if (reg) whoisText += `It's registered through **${reg}**. `;
+          if (created) {
+            const d = new Date(created);
+            const now = new Date();
+            const diffDays = Math.floor(
+              (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24),
+            );
+            if (diffDays < 30)
+              whoisText += `It was created only **${diffDays} day${diffDays !== 1 ? "s" : ""} ago** — that's extremely new. Scam sites are typically created and abandoned within days, so this is a major red flag.`;
+            else if (diffDays < 365)
+              whoisText += `It was created **${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) !== 1 ? "s" : ""} ago**. Relatively new, which isn't necessarily bad, but combined with other factors it's worth noting.`;
+            else
+              whoisText += `It's been around for **${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) !== 1 ? "s" : ""}** — established sites are generally more trustworthy, since scammers rarely maintain domains that long.`;
+          }
+          msgs.push({
+            id: "whois",
+            text: whoisText.trim(),
+            accent: status === "Dangerous" && created ? "yellow" : "blue",
+          });
         }
       }
+
+      // 5 — SSL Certificate status
+      if (ssl && !ssl.error) {
+        let rawIssuer = ssl.issuer || ssl.issuer_organization;
+        let issuer;
+        if (rawIssuer && typeof rawIssuer === "object") {
+          issuer =
+            rawIssuer.O ||
+            rawIssuer.CN ||
+            rawIssuer.organizationName ||
+            Object.values(rawIssuer).find((v) => typeof v === "string");
+        } else {
+          issuer = rawIssuer;
+        }
+
+        if (status === "Dangerous") {
+          msgs.push({
+            id: "ssl",
+            text: issuer
+              ? `Note: This site does have an SSL certificate (issued by **${issuer}**), which might make it look legitimate. But **don't be fooled** — scammers routinely get free SSL certificates to put a padlock icon in your browser. An encrypted connection only means no one else can see your data — it doesn't mean the site itself is trustworthy.`
+              : "Note: This site has an SSL certificate, but that **does not make it safe**. Scammers often use free SSL certificates to display a padlock icon and trick users into thinking the site is legitimate. The padlock only means your connection is encrypted — not that the site is honest.",
+            accent: "yellow",
+          });
+        } else {
+          msgs.push({
+            id: "ssl",
+            text: issuer
+              ? `The site has a valid SSL certificate issued by **${issuer}**. This means your connection is encrypted, which is a positive sign. Just remember that SSL alone doesn't guarantee safety.`
+              : "The site has an SSL certificate (HTTPS), so your connection is encrypted. That's a good baseline, but keep in mind scammers can also get SSL certificates.",
+            accent: "green",
+          });
+        }
+      } else if (ssl?.error) {
+        msgs.push({
+          id: "ssl-err",
+          text: `I couldn't verify this site's SSL certificate — **${ssl.error}**. Without proper encryption, any data you send (passwords, personal info) could be intercepted by attackers.`,
+          accent: "red",
+        });
+      }
+
+      // 6 — Final advice
+      const finalAdvice =
+        status === "Dangerous"
+          ? "**Bottom line:** Do not enter any personal information on this site. Do not download anything from it. If you received this link via email or text message, it's very likely a phishing attempt — let the sender know their account may be compromised."
+          : status === "Warning"
+            ? "**Bottom line:** Be cautious. Don't enter sensitive info like passwords or payment details unless you're absolutely sure this is a legitimate site you trust. When in doubt, visit the official website directly by typing the URL yourself."
+            : "**Bottom line:** This site appears to be legitimate based on our analysis. You can browse it normally, but always stay alert for unusual requests for personal information.";
+      msgs.push({ id: "final", text: finalAdvice, accent: verdictColor });
+
+      return msgs;
     }
 
-    function rows(pairs) {
-      return pairs
-        .map(
-          ([label, val]) =>
-            `<div class="detail-row"><span class="detail-label">${label}</span><span class="detail-value">${val}</span></div>`,
+    // ── Bot Explainer: Render messages with animation ──
+    function renderBotMessages(messages) {
+      if (!spContent || messages.length === 0) return;
+
+      const container = document.createElement("div");
+      container.className = "sp-bot-container";
+
+      const categoryIcons = {
+        verdict: {
+          label: "Verdict",
+          iconSvg: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+        },
+        "score-meaning": {
+          label: "Risk Score",
+          iconSvg: '<path d="M3 3v18h18M7 16l4-7 4 4 5-9"/>',
+        },
+        http: {
+          label: "Connection",
+          iconSvg:
+            '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM12 8v4M12 16h.01"/>',
+        },
+        whois: {
+          label: "Domain Info",
+          iconSvg:
+            '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+        },
+        ssl: {
+          label: "SSL Certificate",
+          iconSvg:
+            '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4"/>',
+        },
+        "ssl-err": {
+          label: "SSL Warning",
+          iconSvg:
+            '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM15 9l-6 6M9 9l6 6"/>',
+        },
+        final: {
+          label: "Recommendation",
+          iconSvg:
+            '<path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>',
+        },
+      };
+
+      messages.forEach((msg, idx) => {
+        const msgDiv = document.createElement("div");
+        msgDiv.className = `sp-bot-message sp-bot-accent-${msg.accent}`;
+        msgDiv.dataset.messageIndex = idx;
+        msgDiv.style.animationDelay =
+          idx === 0 ? "0s" : `${600 + (idx - 1) * 900}ms`;
+
+        const catInfo = categoryIcons[msg.id] || {
+          label: "Info",
+          iconSvg: '<circle cx="12" cy="12" r="10"/>',
+        };
+
+        msgDiv.innerHTML = `
+          <div class="sp-bot-header">
+            <div class="sp-bot-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                ${catInfo.iconSvg}
+              </svg>
+            </div>
+            <span>${catInfo.label}</span>
+          </div>
+          <div class="sp-bot-content">${renderMarkdown(msg.text)}</div>
+        `;
+
+        container.appendChild(msgDiv);
+      });
+
+      spContent.innerHTML = "";
+      spContent.appendChild(container);
+
+      // Auto-scroll to bottom
+      setTimeout(() => {
+        if (container) {
+          container.scrollTop = container.scrollHeight;
+        }
+      }, 100);
+    }
+
+    // ── Markdown renderer for **bold** text ──
+    function renderMarkdown(text) {
+      if (!text) return "";
+      const parts = text.split(/(\*\*[^*]+\*\*)/g);
+      return parts
+        .map((part) =>
+          part.startsWith("**") && part.endsWith("**")
+            ? `<strong>${part.slice(2, -2)}</strong>`
+            : part
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;"),
         )
         .join("");
+    }
+
+    // ── Original JSON renderer ──
+    function jsonPre(data) {
+      const highlighted = JSON.stringify(data, null, 2)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"([^"]+)":/g, '<span class="json-key">"$1"</span>:')
+        .replace(/: "([^"]*)"/g, ': <span class="json-str">"$1"</span>')
+        .replace(/: (-?\d+\.?\d*)/g, ': <span class="json-num">$1</span>')
+        .replace(/: (true|false)/g, ': <span class="json-bool">$1</span>')
+        .replace(/: null/g, ': <span class="json-null">null</span>');
+      return `<pre>${highlighted}</pre>`;
     }
 
     // ── Error state ──
@@ -506,6 +919,90 @@ document.addEventListener("DOMContentLoaded", () => {
       if (alertMessage) alertMessage.textContent = message;
       if (alertContent) alertContent.className = `modal-box ${type}`;
       alertModal.classList.remove("hidden");
+    }
+
+    // ── Metrics tile interactivity (hover glow + click ripple + tilt) ──
+    if (metricsGrid) {
+      const metricTiles = metricsGrid.querySelectorAll(".metric-tile");
+
+      metricTiles.forEach((tile) => {
+        // Mouse move: spotlight glow + tilt effect
+        tile.addEventListener("mousemove", (e) => {
+          const rect = tile.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          const xPercent = (x / rect.width) * 100;
+          const yPercent = (y / rect.height) * 100;
+
+          tile.style.setProperty("--glow-x", `${xPercent}%`);
+          tile.style.setProperty("--glow-y", `${yPercent}%`);
+          tile.style.setProperty("--glow-intensity", "1");
+
+          // Tilt effect based on mouse position
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          const rotateX = ((y - centerY) / centerY) * -10;
+          const rotateY = ((x - centerX) / centerX) * 10;
+
+          tile.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        });
+
+        // Mouse leave: fade glow and reset tilt
+        tile.addEventListener("mouseleave", () => {
+          tile.style.setProperty("--glow-intensity", "0");
+          tile.style.transform =
+            "perspective(1000px) rotateX(0deg) rotateY(0deg)";
+        });
+
+        // Click: ripple effect
+        tile.addEventListener("click", (e) => {
+          const rect = tile.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+
+          const maxDistance = Math.max(
+            Math.hypot(x, y),
+            Math.hypot(x - rect.width, y),
+            Math.hypot(x, y - rect.height),
+            Math.hypot(x - rect.width, y - rect.height),
+          );
+
+          const ripple = document.createElement("div");
+          ripple.style.cssText = `
+            position: absolute;
+            width: ${maxDistance * 2}px;
+            height: ${maxDistance * 2}px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(132, 0, 255, 0.4) 0%, rgba(132, 0, 255, 0.2) 30%, transparent 70%);
+            left: ${x - maxDistance}px;
+            top: ${y - maxDistance}px;
+            pointer-events: none;
+            z-index: 10;
+          `;
+
+          tile.appendChild(ripple);
+
+          // Animate ripple
+          const startTime = Date.now();
+          const duration = 600;
+
+          const animate = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            ripple.style.transform = `scale(${progress})`;
+            ripple.style.opacity = `${1 - progress}`;
+
+            if (progress < 1) {
+              requestAnimationFrame(animate);
+            } else {
+              ripple.remove();
+            }
+          };
+
+          animate();
+        });
+      });
     }
 
     // ── Kick off scan ──
