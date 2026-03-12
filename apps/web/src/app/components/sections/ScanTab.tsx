@@ -323,6 +323,502 @@ function useCountUp(target: number, active: boolean, duration = 950) {
 }
 
 /* ─────────────────────────────────────────────
+   Bot Explainer — auto-generated plain-English
+   analysis that appears as chat bubbles
+───────────────────────────────────────────── */
+interface BotMessage {
+  id: string;
+  text: string;
+  accent?: "red" | "yellow" | "green" | "blue";
+}
+
+function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
+  const msgs: BotMessage[] = [];
+  const s = scan.riskScore;
+  const status = scan.status;
+  const flags: string[] = scan.details?.riskAdjustment?.deterministic_flags || [];
+  const indicators: string[] = scan.details?.riskAdjustment?.indicators || [];
+  const whois = scan.details?.whoisInfo;
+  const ssl = scan.details?.sslCertificates;
+  const isHTTP = scan.url.toLowerCase().startsWith("http://");
+
+  const verdictColor = status === "Dangerous" ? "red" : status === "Warning" ? "yellow" : "green";
+
+  // 1 — Greeting + overall verdict
+  const verdictPhrase =
+    status === "Dangerous"
+      ? `This site is **highly dangerous** with a risk score of **${s} out of 100**. I strongly recommend you **do not visit** this website.`
+      : status === "Warning"
+      ? `This site looks **suspicious** — it scored **${s} out of 100** on our risk scale. You should be careful before interacting with it.`
+      : `Good news — this site looks **safe**! It scored only **${s} out of 100** on our risk scale, meaning no major threats were detected.`;
+  msgs.push({ id: "verdict", text: verdictPhrase, accent: verdictColor });
+
+  // 2 — Score meaning (contextual)
+  const scoreMeaning =
+    s >= 70
+      ? `A score of **${s}** is very high. This means our AI model and multiple security layers detected serious red flags. Think of it like a danger meter — the higher the number, the more likely this is a scam or phishing site designed to steal your information.`
+      : s >= 40
+      ? `A score of **${s}** is in the caution zone. We spotted some warning signs, but nothing definitively confirmed as malicious. Think of it like a yellow traffic light — slow down and look both ways before proceeding.`
+      : `A score of **${s}** is low, which is good. The site passed our security checks without raising major concerns. It's like getting a clean bill of health from a doctor.`;
+  msgs.push({ id: "score-meaning", text: scoreMeaning, accent: "blue" });
+
+  // 3 — Specific threat flags
+  if (flags.length > 0) {
+    const flagLines = flags.map((f) => {
+      const clean = f.replace(/^\u{1F6A8}\s*/u, "").replace(/\s*\(legitimate site: [^)]+\)/, "");
+      if (f.includes("Brand Impersonation") || f.includes("Impersonating")) {
+        const m = f.match(/\(legitimate site: ([^)]+)\)/);
+        return `• **Brand Impersonation** — This site is pretending to be **${m ? m[1] : "a well-known brand"}**. Scammers create look-alike websites to trick you into entering your passwords, credit card numbers, or personal information.`;
+      }
+      if (f.includes("Untrusted TLD") || f.includes("Suspicious TLD"))
+        return "• **Suspicious Domain Ending** — The website uses an unusual domain extension (like .xyz, .tk, .cc) that's commonly used by scam sites because they're cheap and easy to register anonymously.";
+      if (f.includes("VERY NEW DOMAIN") || f.includes("New Domain"))
+        return "• **Brand New Website** — This domain was registered very recently. Most scam sites are created, used for a few days to steal data, then abandoned. Legitimate businesses usually have domains that are months or years old.";
+      if (f.includes("CRITICAL"))
+        return `• **Critical Threat** — ${clean}`;
+      return `• ${clean}`;
+    });
+    msgs.push({
+      id: "flags",
+      text: `Here's specifically what raised the alarm:\n\n${flagLines.join("\n\n")}`,
+      accent: "red",
+    });
+  }
+
+  // 4 — XAI risk factors (from the AI explanation engine)
+  if (xai?.risk_factors?.length > 0) {
+    const factorLines = xai.risk_factors.slice(0, 4).map((f: any) =>
+      `• **${f.title}** — ${f.description}`
+    );
+    msgs.push({
+      id: "xai-risks",
+      text: `Our AI analysis engine also identified these concerns:\n\n${factorLines.join("\n\n")}`,
+      accent: "red",
+    });
+  }
+
+  // 5 — HTTP warning
+  if (isHTTP) {
+    msgs.push({
+      id: "http",
+      text: "This site uses **HTTP instead of HTTPS**, which means your connection is **not encrypted**. Anyone on the same network (like public Wi-Fi) could potentially intercept what you type — including passwords and credit card numbers.",
+      accent: "yellow",
+    });
+  }
+
+  // 6 — WHOIS insights
+  if (whois) {
+    const reg = whois.registrar || null;
+    const created = whois.creation_date || null;
+    if (reg || created) {
+      let whoisText = "Here's what I found about who owns this website: ";
+      if (reg) whoisText += `It's registered through **${reg}**. `;
+      if (created) {
+        const d = new Date(created);
+        const now = new Date();
+        const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays < 30)
+          whoisText += `It was created only **${diffDays} day${diffDays !== 1 ? "s" : ""} ago** — that's extremely new. Scam sites are typically created and abandoned within days, so this is a major red flag.`;
+        else if (diffDays < 365)
+          whoisText += `It was created **${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) !== 1 ? "s" : ""} ago**. Relatively new, which isn't necessarily bad, but combined with other factors it's worth noting.`;
+        else
+          whoisText += `It's been around for **${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) !== 1 ? "s" : ""}** — established sites are generally more trustworthy, since scammers rarely maintain domains that long.`;
+      }
+      msgs.push({ id: "whois", text: whoisText.trim(), accent: status === "Dangerous" && whois.creation_date ? "yellow" : "blue" });
+    }
+  }
+
+  // 7 — SSL (contextual — warns that SSL doesn't mean safe for dangerous sites)
+  if (ssl && !ssl.error) {
+    const rawIssuer = ssl.issuer || ssl.issuer_organization || null;
+    const issuer = rawIssuer && typeof rawIssuer === "object"
+      ? (rawIssuer.O || rawIssuer.CN || rawIssuer.organizationName || Object.values(rawIssuer).find((v: unknown) => typeof v === "string") || null) as string | null
+      : rawIssuer;
+    if (status === "Dangerous") {
+      msgs.push({
+        id: "ssl",
+        text: issuer
+          ? `Note: This site does have an SSL certificate (issued by **${issuer}**), which might make it look legitimate. But **don't be fooled** — scammers routinely get free SSL certificates to put a padlock icon in your browser. An encrypted connection only means no one else can see your data — it doesn't mean the site itself is trustworthy.`
+          : "Note: This site has an SSL certificate, but that **does not make it safe**. Scammers often use free SSL certificates to display a padlock icon and trick users into thinking the site is legitimate. The padlock only means your connection is encrypted — not that the site is honest.",
+        accent: "yellow",
+      });
+    } else {
+      msgs.push({
+        id: "ssl",
+        text: issuer
+          ? `The site has a valid SSL certificate issued by **${issuer}**. This means your connection is encrypted, which is a positive sign. Just remember that SSL alone doesn't guarantee safety.`
+          : "The site has an SSL certificate (HTTPS), so your connection is encrypted. That's a good baseline, but keep in mind scammers can also get SSL certificates.",
+        accent: "green",
+      });
+    }
+  } else if (ssl?.error) {
+    msgs.push({
+      id: "ssl-err",
+      text: `I couldn't verify this site's SSL certificate — **${ssl.error}**. Without proper encryption, any data you send (passwords, personal info) could be intercepted by attackers.`,
+      accent: "red",
+    });
+  }
+
+  // 8 — Trust signals (only for non-dangerous sites, and be honest about them)
+  const positive = indicators.filter(
+    (i) => !i.includes("CRITICAL") && !i.includes("\u{1F6A8}") && !i.includes("VERY NEW") && !i.includes("New Domain (Risk Factor)")
+  );
+  if (status === "Dangerous" && positive.length > 0) {
+    msgs.push({
+      id: "trust-warning",
+      text: `While I did find some surface-level positive signals (${positive.slice(0, 2).join(", ")}), these **do not outweigh** the serious threats detected. Sophisticated phishing sites often have valid DNS records and SSL certificates specifically to appear legitimate.`,
+      accent: "yellow",
+    });
+  } else if (positive.length > 0) {
+    msgs.push({
+      id: "trust",
+      text: `On the bright side, I found **${positive.length} positive signal${positive.length !== 1 ? "s" : ""}**: ${positive.slice(0, 3).join(", ")}${positive.length > 3 ? `, and ${positive.length - 3} more` : ""}. These are good signs.`,
+      accent: "green",
+    });
+  }
+
+  // 9 — Final advice (ALWAYS uses frontend verdict, never XAI)
+  const finalAdvice =
+    status === "Dangerous"
+      ? "**Bottom line:** Do not enter any personal information on this site. Do not download anything from it. If you received this link via email or text message, it's very likely a phishing attempt — let the sender know their account may be compromised."
+      : status === "Warning"
+      ? "**Bottom line:** Be cautious. Don't enter sensitive info like passwords or payment details unless you're absolutely sure this is a legitimate site you trust. When in doubt, visit the official website directly by typing the URL yourself."
+      : "**Bottom line:** This site appears to be legitimate based on our analysis. You can browse it normally, but always stay alert for unusual requests for personal information.";
+  msgs.push({ id: "final", text: finalAdvice, accent: verdictColor });
+
+  return msgs;
+}
+
+/** Renders bold **text** in messages */
+function BotMarkdown({ text }: { text: string }) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.startsWith("**") && part.endsWith("**") ? (
+          <strong key={i} className="font-semibold text-heading">
+            {part.slice(2, -2)}
+          </strong>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  );
+}
+
+function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
+  const messages = generateBotMessages(scan, xai);
+  const [visibleCount, setVisibleCount] = useState(0);
+  const [isTyping, setIsTyping] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setVisibleCount(0);
+    setIsTyping(true);
+    setCollapsed(false);
+  }, [scan.url, scan.riskScore]);
+
+  useEffect(() => {
+    if (visibleCount >= messages.length) {
+      setIsTyping(false);
+      return;
+    }
+    setIsTyping(true);
+    const delay = visibleCount === 0 ? 600 : 900 + Math.min(messages[visibleCount - 1]?.text.length ?? 0, 150) * 2.5;
+    const t = setTimeout(() => setVisibleCount((c) => c + 1), delay);
+    return () => clearTimeout(t);
+  }, [visibleCount, messages.length]);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTo({ top: containerRef.current.scrollHeight, behavior: "smooth" });
+    }
+  }, [visibleCount]);
+
+  const statusColor = scan.status === "Dangerous" ? "red" : scan.status === "Warning" ? "yellow" : "green";
+  const progress = messages.length > 0 ? (visibleCount / messages.length) * 100 : 0;
+
+  const getCategory = (id: string): { label: string; iconPath: string } => {
+    switch (id) {
+      case "verdict": return { label: "Verdict", iconPath: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" };
+      case "score-meaning": return { label: "Risk Score", iconPath: "M3 3v18h18M7 16l4-7 4 4 5-9" };
+      case "flags": return { label: "Threats Detected", iconPath: "M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01" };
+      case "xai-risks": return { label: "AI Analysis", iconPath: "M12 2a4 4 0 014 4c0 1.95-2 4-2 6h-4c0-2-2-4.05-2-6a4 4 0 014-4zM10 16v1a2 2 0 004 0v-1" };
+      case "http": return { label: "Connection", iconPath: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM12 8v4M12 16h.01" };
+      case "whois": return { label: "Domain Info", iconPath: "M12 2a10 10 0 100 20 10 10 0 000-20zM2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" };
+      case "ssl": return { label: "SSL Certificate", iconPath: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4" };
+      case "ssl-err": return { label: "SSL Warning", iconPath: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM15 9l-6 6M9 9l6 6" };
+      case "trust": return { label: "Trust Signals", iconPath: "M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3" };
+      case "trust-warning": return { label: "Trust Advisory", iconPath: "M12 2a10 10 0 100 20 10 10 0 000-20zM12 8v4M12 16h.01" };
+      case "final": return { label: "Recommendation", iconPath: "M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" };
+      default: return { label: "Info", iconPath: "M12 2a10 10 0 100 20 10 10 0 000-20zM12 16v-4M12 8h.01" };
+    }
+  };
+
+  const accentMap: Record<string, { bg: string; text: string; border: string; glow: string; dot: string }> = {
+    red: { bg: "bg-red-500/8 dark:bg-red-500/10", text: "text-red-600 dark:text-red-400", border: "border-red-500/25 dark:border-red-500/30", glow: "shadow-red-500/8", dot: "bg-red-500" },
+    yellow: { bg: "bg-yellow-500/8 dark:bg-yellow-500/10", text: "text-yellow-600 dark:text-yellow-400", border: "border-yellow-500/25 dark:border-yellow-500/30", glow: "shadow-yellow-500/8", dot: "bg-yellow-500" },
+    green: { bg: "bg-green-500/8 dark:bg-green-500/10", text: "text-green-600 dark:text-green-400", border: "border-green-500/25 dark:border-green-500/30", glow: "shadow-green-500/8", dot: "bg-green-500" },
+    blue: { bg: "bg-[#545BFF]/8 dark:bg-[#545BFF]/10", text: "text-[#545BFF] dark:text-[#a89de8]", border: "border-[#545BFF]/25 dark:border-[#545BFF]/30", glow: "shadow-[#545BFF]/8", dot: "bg-[#545BFF]" },
+  };
+
+  const statusBorderCls = statusColor === "red" ? "border-red-500/25" : statusColor === "yellow" ? "border-yellow-500/20" : "border-green-500/15";
+  const statusGradient = scan.status === "Dangerous" ? "from-red-500 to-red-600" : scan.status === "Warning" ? "from-yellow-500 to-yellow-600" : "from-green-500 to-green-600";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.55, type: "spring", stiffness: 110, damping: 20 }}
+      className={`mb-8 rounded-2xl border ${statusBorderCls} dark:bg-[#080814]/95 bg-white/95 backdrop-blur-2xl overflow-hidden shadow-2xl relative`}
+    >
+      {/* Futuristic grid overlay */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.015] dark:opacity-[0.03]" style={{
+        backgroundImage: "linear-gradient(rgba(84,91,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(84,91,255,0.3) 1px, transparent 1px)",
+        backgroundSize: "32px 32px",
+      }} />
+
+      {/* Scan-line animation */}
+      {isTyping && (
+        <motion.div
+          className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#545BFF]/30 to-transparent pointer-events-none z-10"
+          animate={{ y: [0, 500, 0] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+        />
+      )}
+
+      {/* Animated top accent line */}
+      <div className="h-[2px] w-full relative overflow-hidden">
+        {isTyping ? (
+          <motion.div
+            className={`h-full ${scan.status === "Dangerous" ? "bg-gradient-to-r from-transparent via-red-500 to-transparent" : scan.status === "Warning" ? "bg-gradient-to-r from-transparent via-yellow-500 to-transparent" : "bg-gradient-to-r from-transparent via-green-500 to-transparent"}`}
+            initial={{ x: "-100%" }}
+            animate={{ x: "100%" }}
+            transition={{ duration: 2, ease: "easeInOut", repeat: Infinity }}
+            style={{ width: "100%" }}
+          />
+        ) : (
+          <div className={`absolute inset-0 ${scan.status === "Dangerous" ? "bg-gradient-to-r from-red-500/20 via-red-500/60 to-red-500/20" : scan.status === "Warning" ? "bg-gradient-to-r from-yellow-500/20 via-yellow-500/60 to-yellow-500/20" : "bg-gradient-to-r from-green-500/20 via-green-500/60 to-green-500/20"}`} />
+        )}
+      </div>
+
+      {/* Header */}
+      <div className="relative flex items-center justify-between px-5 sm:px-6 py-4 sm:py-5 border-b border-divider/20">
+        <div className="flex items-center gap-4">
+          {/* Holographic avatar */}
+          <div className="relative">
+            <motion.div
+              className={`absolute -inset-1 rounded-2xl bg-gradient-to-br ${statusGradient} opacity-20 blur-md`}
+              animate={{ opacity: [0.15, 0.3, 0.15] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <div className="relative w-12 h-12 sm:w-[52px] sm:h-[52px] rounded-2xl bg-gradient-to-br from-[#545BFF] via-[#6B73FF] to-[#8B5CF6] flex items-center justify-center shadow-xl shadow-[#545BFF]/30 ring-1 ring-white/10">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="sm:w-[24px] sm:h-[24px] drop-shadow-lg">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+            </div>
+            <motion.span
+              className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[2px] dark:border-[#080814] border-white shadow-md ${
+                isTyping ? "bg-yellow-400" : scan.status === "Dangerous" ? "bg-red-500" : scan.status === "Warning" ? "bg-yellow-500" : "bg-green-500"
+              }`}
+              animate={isTyping ? { scale: [1, 1.3, 1], opacity: [1, 0.7, 1] } : {}}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            />
+          </div>
+          <div>
+            <div className="flex items-center gap-2.5">
+              <span className="text-heading font-bold text-base sm:text-[17px] tracking-tight">SmartShield AI</span>
+              <span className="px-2 py-0.5 text-[8px] sm:text-[9px] font-bold tracking-[0.16em] uppercase bg-gradient-to-r from-[#545BFF]/15 to-[#8B5CF6]/15 text-[#545BFF] dark:text-[#b19eef] rounded-md border border-[#545BFF]/20 shadow-inner">AI BOT</span>
+            </div>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-faded text-[10px] sm:text-[11px] font-medium">
+                {isTyping ? "Analyzing threat vectors" : "Analysis complete"}
+              </span>
+              {isTyping && (
+                <span className="flex items-center gap-[3px]">
+                  {[0, 1, 2].map((i) => (
+                    <motion.span
+                      key={i}
+                      animate={{ opacity: [0.2, 1, 0.2] }}
+                      transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.2 }}
+                      className="w-1 h-1 rounded-full bg-[#545BFF]"
+                    />
+                  ))}
+                </span>
+              )}
+              {!isTyping && (
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase rounded-md ${
+                    scan.status === "Dangerous" ? "bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20" :
+                    scan.status === "Warning" ? "bg-yellow-500/10 text-yellow-500 dark:text-yellow-400 border border-yellow-500/20" :
+                    "bg-green-500/10 text-green-500 dark:text-green-400 border border-green-500/20"
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${scan.status === "Dangerous" ? "bg-red-500" : scan.status === "Warning" ? "bg-yellow-500" : "bg-green-500"}`} />
+                  {scan.status}
+                </motion.span>
+              )}
+            </div>
+          </div>
+        </div>
+        <button
+          onClick={() => setCollapsed((c) => !c)}
+          className="p-2.5 rounded-xl hover:bg-white/10 dark:hover:bg-white/5 transition-all text-faded hover:text-heading border border-transparent hover:border-divider/30"
+          aria-label={collapsed ? "Expand analysis" : "Collapse analysis"}
+        >
+          <motion.svg
+            animate={{ rotate: collapsed ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+            width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          >
+            <polyline points="18 15 12 9 6 15" />
+          </motion.svg>
+        </button>
+      </div>
+
+      {/* Chat area */}
+      <AnimatePresence>
+        {!collapsed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <div
+              ref={containerRef}
+              className="px-5 sm:px-6 py-5 sm:py-6 space-y-4 max-h-[520px] overflow-y-auto"
+              style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(84,91,255,0.15) transparent" }}
+            >
+              {messages.slice(0, visibleCount).map((msg) => {
+                const cat = getCategory(msg.id);
+                const colors = accentMap[msg.accent || "blue"];
+                const isVerdict = msg.id === "verdict";
+                const isFinal = msg.id === "final";
+
+                return (
+                  <motion.div
+                    key={msg.id}
+                    initial={{ opacity: 0, y: 16, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.45, type: "spring", stiffness: 140, damping: 18 }}
+                  >
+                    {/* Category label row */}
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className={`w-5 h-5 rounded-md ${colors.bg} ${colors.border} border flex items-center justify-center flex-shrink-0`}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={colors.text}>
+                          <path d={cat.iconPath} />
+                        </svg>
+                      </div>
+                      <span className={`text-[9px] sm:text-[10px] font-bold tracking-[0.12em] uppercase ${colors.text}`}>
+                        {cat.label}
+                      </span>
+                      <div className={`flex-1 h-px ${colors.border} border-t border-dashed`} />
+                    </div>
+
+                    {/* Message card */}
+                    <div
+                      className={`relative rounded-xl px-4 sm:px-5 py-3.5 sm:py-4 border ${colors.border} ${
+                        isVerdict || isFinal
+                          ? `${colors.bg} shadow-lg ${colors.glow}`
+                          : "dark:bg-white/[0.02] bg-white/60 shadow-sm"
+                      } backdrop-blur-sm hover:dark:bg-white/[0.04] hover:bg-white/80 transition-all duration-200`}
+                    >
+                      {/* Left accent bar */}
+                      <div className={`absolute left-0 top-3 bottom-3 w-[3px] rounded-full ${colors.dot}`} />
+                      <p className={`text-copy ${isVerdict ? "text-[13.5px] sm:text-[14.5px]" : "text-[12.5px] sm:text-[13.5px]"} leading-[1.75] whitespace-pre-line pl-2`}>
+                        <BotMarkdown text={msg.text} />
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+
+              {/* Typing indicator */}
+              <AnimatePresence>
+                {isTyping && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.25 }}
+                    className="flex items-center gap-3 pt-1"
+                  >
+                    <div className="w-5 h-5 rounded-md bg-[#545BFF]/10 border border-[#545BFF]/20 flex items-center justify-center flex-shrink-0">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        className="w-2.5 h-2.5 border border-[#545BFF]/60 border-t-[#545BFF] rounded-full"
+                      />
+                    </div>
+                    <div className="dark:bg-white/[0.025] bg-white/60 rounded-xl px-4 py-3 border dark:border-divider/30 border-divider/50 inline-flex items-center gap-2">
+                      <span className="text-faded text-[11px]">Processing insight {visibleCount + 1}</span>
+                      <span className="flex items-center gap-[3px]">
+                        {[0, 1, 2].map((i) => (
+                          <motion.span
+                            key={i}
+                            animate={{ y: [0, -4, 0], opacity: [0.3, 1, 0.3] }}
+                            transition={{ duration: 0.65, repeat: Infinity, delay: i * 0.1, ease: "easeInOut" }}
+                            className="w-[5px] h-[5px] rounded-full bg-[#545BFF]"
+                          />
+                        ))}
+                      </span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Footer with step progress */}
+            <div className="relative px-5 sm:px-6 pb-4 pt-2">
+              <div className="h-[3px] w-full rounded-full dark:bg-white/[0.04] bg-slate-200/60 overflow-hidden mb-3">
+                <motion.div
+                  className={`h-full rounded-full ${
+                    !isTyping ? `bg-gradient-to-r ${statusGradient}` : "bg-gradient-to-r from-[#545BFF] to-[#8B5CF6]"
+                  }`}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    {messages.map((m, i) => (
+                      <motion.div
+                        key={m.id}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          i < visibleCount
+                            ? `${accentMap[messages[i].accent || "blue"].dot} w-3`
+                            : "dark:bg-white/10 bg-slate-300/50 w-1.5"
+                        }`}
+                        initial={false}
+                        animate={i === visibleCount - 1 && i >= 0 ? { scale: [1, 1.4, 1] } : {}}
+                        transition={{ duration: 0.3 }}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-[9px] sm:text-[10px] font-semibold text-faded tracking-wider uppercase">
+                    {visibleCount}/{messages.length} Insights
+                  </span>
+                </div>
+                <span className="text-[8px] sm:text-[9px] font-medium text-faded/40 tracking-wider uppercase hidden sm:inline">
+                  AI-powered · Privacy-first
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+/* ─────────────────────────────────────────────
    Guest Scanner (no auth required)
 ───────────────────────────────────────────── */
 function GuestScanner({ inView }: { inView: boolean }) {
@@ -349,6 +845,10 @@ function GuestScanner({ inView }: { inView: boolean }) {
   // Community (read-only for guests)
   const [communityComments, setCommunityComments] = useState<any[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
+
+  // Scroll targets
+  const riskScoreRef = useRef<HTMLDivElement>(null);
+  const botExplainerRef = useRef<HTMLDivElement>(null);
 
   // Mouse parallax for shield
   const contentRef = useRef<HTMLDivElement>(null);
@@ -384,6 +884,20 @@ function GuestScanner({ inView }: { inView: boolean }) {
     }
     setScoreActive(false);
   }, [currentScan]);
+
+  // Two-step scroll: Risk Score card first, then Bot Explainer
+  useEffect(() => {
+    if (!currentScan) return;
+    // Step 1 — scroll to risk score card quickly after results appear
+    const t1 = setTimeout(() => {
+      riskScoreRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 400);
+    // Step 2 — after user has seen the risk score, scroll to bot explainer
+    const t2 = setTimeout(() => {
+      botExplainerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 2600);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [currentScan?.url, currentScan?.riskScore]);
 
   // Typewriter placeholder (active when input is empty + not scanning)
   const typingPlaceholder = useTypingPlaceholder(!urlInput && !scanning && inView);
@@ -889,39 +1403,49 @@ function GuestScanner({ inView }: { inView: boolean }) {
       {/* ─── Scan Results ─── */}
       {currentScan && (
         <motion.div
+          ref={riskScoreRef}
           initial={{ opacity: 0, y: 28, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.5, type: "spring", stiffness: 110, damping: 20 }}
-          className="mt-4"
+          className="mt-4 scroll-mt-20"
         >
           {/* Risk Score Card */}
           <div
             className={`relative overflow-hidden rounded-2xl border ${
               currentScan.status === "Dangerous"
-                ? "bg-red-500/5 border-red-500/20"
+                ? "border-red-500/25 dark:bg-[#0c0810]/80 bg-white/90"
                 : currentScan.status === "Warning"
-                ? "bg-yellow-500/5 border-yellow-500/20"
-                : "bg-green-500/5 border-green-500/20"
-            } p-5 sm:p-6 md:p-8 mb-8 backdrop-blur-sm`}
+                ? "border-yellow-500/25 dark:bg-[#0c0c10]/80 bg-white/90"
+                : "border-green-500/25 dark:bg-[#080c10]/80 bg-white/90"
+            } p-5 sm:p-6 md:p-8 mb-8 backdrop-blur-xl shadow-2xl`}
           >
+            {/* Top accent bar */}
+            <div className={`absolute top-0 inset-x-0 h-[2px] ${currentScan.status === "Dangerous" ? "bg-gradient-to-r from-transparent via-red-500 to-transparent" : currentScan.status === "Warning" ? "bg-gradient-to-r from-transparent via-yellow-500 to-transparent" : "bg-gradient-to-r from-transparent via-green-500 to-transparent"}`} />
+
             {/* Glow */}
             <div
-              className={`absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 rounded-full blur-3xl opacity-20 pointer-events-none ${
+              className={`absolute top-0 right-0 -mr-24 -mt-24 w-[28rem] h-[28rem] rounded-full blur-[100px] opacity-[0.12] pointer-events-none ${
                 currentScan.status === "Dangerous" ? "bg-red-500" : currentScan.status === "Warning" ? "bg-yellow-500" : "bg-green-500"
               }`}
             />
+            <div className={`absolute bottom-0 left-0 -ml-20 -mb-20 w-72 h-72 rounded-full blur-[80px] opacity-[0.05] pointer-events-none bg-[#545BFF]`} />
 
             <div className="relative z-10 flex flex-col lg:flex-row items-center lg:items-start gap-6 sm:gap-8 md:gap-12">
               {/* Risk Circle */}
               <div className="flex-shrink-0 flex flex-col items-center">
-                <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48">
+                <div className="relative w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52">
+                  {/* Outer ambient ring */}
+                  <div className={`absolute inset-[-6px] rounded-full border ${
+                    currentScan.status === "Dangerous" ? "border-red-500/10" : currentScan.status === "Warning" ? "border-yellow-500/10" : "border-green-500/10"
+                  }`} />
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8" className="text-divider" />
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="6" className="text-divider/40" />
                     <circle
-                      cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8"
+                      cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="6"
                       className={currentScan.status === "Dangerous" ? "text-red-500" : currentScan.status === "Warning" ? "text-yellow-500" : "text-green-500"}
                       strokeDasharray={`${(currentScan.riskScore / 100) * 283} 283`}
                       strokeLinecap="round"
+                      style={{ filter: `drop-shadow(0 0 8px ${currentScan.status === "Dangerous" ? "rgba(239,68,68,0.4)" : currentScan.status === "Warning" ? "rgba(234,179,8,0.3)" : "rgba(34,197,94,0.3)"})` }}
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -934,31 +1458,44 @@ function GuestScanner({ inView }: { inView: boolean }) {
                     >
                       {displayScore}
                     </motion.span>
-                    <span className="text-[10px] sm:text-xs uppercase tracking-widest text-faded mt-1">Risk Score</span>
+                    <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-faded mt-1 font-mono">Risk Score</span>
                   </div>
                 </div>
-                <div
-                  className={`mt-3 sm:mt-4 px-5 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold tracking-wide uppercase ${
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.4, type: "spring", stiffness: 150, damping: 14 }}
+                  className={`mt-3 sm:mt-4 px-5 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold tracking-wider uppercase flex items-center gap-2 ${
                     currentScan.status === "Dangerous"
-                      ? "bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30"
+                      ? "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30 shadow-lg shadow-red-500/10"
                       : currentScan.status === "Warning"
-                      ? "bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30"
-                      : "bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30"
+                      ? "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30 shadow-lg shadow-yellow-500/10"
+                      : "bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30 shadow-lg shadow-green-500/10"
                   }`}
                 >
+                  <span className={`w-2 h-2 rounded-full ${
+                    currentScan.status === "Dangerous" ? "bg-red-500 animate-pulse" : currentScan.status === "Warning" ? "bg-yellow-500" : "bg-green-500"
+                  }`} />
                   {currentScan.status}
-                </div>
+                </motion.div>
               </div>
 
               {/* Info */}
               <div className="flex-1 w-full text-center lg:text-left">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-heading mb-2 break-all">{currentScan.url}</h2>
+                <div className="flex items-center gap-2.5 mb-3 justify-center lg:justify-start">
+                  <div className={`p-1.5 rounded-lg ${
+                    currentScan.status === "Dangerous" ? "bg-red-500/10 text-red-500" : currentScan.status === "Warning" ? "bg-yellow-500/10 text-yellow-500" : "bg-green-500/10 text-green-500"
+                  }`}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
+                  </div>
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-heading break-all font-mono">{currentScan.url}</h2>
+                </div>
 
                 {/* Expanded URL banner — shown when a shortened URL was resolved */}
                 {currentScan.expandedUrl && (
-                  <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-[#545BFF]/8 dark:bg-[#545BFF]/12 border border-[#545BFF]/25 rounded-xl flex items-start gap-3 text-left">
+                  <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-[#545BFF]/8 dark:bg-[#545BFF]/10 border border-[#545BFF]/20 rounded-xl flex items-start gap-3 text-left backdrop-blur-sm">
                     <div className="p-1.5 bg-[#545BFF]/15 rounded-lg text-[#545BFF] shrink-0 mt-0.5">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
                         <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
                       </svg>
@@ -979,84 +1516,109 @@ function GuestScanner({ inView }: { inView: boolean }) {
                   </div>
                 )}
 
-                <p
-                  className={`text-sm sm:text-base md:text-lg mb-4 sm:mb-6 ${
-                    currentScan.status === "Dangerous" ? "text-red-700 dark:text-red-300" : currentScan.status === "Warning" ? "text-yellow-700 dark:text-yellow-300" : "text-green-700 dark:text-green-300"
+                <div
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border mb-5 sm:mb-6 ${
+                    currentScan.status === "Dangerous" ? "bg-red-500/8 border-red-500/15 text-red-700 dark:text-red-300" : currentScan.status === "Warning" ? "bg-yellow-500/8 border-yellow-500/15 text-yellow-700 dark:text-yellow-300" : "bg-green-500/8 border-green-500/15 text-green-700 dark:text-green-300"
                   }`}
                 >
-                  {currentScan.status === "Dangerous"
-                    ? "Strictly recommended to avoid this site. High threat level detected."
-                    : currentScan.status === "Warning"
-                    ? "Potential security risks detected. Proceed with caution."
-                    : "No major threats detected. Safe to browse."}
-                </p>
+                  {currentScan.status === "Dangerous" ? (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6" /><path d="M9 9l6 6" /></svg>
+                  ) : currentScan.status === "Warning" ? (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+                  ) : (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                  )}
+                  <span className="text-xs sm:text-sm font-medium">
+                    {currentScan.status === "Dangerous"
+                      ? "High threat level detected. Avoid this site."
+                      : currentScan.status === "Warning"
+                      ? "Potential risks detected. Proceed with caution."
+                      : "No major threats detected. Safe to browse."}
+                  </span>
+                </div>
 
                 {/* HTTP Warning */}
                 {currentScan.url.toLowerCase().startsWith("http://") && (
-                  <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl flex items-start gap-3 sm:gap-4 text-left">
-                    <div className="p-1.5 sm:p-2 bg-yellow-500/20 rounded-lg text-yellow-500 shrink-0">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
+                  <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-yellow-500/8 border border-yellow-500/20 rounded-xl flex items-start gap-3 text-left">
+                    <div className="p-1.5 bg-yellow-500/15 rounded-lg text-yellow-500 shrink-0">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
                     </div>
                     <div>
-                      <h4 className="text-yellow-600 dark:text-yellow-400 font-bold text-sm sm:text-base">Insecure Connection (HTTP)</h4>
-                      <p className="text-yellow-700/80 dark:text-yellow-200/80 text-xs sm:text-sm mt-1">Data sent to this website is not encrypted and could be intercepted by attackers.</p>
+                      <h4 className="text-yellow-600 dark:text-yellow-400 font-bold text-xs sm:text-sm">Insecure Connection (HTTP)</h4>
+                      <p className="text-yellow-700/80 dark:text-yellow-200/70 text-[11px] sm:text-xs mt-0.5">Data sent to this website is not encrypted and could be intercepted.</p>
                     </div>
                   </div>
                 )}
 
-                {/* Quick Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mt-4 sm:mt-6">
-                  <div className="dark:bg-inset/50 bg-white/60 p-3 sm:p-4 rounded-xl border border-divider backdrop-blur-sm">
-                    <div className="text-faded text-[10px] sm:text-xs uppercase tracking-wider mb-1">Registrar</div>
-                    <div className="text-heading font-medium text-xs sm:text-sm truncate">{currentScan.details?.registrar || "Unknown"}</div>
-                  </div>
-                  <div className="dark:bg-inset/50 bg-white/60 p-3 sm:p-4 rounded-xl border border-divider backdrop-blur-sm">
-                    <div className="text-faded text-[10px] sm:text-xs uppercase tracking-wider mb-1">Created</div>
-                    <div className="text-heading font-medium text-xs sm:text-sm">{currentScan.details?.creationDate || "Unknown"}</div>
-                  </div>
-                  <div className="dark:bg-inset/50 bg-white/60 p-3 sm:p-4 rounded-xl border border-divider col-span-2 md:col-span-1 backdrop-blur-sm">
-                    <div className="text-faded text-[10px] sm:text-xs uppercase tracking-wider mb-1">Last Analysis</div>
-                    <div className="text-heading font-medium text-xs sm:text-sm">{currentScan.details?.lastAnalysisDate}</div>
-                  </div>
+                {/* Quick Stats Grid */}
+                <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+                  {[
+                    { label: "Registrar", value: currentScan.details?.registrar || "Unknown", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#545BFF]"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
+                    { label: "Created", value: currentScan.details?.creationDate || "Unknown", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#b19eef]"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg> },
+                    { label: "Last Analysis", value: currentScan.details?.lastAnalysisDate || "N/A", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-500"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg> },
+                  ].map(({ label, value, icon }) => (
+                    <div key={label} className="dark:bg-white/[0.025] bg-white/60 p-3 sm:p-4 rounded-xl border border-divider/50 backdrop-blur-sm hover:border-divider transition-colors group">
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <div className="opacity-60 group-hover:opacity-100 transition-opacity">{icon}</div>
+                        <div className="text-faded text-[9px] sm:text-[10px] uppercase tracking-[0.15em] font-mono">{label}</div>
+                      </div>
+                      <div className="text-heading font-semibold text-[11px] sm:text-xs truncate">{value}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
 
             {/* Reanalyze + signup nudge */}
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-divider/50">
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-faded flex-wrap justify-center sm:justify-start">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#545BFF] shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
-                <span>Results are not saved.</span>
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 mt-6 sm:mt-8 pt-4 sm:pt-5 border-t border-divider/30">
+              <div className="flex items-center gap-2 text-[11px] sm:text-xs text-faded flex-wrap justify-center sm:justify-start">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#545BFF]/60 shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                <span className="font-mono tracking-wider">Results are not saved.</span>
               </div>
               <button
                 onClick={handleReanalyze}
                 disabled={scanning}
-                className="px-5 sm:px-6 py-2 rounded-lg dark:bg-inset bg-white/70 hover:bg-white dark:hover:bg-panel disabled:opacity-50 disabled:cursor-not-allowed text-heading transition text-xs sm:text-sm font-medium border border-divider backdrop-blur-sm"
+                className="group px-5 sm:px-6 py-2 sm:py-2.5 rounded-xl dark:bg-white/[0.04] bg-white/80 hover:bg-white dark:hover:bg-white/[0.08] disabled:opacity-50 disabled:cursor-not-allowed text-heading transition-all text-xs sm:text-sm font-semibold border border-divider/60 hover:border-[#545BFF]/30 backdrop-blur-sm flex items-center gap-2"
               >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#545BFF] group-hover:rotate-180 transition-transform duration-500"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
                 {scanning ? "Scanning..." : "Reanalyze"}
               </button>
             </div>
           </div>
 
+          {/* ─── SmartShield AI Bot Explainer ─── */}
+          <div ref={botExplainerRef} className="scroll-mt-20">
+            <BotExplainer scan={currentScan} xai={xaiExplanation} />
+          </div>
+
           {/* ─── Detail Tabs ─── */}
-          <div className="dark:bg-inset/60 bg-white/70 backdrop-blur-md border border-divider rounded-2xl overflow-hidden shadow-xl dark:shadow-[0_4px_36px_rgba(84,91,255,0.06)]">
-            <div className="flex overflow-x-auto p-1.5 sm:p-2 gap-1.5 sm:gap-2 border-b border-divider/50 dark:bg-panel/50 bg-slate-50/80 scrollbar-hide">
-              {(["detection", "explanation", "details", "relations", "community"] as const).map((tab) => (
+          <div className="dark:bg-[#080814]/80 bg-white/90 backdrop-blur-xl border border-divider/40 dark:border-[#545BFF]/10 rounded-2xl overflow-hidden shadow-2xl dark:shadow-[0_8px_48px_rgba(84,91,255,0.06)]">
+            {/* Tab bar with responsive design */}
+            <div className="flex overflow-x-auto p-1 sm:p-2 gap-1 border-b border-divider/20 dark:bg-white/[0.01] bg-slate-50/50 scrollbar-hide">
+              {([
+                { key: "detection" as const, icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>, label: "Detection" },
+                { key: "explanation" as const, icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, label: "Explanation" },
+                { key: "details" as const, icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>, label: "Details" },
+                { key: "relations" as const, icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, label: "Relations" },
+                { key: "community" as const, icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>, label: "Community" },
+              ]).map(({ key, icon, label }) => (
                 <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`relative px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl transition-all duration-200 whitespace-nowrap outline-none focus:ring-2 focus:ring-[#545BFF]/50 ${
-                    activeTab === tab
+                  key={key}
+                  onClick={() => setActiveTab(key)}
+                  title={label}
+                  className={`relative flex items-center gap-1 sm:gap-2 px-2 xs:px-2.5 sm:px-4 py-1.5 xs:py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all duration-250 whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-[#545BFF]/50 flex-shrink-0 ${
+                    activeTab === key
                       ? "text-white bg-gradient-to-r from-[#545BFF] to-[#6B73FF] shadow-lg shadow-[#545BFF]/25"
-                      : "text-faded hover:text-heading dark:hover:bg-heading/5 hover:bg-slate-100"
+                      : "text-faded hover:text-heading dark:hover:bg-white/[0.04] hover:bg-slate-100/80"
                   }`}
                 >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  <span className={`flex-shrink-0 ${activeTab === key ? "text-white" : "text-faded"}`}>{icon}</span>
+                  <span className="hidden sm:inline text-[10px] xs:text-[11px] sm:text-sm font-medium">{label}</span>
                 </button>
               ))}
             </div>
 
-            <div className="p-4 sm:p-6 md:p-8 bg-gradient-to-b from-page/50 to-page">
+            <div className="p-3 xs:p-4 sm:p-6 md:p-8">
 
               {/* ── Detection ── */}
               {activeTab === "detection" && (() => {
@@ -1072,34 +1634,39 @@ function GuestScanner({ inView }: { inView: boolean }) {
                 const negativeIndicators = allIndicators.filter((i) => isCritical(i));
 
                 return (
-                  <div className="space-y-5 sm:space-y-6">
+                  <div className="space-y-6 sm:space-y-7">
                     {/* URL + Status row */}
-                    <div className="dark:bg-panel bg-white/80 border border-divider rounded-xl p-3 md:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 backdrop-blur-sm">
-                      <span className="text-heading text-xs md:text-sm break-all font-mono">{currentScan.url}</span>
-                      <span className={`text-xs px-3 py-1 rounded-full font-medium whitespace-nowrap ${
-                        currentScan.riskScore >= 70 ? "bg-red-500/20 text-red-600 dark:text-red-400" : currentScan.riskScore >= 40 ? "bg-yellow-500/20 text-yellow-600 dark:text-yellow-400" : "bg-green-500/20 text-green-600 dark:text-green-400"
+                    <div className={`dark:bg-white/[0.02] bg-white/70 border rounded-xl p-3.5 md:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 backdrop-blur-sm ${
+                      currentScan.riskScore >= 70 ? "border-red-500/20" : currentScan.riskScore >= 40 ? "border-yellow-500/20" : "border-green-500/20"
+                    }`}>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${currentScan.riskScore >= 70 ? "bg-red-500" : currentScan.riskScore >= 40 ? "bg-yellow-500" : "bg-green-500"}`} />
+                        <span className="text-heading text-xs md:text-sm break-all font-mono">{currentScan.url}</span>
+                      </div>
+                      <span className={`text-[10px] sm:text-xs px-3 py-1 rounded-full font-bold tracking-wide whitespace-nowrap uppercase border ${
+                        currentScan.riskScore >= 70 ? "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/25" : currentScan.riskScore >= 40 ? "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/25" : "bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/25"
                       }`}>
-                        {currentScan.riskScore >= 70 ? "Phishing" : currentScan.riskScore >= 40 ? "Suspicious" : "Safe"}
+                        {currentScan.riskScore >= 70 ? "Phishing Detected" : currentScan.riskScore >= 40 ? "Suspicious" : "Safe"}
                       </span>
                     </div>
 
                     {/* Page Screenshot (Warning / Dangerous only) */}
                     {screenshot && (
                       <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className={`w-1 h-5 rounded-full ${currentScan.riskScore >= 70 ? "bg-red-500" : "bg-yellow-500"}`} />
-                          <h4 className="text-heading font-semibold text-sm">Page Screenshot</h4>
-                          <span className={`text-xs font-mono px-2 py-0.5 rounded border ${
+                        <div className="flex items-center gap-2.5 mb-3 sm:mb-3.5 flex-wrap">
+                          <div className={`w-1 h-6 rounded-full ${currentScan.riskScore >= 70 ? "bg-red-500" : "bg-yellow-500"}`} />
+                          <h4 className="text-heading font-bold text-xs sm:text-sm md:text-[15px]">Page Screenshot</h4>
+                          <span className={`text-[9px] sm:text-[10px] font-mono px-2 py-0.5 rounded-md border ${
                             currentScan.riskScore >= 70
                               ? "text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/20"
                               : "text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 border-yellow-500/20"
                           }`}>
-                            {currentScan.riskScore >= 70 ? "PHISHING SITE" : "SUSPICIOUS SITE"}
+                            {currentScan.riskScore >= 70 ? "PHISHING" : "SUSPICIOUS"}
                           </span>
                         </div>
-                        <div className={`rounded-xl border overflow-hidden ${currentScan.riskScore >= 70 ? "border-red-500/40" : "border-yellow-500/40"}`}>
-                          <div className={`px-3 py-1.5 text-xs font-mono flex items-center gap-2 ${currentScan.riskScore >= 70 ? "bg-red-500/10 text-red-600 dark:text-red-400" : "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"}`}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
+                        <div className={`rounded-xl border overflow-hidden shadow-lg ${currentScan.riskScore >= 70 ? "border-red-500/30" : "border-yellow-500/30"}`}>
+                          <div className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[9px] sm:text-[10px] font-mono flex items-center gap-2 ${currentScan.riskScore >= 70 ? "bg-red-500/8 text-red-600 dark:text-red-400" : "bg-yellow-500/8 text-yellow-600 dark:text-yellow-400"}`}>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
                             Live capture at time of scan
                           </div>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1116,42 +1683,49 @@ function GuestScanner({ inView }: { inView: boolean }) {
                     {/* Threat Flags */}
                     {detFlags.length > 0 && (
                       <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="w-1 h-5 bg-red-500 rounded-full" />
-                          <h4 className="text-heading font-semibold text-sm">Threat Indicators</h4>
-                          <span className="text-xs font-mono text-red-600 dark:text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">{detFlags.length} FLAG{detFlags.length !== 1 ? "S" : ""}</span>
+                        <div className="flex items-center gap-2.5 mb-3 sm:mb-3.5">
+                          <div className="w-1 h-6 bg-red-500 rounded-full" />
+                          <h4 className="text-heading font-bold text-xs sm:text-sm md:text-[15px]">Threat Indicators</h4>
+                          <span className="text-[9px] sm:text-[10px] font-mono text-red-600 dark:text-red-400 bg-red-500/10 px-2 py-0.5 rounded-md border border-red-500/20">{detFlags.length} FLAG{detFlags.length !== 1 ? "S" : ""}</span>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-2 sm:space-y-2.5">
                           {detFlags.map((flag, i) => {
                             const isBrand = isBrandImpersonation(flag);
                             const isTLD = isSuspiciousTLD(flag);
                             const isRed = isCritical(flag) || isBrand;
                             return (
-                              <div key={i} className={`flex items-start gap-3 p-3 rounded-lg border ${
-                                isBrand ? "bg-red-500/10 border-red-500/30" :
-                                isTLD   ? "bg-orange-500/10 border-orange-500/30" :
-                                isRed   ? "bg-red-500/10 border-red-500/20" :
-                                          "bg-yellow-500/10 border-yellow-500/20"
+                              <div key={i} className={`flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3.5 rounded-xl border transition-all hover:shadow-md ${
+                                isBrand ? "bg-red-500/8 border-red-500/25 hover:border-red-500/40" :
+                                isTLD   ? "bg-orange-500/8 border-orange-500/25 hover:border-orange-500/40" :
+                                isRed   ? "bg-red-500/8 border-red-500/20 hover:border-red-500/35" :
+                                          "bg-yellow-500/8 border-yellow-500/20 hover:border-yellow-500/35"
                               }`}>
                                 {isBrand ? (
-                                  <svg className="shrink-0 mt-0.5 text-red-500 dark:text-red-400" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
+                                  <div className="shrink-0 mt-0.5 p-1.5 rounded-lg bg-red-500/15">
+                                    <svg className="text-red-500 dark:text-red-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
+                                  </div>
                                 ) : isTLD ? (
-                                  <svg className="shrink-0 mt-0.5 text-orange-500 dark:text-orange-400" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
+                                  <div className="shrink-0 mt-0.5 p-1.5 rounded-lg bg-orange-500/15">
+                                    <svg className="text-orange-500 dark:text-orange-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
+                                  </div>
                                 ) : (
-                                  <svg className={`shrink-0 mt-0.5 ${isRed ? "text-red-500 dark:text-red-400" : "text-yellow-500 dark:text-yellow-400"}`} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+                                  <div className={`shrink-0 mt-0.5 p-1.5 rounded-lg ${isRed ? "bg-red-500/15" : "bg-yellow-500/15"}`}>
+                                    <svg className={`${isRed ? "text-red-500 dark:text-red-400" : "text-yellow-500 dark:text-yellow-400"}`} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+                                  </div>
                                 )}
                                 <div className="flex-1 min-w-0">
-                                  {isBrand && <span className="inline-block text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider mb-1 bg-red-500/20 px-1.5 py-0.5 rounded">Brand Impersonation</span>}
-                                  {isTLD  && <span className="inline-block text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider mb-1 bg-orange-500/20 px-1.5 py-0.5 rounded">Suspicious TLD</span>}
-                                  <p className={`text-xs leading-relaxed ${
+                                  {isBrand && <span className="inline-block text-[9px] sm:text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wider mb-1.5 bg-red-500/15 px-2 py-0.5 rounded-md">Brand Impersonation</span>}
+                                  {isTLD  && <span className="inline-block text-[9px] sm:text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider mb-1.5 bg-orange-500/15 px-2 py-0.5 rounded-md">Suspicious TLD</span>}
+                                  <p className={`text-xs sm:text-sm leading-relaxed ${
                                     isBrand ? "text-red-700 dark:text-red-200" : isTLD ? "text-orange-700 dark:text-orange-200" : isRed ? "text-red-700 dark:text-red-200" : "text-yellow-700 dark:text-yellow-200"
                                   }`}>{flag.replace(/^\u{1F6A8}\s*/u, "").replace(/\s*\(legitimate site: [^)]+\)/, "")}</p>
                                   {isBrand && (() => {
                                     const m = flag.match(/\(legitimate site: ([^)]+)\)/);
                                     return m ? (
-                                      <div className="mt-1.5 flex items-center gap-1.5">
-                                        <span className="text-xs text-faded">Legitimate site:</span>
-                                        <a href={`https://${m[1]}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 underline underline-offset-2">{m[1]}</a>
+                                      <div className="mt-2 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/8 border border-blue-500/15 w-fit">
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-blue-500 shrink-0"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                                        <span className="text-[10px] text-faded">Real site:</span>
+                                        <a href={`https://${m[1]}`} target="_blank" rel="noopener noreferrer" className="text-[10px] sm:text-xs text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 underline underline-offset-2 font-medium">{m[1]}</a>
                                       </div>
                                     ) : null;
                                   })()}
@@ -1166,15 +1740,18 @@ function GuestScanner({ inView }: { inView: boolean }) {
                     {/* Critical indicators from contextual layer */}
                     {negativeIndicators.length > 0 && (
                       <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="w-1 h-5 bg-red-600 rounded-full" />
-                          <h4 className="text-heading font-semibold text-sm">Critical Signals</h4>
+                        <div className="flex items-center gap-2.5 mb-3 sm:mb-3.5">
+                          <div className="w-1 h-6 bg-red-600 rounded-full" />
+                          <h4 className="text-heading font-bold text-xs sm:text-sm md:text-[15px]">Critical Signals</h4>
+                          <span className="text-[9px] sm:text-[10px] font-mono text-red-600 dark:text-red-400 bg-red-500/10 px-2 py-0.5 rounded-md border border-red-500/20">{negativeIndicators.length}</span>
                         </div>
                         <div className="space-y-2">
                           {negativeIndicators.map((ind, i) => (
-                            <div key={i} className="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                              <svg className="shrink-0 text-red-500 dark:text-red-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6" /><path d="M9 9l6 6" /></svg>
-                              <span className="text-red-700 dark:text-red-200 text-xs">{ind.replace(/^\u{1F6A8}\s*/u, "")}</span>
+                            <div key={i} className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-red-500/8 border border-red-500/20 rounded-xl hover:border-red-500/35 transition-colors">
+                              <div className="shrink-0 p-1 rounded-lg bg-red-500/15">
+                                <svg className="text-red-500 dark:text-red-400" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6" /><path d="M9 9l6 6" /></svg>
+                              </div>
+                              <span className="text-red-700 dark:text-red-200 text-xs sm:text-sm">{ind.replace(/^\u{1F6A8}\s*/u, "")}</span>
                             </div>
                           ))}
                         </div>
@@ -1184,15 +1761,15 @@ function GuestScanner({ inView }: { inView: boolean }) {
                     {/* Trust signals */}
                     {positiveIndicators.length > 0 && (
                       <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="w-1 h-5 bg-green-500 rounded-full" />
-                          <h4 className="text-heading font-semibold text-sm">Trust Signals</h4>
-                          <span className="text-xs font-mono text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">{positiveIndicators.length} FOUND</span>
+                        <div className="flex items-center gap-2.5 mb-3 sm:mb-3.5">
+                          <div className="w-1 h-6 bg-green-500 rounded-full" />
+                          <h4 className="text-heading font-bold text-xs sm:text-sm md:text-[15px]">Trust Signals</h4>
+                          <span className="text-[9px] sm:text-[10px] font-mono text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-0.5 rounded-md border border-green-500/20">{positiveIndicators.length} FOUND</span>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {positiveIndicators.map((ind, i) => (
-                            <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-lg text-green-700 dark:text-green-300 text-xs">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                            <span key={i} className="inline-flex items-center gap-1.5 px-3 py-2 bg-green-500/8 border border-green-500/15 rounded-xl text-green-700 dark:text-green-300 text-xs sm:text-[13px] hover:border-green-500/30 transition-colors">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0"><polyline points="20 6 9 17 4 12" /></svg>
                               {ind}
                             </span>
                           ))}
@@ -1201,7 +1778,13 @@ function GuestScanner({ inView }: { inView: boolean }) {
                     )}
 
                     {detFlags.length === 0 && allIndicators.length === 0 && (
-                      <p className="text-faded text-sm text-center py-6">No threat indicators detected.</p>
+                      <div className="text-center py-10">
+                        <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-green-500/10 flex items-center justify-center">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-green-500"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" /></svg>
+                        </div>
+                        <p className="text-heading font-medium text-sm">No threat indicators detected</p>
+                        <p className="text-faded text-xs mt-1">This URL passed all security checks</p>
+                      </div>
                     )}
                   </div>
                 );
@@ -1209,48 +1792,45 @@ function GuestScanner({ inView }: { inView: boolean }) {
 
               {/* ── Details ── */}
               {activeTab === "details" && (
-                <div className="space-y-4 text-xs md:text-sm">
-                  <div>
-                    <h4 className="text-faded mb-2 font-medium flex items-center gap-2">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#545BFF]"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                      WHOIS Information
-                    </h4>
-                    <div className="dark:bg-inset bg-slate-50 p-3 md:p-4 rounded-lg border border-divider text-copy font-mono text-xs overflow-x-auto">
-                      {currentScan.details?.whoisInfo ? (
-                        <pre className="text-xs">{JSON.stringify(currentScan.details.whoisInfo, null, 2)}</pre>
-                      ) : (
-                        <p className="text-xs text-center py-4 text-faded">No WHOIS data available</p>
-                      )}
+                <div className="space-y-5">
+                  {[
+                    {
+                      title: "WHOIS Information",
+                      icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#545BFF]"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
+                      data: currentScan.details?.whoisInfo,
+                      accent: "[#545BFF]",
+                    },
+                    {
+                      title: "DNS Records",
+                      icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#b19eef]"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>,
+                      data: currentScan.details?.dnsRecords,
+                      accent: "[#b19eef]",
+                    },
+                    {
+                      title: "SSL Certificate",
+                      icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-500"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>,
+                      data: currentScan.details?.sslCertificates && !currentScan.details.sslCertificates.error ? currentScan.details.sslCertificates : null,
+                      accent: "green-500",
+                      error: currentScan.details?.sslCertificates?.error,
+                    },
+                  ].map(({ title, icon, data, error: dataError }) => (
+                    <div key={title}>
+                      <div className="flex items-center gap-2.5 mb-2.5">
+                        <div className="p-1.5 rounded-lg dark:bg-white/[0.03] bg-slate-50">{icon}</div>
+                        <h4 className="text-heading font-bold text-sm sm:text-[15px]">{title}</h4>
+                        {data && <span className="text-[9px] font-mono text-green-600 dark:text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded border border-green-500/15 uppercase tracking-wider">Available</span>}
+                      </div>
+                      <div className="dark:bg-white/[0.02] bg-slate-50/80 p-4 rounded-xl border border-divider/50 font-mono text-xs overflow-x-auto backdrop-blur-sm">
+                        {data ? (
+                          <pre className="text-xs text-copy leading-relaxed">{JSON.stringify(data, null, 2)}</pre>
+                        ) : (
+                          <p className="text-xs text-center py-5 text-faded">
+                            {dataError || `No ${title.toLowerCase()} available`}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <h4 className="text-faded mb-2 font-medium flex items-center gap-2">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#b19eef]"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
-                      DNS Records
-                    </h4>
-                    <div className="dark:bg-inset bg-slate-50 p-3 md:p-4 rounded-lg border border-divider text-copy">
-                      {currentScan.details?.dnsRecords ? (
-                        <pre className="text-xs font-mono overflow-x-auto">{JSON.stringify(currentScan.details.dnsRecords, null, 2)}</pre>
-                      ) : (
-                        <p className="text-xs text-center py-4 text-faded">No DNS records available</p>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="text-faded mb-2 font-medium flex items-center gap-2">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-500"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                      SSL Certificate
-                    </h4>
-                    <div className="dark:bg-inset bg-slate-50 p-3 md:p-4 rounded-lg border border-divider text-copy">
-                      {currentScan.details?.sslCertificates && !currentScan.details.sslCertificates.error ? (
-                        <pre className="text-xs font-mono overflow-x-auto">{JSON.stringify(currentScan.details.sslCertificates, null, 2)}</pre>
-                      ) : (
-                        <p className="text-xs text-center py-4 text-faded">
-                          {currentScan.details?.sslCertificates?.error || "No SSL certificate data available"}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                  ))}
                 </div>
               )}
 
@@ -1262,15 +1842,19 @@ function GuestScanner({ inView }: { inView: boolean }) {
                       <div className="relative w-16 h-16 mb-6">
                         <div className="absolute inset-0 border-t-2 border-[#545BFF] rounded-full animate-spin" />
                         <div className="absolute inset-2 border-r-2 border-[#b19eef] rounded-full animate-spin" style={{ animationDirection: "reverse" }} />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#545BFF]"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        </div>
                       </div>
-                      <p className="text-faded font-mono text-xs sm:text-sm tracking-wide animate-pulse">Initializing AI Analysis Protocol...</p>
+                      <p className="text-heading font-medium text-sm mb-1">AI Analysis in Progress</p>
+                      <p className="text-faded font-mono text-[10px] tracking-wide animate-pulse">Processing threat vectors...</p>
                     </div>
                   ) : xaiExplanation ? (
                     <>
                       {/* Recommendation */}
                       <div
-                        className={`rounded-xl border border-divider overflow-hidden ${
-                          currentScan.riskScore >= 70 ? "bg-red-950/10 dark:bg-red-950/10 light:bg-red-50/50" : currentScan.riskScore >= 40 ? "bg-yellow-950/10 dark:bg-yellow-950/10 light:bg-yellow-50/50" : "bg-green-950/10 dark:bg-green-950/10 light:bg-green-50/50"
+                        className={`rounded-xl border overflow-hidden shadow-sm ${
+                          currentScan.riskScore >= 70 ? "border-red-500/20 bg-red-500/5" : currentScan.riskScore >= 40 ? "border-yellow-500/20 bg-yellow-500/5" : "border-green-500/20 bg-green-500/5"
                         }`}
                       >
                         <div className="p-4 sm:p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-4 sm:gap-6">
@@ -1293,20 +1877,26 @@ function GuestScanner({ inView }: { inView: boolean }) {
                           </div>
                           <div className="text-center md:text-left flex-1">
                             <h4
-                              className={`text-xs sm:text-sm font-mono uppercase tracking-widest mb-2 sm:mb-3 ${
+                              className={`text-[10px] sm:text-xs font-mono uppercase tracking-[0.18em] mb-2 sm:mb-3 ${
                                 currentScan.riskScore >= 70 ? "text-red-600 dark:text-red-400" : currentScan.riskScore >= 40 ? "text-yellow-600 dark:text-yellow-400" : "text-green-600 dark:text-green-400"
                               }`}
                             >
-                              Strategic Recommendation
+                              AI Recommendation
                             </h4>
-                            <p className="text-copy text-sm md:text-lg font-medium">{xaiExplanation.recommendation}</p>
+                            <p className="text-copy text-sm md:text-base font-medium leading-relaxed">
+                              {currentScan.riskScore >= 70
+                                ? "This site is highly dangerous. Do not enter any personal information, credentials, or payment details. Leave the site immediately."
+                                : currentScan.riskScore >= 40
+                                ? "This site shows suspicious characteristics. Exercise caution and avoid entering sensitive information unless you can verify its legitimacy."
+                                : "Site appears safe, but always practice good security habits. Avoid sharing unnecessary personal information."}
+                            </p>
                           </div>
                         </div>
                       </div>
 
                       {/* Factors Grid */}
                       <div
-                        className={`grid gap-4 sm:gap-6 ${
+                        className={`grid gap-5 sm:gap-6 ${
                           xaiExplanation.risk_factors?.length > 0 && xaiExplanation.positive_factors?.length > 0
                             ? "grid-cols-1 lg:grid-cols-2"
                             : "grid-cols-1"
@@ -1314,20 +1904,22 @@ function GuestScanner({ inView }: { inView: boolean }) {
                       >
                         {xaiExplanation.risk_factors?.length > 0 && (
                           <div className="space-y-3 sm:space-y-4">
-                            <div className="flex items-center gap-3 mb-2">
-                              <div className="w-1.5 h-6 bg-red-500 rounded-full" />
-                              <h4 className="text-heading font-bold text-base sm:text-lg">Threat Vectors Detected</h4>
-                              <span className="text-xs font-mono text-red-600 dark:text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
-                                {xaiExplanation.risk_factors.length} ISSUES
+                            <div className="flex items-center gap-2.5 mb-2">
+                              <div className="w-1 h-6 bg-red-500 rounded-full" />
+                              <h4 className="text-heading font-bold text-sm sm:text-[15px]">Threat Vectors</h4>
+                              <span className="text-[10px] font-mono text-red-600 dark:text-red-400 bg-red-500/10 px-2 py-0.5 rounded-md border border-red-500/20">
+                                {xaiExplanation.risk_factors.length}
                               </span>
                             </div>
-                            <div className="grid gap-3">
+                            <div className="grid gap-2.5">
                               {xaiExplanation.risk_factors.map((factor: any, idx: number) => (
-                                <div key={idx} className="dark:bg-inset bg-white/70 border border-red-500/20 rounded-lg p-3 sm:p-4 hover:border-red-500/40 transition-colors group backdrop-blur-sm">
-                                  <div className="flex items-start gap-3 sm:gap-4">
-                                    <span className="flex-shrink-0 mt-1 text-red-500/50 group-hover:text-red-500 transition-colors font-mono text-xs">0{idx + 1}</span>
+                                <div key={idx} className="dark:bg-white/[0.02] bg-white/70 border border-red-500/15 rounded-xl p-3.5 sm:p-4 hover:border-red-500/30 transition-all group backdrop-blur-sm">
+                                  <div className="flex items-start gap-3">
+                                    <span className="flex-shrink-0 mt-0.5 w-6 h-6 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500/60 group-hover:text-red-500 transition-colors font-mono text-[10px] font-bold">
+                                      {String(idx + 1).padStart(2, "0")}
+                                    </span>
                                     <div>
-                                      <h5 className="text-red-700 dark:text-red-300 font-medium text-xs sm:text-sm mb-1">{factor.title}</h5>
+                                      <h5 className="text-red-700 dark:text-red-300 font-semibold text-xs sm:text-sm mb-0.5">{factor.title}</h5>
                                       <p className="text-faded text-xs leading-relaxed">{factor.description}</p>
                                     </div>
                                   </div>
@@ -1339,20 +1931,22 @@ function GuestScanner({ inView }: { inView: boolean }) {
 
                         {xaiExplanation.positive_factors?.length > 0 && (
                           <div className="space-y-3 sm:space-y-4">
-                            <div className="flex items-center gap-3 mb-2">
-                              <div className="w-1.5 h-6 bg-green-500 rounded-full" />
-                              <h4 className="text-heading font-bold text-base sm:text-lg">Trust Signals Validated</h4>
-                              <span className="text-xs font-mono text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">
-                                {xaiExplanation.positive_factors.length} VERIFIED
+                            <div className="flex items-center gap-2.5 mb-2">
+                              <div className="w-1 h-6 bg-green-500 rounded-full" />
+                              <h4 className="text-heading font-bold text-sm sm:text-[15px]">Trust Signals</h4>
+                              <span className="text-[10px] font-mono text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-0.5 rounded-md border border-green-500/20">
+                                {xaiExplanation.positive_factors.length}
                               </span>
                             </div>
-                            <div className="grid gap-3">
+                            <div className="grid gap-2.5">
                               {xaiExplanation.positive_factors.map((factor: any, idx: number) => (
-                                <div key={idx} className="dark:bg-inset bg-white/70 border border-green-500/20 rounded-lg p-3 sm:p-4 hover:border-green-500/40 transition-colors group backdrop-blur-sm">
-                                  <div className="flex items-start gap-3 sm:gap-4">
-                                    <span className="flex-shrink-0 mt-1 text-green-500/50 group-hover:text-green-500 transition-colors font-mono text-xs">0{idx + 1}</span>
+                                <div key={idx} className="dark:bg-white/[0.02] bg-white/70 border border-green-500/15 rounded-xl p-3.5 sm:p-4 hover:border-green-500/30 transition-all group backdrop-blur-sm">
+                                  <div className="flex items-start gap-3">
+                                    <span className="flex-shrink-0 mt-0.5 w-6 h-6 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500/60 group-hover:text-green-500 transition-colors font-mono text-[10px] font-bold">
+                                      {String(idx + 1).padStart(2, "0")}
+                                    </span>
                                     <div>
-                                      <h5 className="text-green-700 dark:text-green-300 font-medium text-xs sm:text-sm mb-1">{factor.title}</h5>
+                                      <h5 className="text-green-700 dark:text-green-300 font-semibold text-xs sm:text-sm mb-0.5">{factor.title}</h5>
                                       <p className="text-faded text-xs leading-relaxed">{factor.description}</p>
                                     </div>
                                   </div>
@@ -1364,8 +1958,12 @@ function GuestScanner({ inView }: { inView: boolean }) {
                       </div>
                     </>
                   ) : (
-                    <div className="text-center py-12">
-                      <p className="text-faded">Unable to generate explanation. Please try again.</p>
+                    <div className="text-center py-14">
+                      <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-[#545BFF]/10 flex items-center justify-center">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#545BFF]"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                      </div>
+                      <p className="text-heading font-medium text-sm">Unable to generate explanation</p>
+                      <p className="text-faded text-xs mt-1">The AI analysis service may be temporarily unavailable</p>
                     </div>
                   )}
                 </div>
@@ -1375,31 +1973,40 @@ function GuestScanner({ inView }: { inView: boolean }) {
               {activeTab === "relations" && (
                 <div>
                   {loadingHistory && (
-                    <div className="text-center py-12">
-                      <p className="text-faded">Loading historical data...</p>
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <div className="relative w-14 h-14 mb-5">
+                        <div className="absolute inset-0 border-t-2 border-[#545BFF] rounded-full animate-spin" />
+                        <div className="absolute inset-2.5 border-r-2 border-[#b19eef] rounded-full animate-spin" style={{ animationDirection: "reverse" }} />
+                      </div>
+                      <p className="text-heading font-medium text-sm mb-1">Loading Historical Data</p>
+                      <p className="text-faded text-[10px] font-mono tracking-wide animate-pulse">Fetching domain timeline...</p>
                     </div>
                   )}
                   {!loadingHistory && historicalData && (
-                    <div className="space-y-5 sm:space-y-6">
+                    <div className="space-y-6 sm:space-y-7">
                       {historicalData.whois_changes?.length > 0 && (
                         <div>
-                          <h4 className="flex items-center gap-2 text-heading font-semibold mb-3 text-sm">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#545BFF]"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                            WHOIS Changes History
-                          </h4>
+                          <div className="flex items-center gap-2.5 mb-3.5">
+                            <div className="p-1.5 rounded-lg bg-[#545BFF]/10">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#545BFF]"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                            </div>
+                            <h4 className="text-heading font-bold text-sm sm:text-[15px]">WHOIS Changes</h4>
+                            <span className="text-[10px] font-mono text-[#545BFF] dark:text-[#a89de8] bg-[#545BFF]/10 px-2 py-0.5 rounded-md border border-[#545BFF]/15">{historicalData.whois_changes.length}</span>
+                          </div>
                           <div className="space-y-3">
                             {historicalData.whois_changes.map((change: any, idx: number) => (
-                              <div key={idx} className="dark:bg-inset/50 bg-white/60 border border-divider rounded-xl p-3 sm:p-4 hover:border-[#545BFF]/25 transition-all backdrop-blur-sm">
-                                <div className="flex items-center justify-between mb-3 border-b border-divider pb-2">
-                                  <span className="text-faded text-xs font-mono">{new Date(change.date).toLocaleString()}</span>
+                              <div key={idx} className="dark:bg-white/[0.02] bg-white/60 border border-divider/50 rounded-xl p-4 hover:border-[#545BFF]/25 transition-all backdrop-blur-sm">
+                                <div className="flex items-center gap-2 mb-3 pb-2.5 border-b border-divider/30">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-[#545BFF]" />
+                                  <span className="text-faded text-[10px] sm:text-xs font-mono">{new Date(change.date).toLocaleString()}</span>
                                 </div>
-                                <div className="space-y-2">
+                                <div className="space-y-2.5">
                                   {Object.entries(change.changes).map(([field, fieldChange]: [string, any]) => (
-                                    <div key={field} className="text-sm border-l-2 border-divider pl-3 py-1">
-                                      <div className="text-faded text-xs font-medium uppercase tracking-wider mb-1">{field}</div>
-                                      <div className="flex flex-col gap-1 text-xs">
-                                        <div className="flex items-center gap-2 text-red-600 dark:text-red-400"><span className="w-4 font-mono">-</span><span className="font-mono bg-red-500/10 px-1 rounded truncate">{JSON.stringify(fieldChange.from).replace(/^"|"$/g, "")}</span></div>
-                                        <div className="flex items-center gap-2 text-green-600 dark:text-green-400"><span className="w-4 font-mono">+</span><span className="font-mono bg-green-500/10 px-1 rounded truncate">{JSON.stringify(fieldChange.to).replace(/^"|"$/g, "")}</span></div>
+                                    <div key={field} className="text-sm border-l-2 border-[#545BFF]/20 pl-3 py-1.5">
+                                      <div className="text-faded text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5">{field}</div>
+                                      <div className="flex flex-col gap-1.5 text-xs">
+                                        <div className="flex items-center gap-2 text-red-600 dark:text-red-400"><span className="w-4 font-mono font-bold">-</span><span className="font-mono bg-red-500/8 px-1.5 py-0.5 rounded-md truncate">{JSON.stringify(fieldChange.from).replace(/^"|"$/g, "")}</span></div>
+                                        <div className="flex items-center gap-2 text-green-600 dark:text-green-400"><span className="w-4 font-mono font-bold">+</span><span className="font-mono bg-green-500/8 px-1.5 py-0.5 rounded-md truncate">{JSON.stringify(fieldChange.to).replace(/^"|"$/g, "")}</span></div>
                                       </div>
                                     </div>
                                   ))}
@@ -1412,25 +2019,29 @@ function GuestScanner({ inView }: { inView: boolean }) {
 
                       {historicalData.dns_changes?.length > 0 && (
                         <div>
-                          <h4 className="flex items-center gap-2 text-heading font-semibold mb-3 text-sm">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#b19eef]"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
-                            DNS Changes History
-                          </h4>
+                          <div className="flex items-center gap-2.5 mb-3.5">
+                            <div className="p-1.5 rounded-lg bg-[#b19eef]/10">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#b19eef]"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
+                            </div>
+                            <h4 className="text-heading font-bold text-sm sm:text-[15px]">DNS Changes</h4>
+                            <span className="text-[10px] font-mono text-[#b19eef] bg-[#b19eef]/10 px-2 py-0.5 rounded-md border border-[#b19eef]/15">{historicalData.dns_changes.length}</span>
+                          </div>
                           <div className="space-y-3">
                             {historicalData.dns_changes.map((change: any, idx: number) => (
-                              <div key={idx} className="dark:bg-inset/50 bg-white/60 border border-divider rounded-xl p-3 sm:p-4 hover:border-[#b19eef]/25 transition-all backdrop-blur-sm">
-                                <div className="flex items-center justify-between mb-3 border-b border-divider pb-2">
-                                  <span className="text-faded text-xs font-mono">{new Date(change.date).toLocaleString()}</span>
+                              <div key={idx} className="dark:bg-white/[0.02] bg-white/60 border border-divider/50 rounded-xl p-4 hover:border-[#b19eef]/25 transition-all backdrop-blur-sm">
+                                <div className="flex items-center gap-2 mb-3 pb-2.5 border-b border-divider/30">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-[#b19eef]" />
+                                  <span className="text-faded text-[10px] sm:text-xs font-mono">{new Date(change.date).toLocaleString()}</span>
                                 </div>
-                                <div className="space-y-2">
+                                <div className="space-y-2.5">
                                   {Object.entries(change.changes).map(([recordType, recordChange]: [string, any]) => (
-                                    <div key={recordType} className="text-sm border-l-2 border-[#b19eef]/30 pl-3 py-1">
-                                      <div className="text-[#b19eef] text-xs font-medium uppercase tracking-wider mb-1">{recordType} Records</div>
+                                    <div key={recordType} className="text-sm border-l-2 border-[#b19eef]/25 pl-3 py-1.5">
+                                      <div className="text-[#b19eef] text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5">{recordType} Records</div>
                                       {recordChange.added?.map((val: string, i: number) => (
-                                        <div key={i} className="flex items-center gap-2 text-green-600 dark:text-green-400 text-xs font-mono"><span>+</span><span className="bg-green-500/10 px-1 rounded break-all">{val}</span></div>
+                                        <div key={i} className="flex items-center gap-2 text-green-600 dark:text-green-400 text-xs font-mono mb-1"><span className="font-bold">+</span><span className="bg-green-500/8 px-1.5 py-0.5 rounded-md break-all">{val}</span></div>
                                       ))}
                                       {recordChange.removed?.map((val: string, i: number) => (
-                                        <div key={i} className="flex items-center gap-2 text-red-600 dark:text-red-400 text-xs font-mono"><span>-</span><span className="bg-red-500/10 px-1 rounded break-all">{val}</span></div>
+                                        <div key={i} className="flex items-center gap-2 text-red-600 dark:text-red-400 text-xs font-mono mb-1"><span className="font-bold">-</span><span className="bg-red-500/8 px-1.5 py-0.5 rounded-md break-all">{val}</span></div>
                                       ))}
                                     </div>
                                   ))}
@@ -1443,24 +2054,27 @@ function GuestScanner({ inView }: { inView: boolean }) {
 
                       {historicalData.ssl_history?.length > 0 && (
                         <div>
-                          <h4 className="flex items-center gap-2 text-heading font-semibold mb-3 text-sm">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-500"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                            SSL Certificate History
-                          </h4>
+                          <div className="flex items-center gap-2.5 mb-3.5">
+                            <div className="p-1.5 rounded-lg bg-green-500/10">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-500"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                            </div>
+                            <h4 className="text-heading font-bold text-sm sm:text-[15px]">SSL Certificate History</h4>
+                            <span className="text-[10px] font-mono text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-0.5 rounded-md border border-green-500/15">{historicalData.ssl_history.length}</span>
+                          </div>
                           <div className="space-y-3">
                             {historicalData.ssl_history.slice(0, 5).map((cert: any, idx: number) => (
-                              <div key={idx} className="dark:bg-inset/50 bg-white/60 border border-divider rounded-xl p-3 sm:p-4 hover:border-green-500/25 transition-all backdrop-blur-sm">
-                                <div className="flex items-center gap-2 mb-3">
-                                  <div className="p-1.5 bg-green-500/10 rounded-lg">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-500"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                              <div key={idx} className="dark:bg-white/[0.02] bg-white/60 border border-divider/50 rounded-xl p-4 hover:border-green-500/25 transition-all backdrop-blur-sm">
+                                <div className="flex items-center gap-2 mb-3 pb-2.5 border-b border-divider/30">
+                                  <div className="p-1 rounded-lg bg-green-500/10">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-500"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
                                   </div>
-                                  <span className="text-faded text-xs font-mono">Captured: {new Date(cert.snapshot_date).toLocaleString()}</span>
+                                  <span className="text-faded text-[10px] sm:text-xs font-mono">Captured: {new Date(cert.snapshot_date).toLocaleString()}</span>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs ml-0 sm:ml-9">
-                                  <div><div className="text-faded uppercase tracking-widest text-[10px]">Issuer</div><div className="text-copy font-medium truncate">{cert.issuer}</div></div>
-                                  <div><div className="text-faded uppercase tracking-widest text-[10px]">Serial Number</div><div className="text-copy font-mono truncate">{cert.serial_number}</div></div>
-                                  <div><div className="text-faded uppercase tracking-widest text-[10px]">Valid From</div><div className="text-green-600 dark:text-green-400 font-mono">{cert.valid_from}</div></div>
-                                  <div><div className="text-faded uppercase tracking-widest text-[10px]">Valid Until</div><div className="text-yellow-600 dark:text-yellow-400 font-mono">{cert.valid_until}</div></div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs ml-0 sm:ml-8">
+                                  <div><div className="text-faded uppercase tracking-[0.15em] text-[10px] font-bold mb-0.5">Issuer</div><div className="text-copy font-medium truncate">{cert.issuer}</div></div>
+                                  <div><div className="text-faded uppercase tracking-[0.15em] text-[10px] font-bold mb-0.5">Serial Number</div><div className="text-copy font-mono text-[10px] truncate">{cert.serial_number}</div></div>
+                                  <div><div className="text-faded uppercase tracking-[0.15em] text-[10px] font-bold mb-0.5">Valid From</div><div className="text-green-600 dark:text-green-400 font-mono text-[11px]">{cert.valid_from}</div></div>
+                                  <div><div className="text-faded uppercase tracking-[0.15em] text-[10px] font-bold mb-0.5">Valid Until</div><div className="text-yellow-600 dark:text-yellow-400 font-mono text-[11px]">{cert.valid_until}</div></div>
                                 </div>
                               </div>
                             ))}
@@ -1469,16 +2083,23 @@ function GuestScanner({ inView }: { inView: boolean }) {
                       )}
 
                       {(!historicalData.whois_changes?.length && !historicalData.dns_changes?.length && !historicalData.ssl_history?.length) && (
-                        <div className="text-center py-12">
-                          <p className="text-faded">No historical changes detected yet.</p>
-                          <p className="text-faded text-sm mt-2">Changes will appear as we track this domain over time.</p>
+                        <div className="text-center py-14">
+                          <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-[#545BFF]/10 flex items-center justify-center">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#545BFF]"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                          </div>
+                          <p className="text-heading font-medium text-sm">No historical changes detected</p>
+                          <p className="text-faded text-xs mt-1">Changes will appear as we track this domain over time</p>
                         </div>
                       )}
                     </div>
                   )}
                   {!loadingHistory && !historicalData && (
-                    <div className="text-center py-12">
-                      <p className="text-faded text-sm">No historical data available.</p>
+                    <div className="text-center py-14">
+                      <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-[#545BFF]/10 flex items-center justify-center">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#545BFF]"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                      </div>
+                      <p className="text-heading font-medium text-sm">No historical data available</p>
+                      <p className="text-faded text-xs mt-1">Domain timeline data is not yet available for this URL</p>
                     </div>
                   )}
                 </div>
@@ -1486,56 +2107,75 @@ function GuestScanner({ inView }: { inView: boolean }) {
 
               {/* ── Community ── */}
               {activeTab === "community" && (
-                <div className="py-4 sm:py-6 max-w-2xl mx-auto">
-                  <h3 className="text-heading font-semibold mb-4 text-center">Community Feedback</h3>
+                <div className="py-2 sm:py-4 max-w-2xl mx-auto">
+                  <div className="flex items-center justify-center gap-2.5 mb-6">
+                    <div className="p-1.5 rounded-lg bg-[#545BFF]/10">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#545BFF]"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <h3 className="text-heading font-bold text-sm sm:text-[15px]">Community Feedback</h3>
+                    {communityComments.length > 0 && (
+                      <span className="text-[10px] font-mono text-[#545BFF] dark:text-[#a89de8] bg-[#545BFF]/10 px-2 py-0.5 rounded-md border border-[#545BFF]/15">
+                        {communityComments.length}
+                      </span>
+                    )}
+                  </div>
 
                   {loadingComments ? (
-                    <div className="text-faded text-center mb-6">Loading feedback...</div>
+                    <div className="flex flex-col items-center py-12">
+                      <div className="relative w-10 h-10 mb-4">
+                        <div className="absolute inset-0 border-t-2 border-[#545BFF] rounded-full animate-spin" />
+                      </div>
+                      <p className="text-faded text-xs font-mono animate-pulse">Loading community feedback...</p>
+                    </div>
                   ) : communityComments.length === 0 ? (
-                    <div className="text-faded text-center mb-6">No feedback yet for this URL.</div>
+                    <div className="text-center py-12">
+                      <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-[#545BFF]/10 flex items-center justify-center">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#545BFF]"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                      </div>
+                      <p className="text-heading font-medium text-sm">No community feedback yet</p>
+                      <p className="text-faded text-xs mt-1">Be the first to report this URL</p>
+                    </div>
                   ) : (
-                    <ul className="mb-6 space-y-4">
+                    <ul className="space-y-3">
                       {communityComments.map((cmt, idx) => (
-                        <li key={idx} className="dark:bg-inset/50 bg-white/60 backdrop-blur-sm border border-divider/50 rounded-xl p-4 sm:p-5 hover:border-[#545BFF]/30 transition-all">
+                        <li key={idx} className="dark:bg-white/[0.02] bg-white/60 backdrop-blur-sm border border-divider/40 rounded-xl p-4 sm:p-5 hover:border-[#545BFF]/25 transition-all">
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#545BFF] to-[#b19eef] p-0.5">
-                                <div className="w-full h-full rounded-full dark:bg-inset bg-white flex items-center justify-center">
-                                  <span className="text-[10px] font-bold text-[#545BFF] dark:text-white">{cmt.user_id ? cmt.user_id.substring(0, 2).toUpperCase() : "AN"}</span>
+                              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#545BFF] to-[#b19eef] p-[2px]">
+                                <div className="w-full h-full rounded-[10px] dark:bg-[#080814] bg-white flex items-center justify-center">
+                                  <span className="text-[10px] font-bold text-[#545BFF] dark:text-[#a89de8]">{cmt.user_id ? cmt.user_id.substring(0, 2).toUpperCase() : "AN"}</span>
                                 </div>
                               </div>
                               <div>
-                                <div className="text-xs text-faded">User: {cmt.user_id ? `${cmt.user_id.substring(0, 8)}...` : "Anonymous"}</div>
-                                <div className="text-[10px] text-faded">{cmt.created_at ? new Date(cmt.created_at).toLocaleString() : ""}</div>
+                                <div className="text-xs text-heading font-medium">{cmt.user_id ? `User ${cmt.user_id.substring(0, 8)}...` : "Anonymous"}</div>
+                                <div className="text-[10px] text-faded font-mono">{cmt.created_at ? new Date(cmt.created_at).toLocaleString() : ""}</div>
                               </div>
                             </div>
                             {cmt.flag && cmt.flag !== "neutral" && (
                               <div
-                                className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border ${
+                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${
                                   cmt.flag === "legitimate" ? "bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400" : "bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400"
                                 }`}
                               >
                                 {cmt.flag === "legitimate" ? (
                                   <>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
-                                    <span className="text-[10px] font-bold uppercase tracking-wider">Legitimate</span>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                                    <span className="text-[9px] font-bold uppercase tracking-wider">Legitimate</span>
                                   </>
                                 ) : (
                                   <>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                                    <span className="text-[10px] font-bold uppercase tracking-wider">Phishing</span>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                                    <span className="text-[9px] font-bold uppercase tracking-wider">Phishing</span>
                                   </>
                                 )}
                               </div>
                             )}
                           </div>
-                          <div className="text-xs sm:text-sm text-copy leading-relaxed pl-11">{cmt.description}</div>
+                          <div className="text-xs sm:text-[13px] text-copy leading-relaxed pl-12">{cmt.description}</div>
                         </li>
                       ))}
                     </ul>
                   )}
-
-
                 </div>
               )}
             </div>

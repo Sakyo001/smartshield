@@ -47,7 +47,7 @@ export default function FAQTab() {
   const inView = useInView(sectionRef, { once: true, margin: "-80px" });
 
   return (
-    <section ref={sectionRef} id="faq" className="py-16 md:py-24 px-4 sm:px-6 bg-page relative overflow-hidden scroll-mt-20">
+    <section ref={sectionRef} id="faq" className="py-6 md:py-10 px-4 sm:px-6 bg-page relative overflow-hidden scroll-mt-20">
       {/* Ambient glows */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
         <div className="absolute top-[5%] left-[8%] w-72 h-72 md:w-96 md:h-96 rounded-full bg-[#545BFF]/8 blur-[100px]" />
@@ -113,6 +113,7 @@ export default function FAQTab() {
                   onClick={() => setOpenIndex(isOpen ? null : index)}
                   className="w-full px-5 sm:px-6 py-4 sm:py-5 flex items-center justify-between text-left transition-all duration-200 rounded-xl"
                   aria-expanded={isOpen}
+                  suppressHydrationWarning={true}
                 >
                   <span className={`font-semibold pr-4 text-sm sm:text-base transition-colors duration-300 flex-1 leading-snug ${isOpen ? "text-[#545BFF] dark:text-[#7c83ff]" : "text-heading group-hover:text-[#545BFF] dark:group-hover:text-[#7c83ff]"}`}>
                     {faq.question}

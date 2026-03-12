@@ -99,7 +99,7 @@ export default function AboutTab() {
   const inView = useInView(sectionRef, { once: true, margin: "-60px" });
 
   return (
-    <section ref={sectionRef} id="about" className="py-16 md:py-24 px-4 md:px-6 bg-page relative overflow-hidden scroll-mt-20">
+    <section ref={sectionRef} id="about" className="py-10 md:py-16 pb-2 md:pb-2 px-4 md:px-6 bg-page relative overflow-hidden scroll-mt-16">
       {/* Ambient glows */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
         <div className="absolute top-[8%] right-[3%] w-80 h-80 md:w-[500px] md:h-[500px] rounded-full bg-[#545BFF]/7 blur-[120px]" />
@@ -110,7 +110,7 @@ export default function AboutTab() {
       <div className="max-w-6xl mx-auto relative z-10">
 
         {/* ── Section header ─────────────────────────────────────────── */}
-        <div className="text-center mb-14 md:mb-20">
+        <div className="text-center mb-10 md:mb-14">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -149,7 +149,7 @@ export default function AboutTab() {
           initial={{ opacity: 0, y: 22 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.55, delay: 0.25 }}
-          className="relative overflow-hidden rounded-2xl md:rounded-3xl border border-[#545BFF]/20 dark:bg-[#0d0e1a]/60 bg-white/80 backdrop-blur-md hover:border-[#545BFF]/40 transition-all duration-300 shadow-[0_2px_20px_rgba(84,91,255,0.08),0_1px_6px_rgba(0,0,0,0.04)] dark:shadow-none p-6 sm:p-8 md:p-10 mb-8 md:mb-10"
+          className="relative overflow-hidden rounded-2xl md:rounded-3xl border border-[#545BFF]/20 dark:bg-[#0d0e1a]/60 bg-white/80 backdrop-blur-md hover:border-[#545BFF]/40 transition-all duration-300 shadow-[0_2px_20px_rgba(84,91,255,0.08),0_1px_6px_rgba(0,0,0,0.04)] dark:shadow-none p-6 sm:p-8 md:p-10 mb-6 md:mb-8"
         >
           {/* inner glow */}
           <div className="absolute top-0 left-0 w-[350px] h-[350px] bg-[#545BFF]/5 rounded-full blur-[90px] -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
@@ -177,7 +177,7 @@ export default function AboutTab() {
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5, delay: 0.35 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8 md:mb-10"
+          className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 md:mb-8"
         >
           {stats.map((s, i) => (
             <motion.div
@@ -199,7 +199,7 @@ export default function AboutTab() {
         </motion.div>
 
         {/* ── Feature cards grid ─────────────────────────────────────── */}
-        <div className="mb-10 md:mb-14">
+        <div className="mb-6 md:mb-8">
           <motion.h3
             initial={{ opacity: 0, y: 14 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -230,121 +230,6 @@ export default function AboutTab() {
             ))}
           </div>
         </div>
-
-        {/* ── ML Model breakdown ─────────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 22 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.55, delay: 0.5 }}
-          className="relative overflow-hidden rounded-2xl md:rounded-3xl border border-[#545BFF]/20 dark:bg-[#0d0e1a]/60 bg-white/80 backdrop-blur-md shadow-[0_2px_20px_rgba(84,91,255,0.08),0_1px_6px_rgba(0,0,0,0.04)] dark:shadow-none p-6 sm:p-8 md:p-10"
-        >
-          {/* corner glow */}
-          <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-[#b19eef]/6 rounded-full blur-[80px] translate-x-1/3 translate-y-1/3 pointer-events-none" />
-
-          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-start relative z-10">
-            {/* Left: model list */}
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full dark:bg-[#545BFF]/10 bg-[#545BFF]/10 border border-[#545BFF]/25 mb-5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#545BFF] animate-pulse" />
-                <span className="text-[#545BFF] dark:text-[#a89de8] text-[10px] font-semibold tracking-widest uppercase">ML Pipeline</span>
-              </div>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-heading tracking-tight mb-2">
-                Three Models,{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#545BFF] to-[#b19eef]">
-                  One Verdict
-                </span>
-              </h3>
-              <p className="text-copy/75 text-sm sm:text-base leading-relaxed mb-7">
-                Every URL is evaluated by all three classifiers. The majority vote, weighted by each model&apos;s confidence, determines the final risk score.
-              </p>
-
-              <div className="space-y-4">
-                {models.map((m, i) => (
-                  <div
-                    key={i}
-                    className="flex items-start gap-4 p-4 rounded-xl border border-[#545BFF]/10 dark:bg-[#545BFF]/3 bg-[#545BFF]/3 hover:border-[#545BFF]/25 transition-all duration-200"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#545BFF] to-[#6B73FF] flex items-center justify-center flex-shrink-0 shadow-[0_0_12px_rgba(84,91,255,0.35)] mt-0.5">
-                      <span className="text-white text-xs font-bold">{i + 1}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <h4 className="font-extrabold text-heading text-sm">{m.name}</h4>
-                        <span className={`text-[9px] font-semibold tracking-widest uppercase px-2 py-0.5 rounded-full ${m.badgeClass}`}>
-                          {m.badge}
-                        </span>
-                      </div>
-                      <p className="text-copy/70 text-xs sm:text-sm leading-relaxed">{m.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right: how it works steps */}
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full dark:bg-[#b19eef]/10 bg-[#b19eef]/10 border border-[#b19eef]/25 mb-5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#b19eef] animate-pulse" />
-                <span className="text-[#b19eef] text-[10px] font-semibold tracking-widest uppercase">Detection Flow</span>
-              </div>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-heading tracking-tight mb-2">
-                How a Scan{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#545BFF] to-[#b19eef]">
-                  Works
-                </span>
-              </h3>
-              <p className="text-copy/75 text-sm sm:text-base leading-relaxed mb-7">
-                From URL input to risk verdict in under 200ms, here&apos;s what happens behind the scenes.
-              </p>
-
-              <div className="space-y-3">
-                {[
-                  {
-                    step: "01",
-                    title: "URL Submitted",
-                    desc: "You enter a URL manually or the Chrome extension captures it automatically before page load.",
-                    color: "from-[#545BFF] to-[#6B73FF]",
-                    glow: "rgba(84,91,255,0.35)",
-                  },
-                  {
-                    step: "02",
-                    title: "Feature Extraction",
-                    desc: "Lexical, structural, WHOIS, DNS, and SSL features are extracted and normalised for model input.",
-                    color: "from-[#6B73FF] to-[#9b8dff]",
-                    glow: "rgba(107,115,255,0.30)",
-                  },
-                  {
-                    step: "03",
-                    title: "3-Model Ensemble Vote",
-                    desc: "Random Forest, Decision Tree, and Naive Bayes each cast a confidence-weighted vote.",
-                    color: "from-[#9b8dff] to-[#b19eef]",
-                    glow: "rgba(177,158,239,0.30)",
-                  },
-                  {
-                    step: "04",
-                    title: "Risk Score Returned",
-                    desc: "A colour-coded verdict (Safe / Suspicious / Phishing) with XAI feature importance is displayed.",
-                    color: "from-[#b19eef] to-[#e0d5ff]",
-                    glow: "rgba(177,158,239,0.25)",
-                  },
-                ].map((step, i) => (
-                  <div key={i} className="flex items-start gap-4 group/step">
-                    <div
-                      className={`w-9 h-9 rounded-xl bg-gradient-to-br ${step.color} flex items-center justify-center flex-shrink-0 text-white text-[11px] font-extrabold tracking-wider`}
-                      style={{ boxShadow: `0 0 14px ${step.glow}` }}
-                    >
-                      {step.step}
-                    </div>
-                    <div className="flex-1 pt-1">
-                      <h4 className="font-extrabold text-heading text-sm mb-0.5 group-hover/step:text-[#545BFF] dark:group-hover/step:text-[#7c83ff] transition-colors duration-200">{step.title}</h4>
-                      <p className="text-copy/70 text-xs leading-relaxed">{step.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </motion.div>
 
       </div>
     </section>

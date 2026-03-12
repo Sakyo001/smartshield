@@ -211,7 +211,7 @@ export default function CTASection() {
               hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
           >
             <span className="relative z-10 flex items-center gap-2">
-              Get the Extension It's Free
+              Get the Extension
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:translate-x-0.5 transition-transform duration-200" aria-hidden>
                 <path d="M5 12h14M12 5l7 7-7 7"/>
               </svg>
@@ -227,7 +227,7 @@ export default function CTASection() {
               dark:hover:bg-[#545BFF]/8 hover:bg-[#545BFF]/10
               rounded-full backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5"
           >
-            Try a Free Scan
+            Scan a Website
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:translate-x-0.5 transition-transform duration-200" aria-hidden>
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>

@@ -403,6 +403,7 @@ function CardSwapDeck() {
             aria-label={feat.title}
             aria-current={i === front ? "true" : undefined}
             className="rounded-full"
+            suppressHydrationWarning={true}
             style={{
               width:      i === front ? 24 : 8,
               height:     8,
