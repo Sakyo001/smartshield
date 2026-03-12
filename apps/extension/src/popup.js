@@ -507,6 +507,29 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="sp-stat-val${!value ? " placeholder" : ""}">${value || "Not available"}</div>
         </div>`;
 
+      // Generate all bot messages first to extract summary
+      const botMsgs = generateBotMessages(r, details);
+      const summaryMsg = botMsgs.find((m) => m.id === "summary");
+      const otherMsgs = botMsgs.filter((m) => m.id !== "summary");
+
+      // Build summary HTML for insertion above stats
+      let summaryHTML = "";
+      if (summaryMsg) {
+        summaryHTML = `
+        <div class="sp-bot-message sp-bot-accent-${summaryMsg.accent}" data-message-index="summary-card" style="animation-delay: 0s;">
+          <div class="sp-bot-header">
+            <div class="sp-bot-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/>
+              </svg>
+            </div>
+            <span>Analysis Summary</span>
+          </div>
+          <div class="sp-bot-content">${renderMarkdown(summaryMsg.text)}</div>
+        </div>
+        `;
+      }
+
       spContent.innerHTML = `
         <!-- URL + Status -->
         <div class="sp-url-row">
@@ -516,6 +539,8 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
           <span class="sp-url-badge ${statusCls}">${statusTxt}</span>
         </div>
+
+        ${summaryHTML}
 
         <!-- Stats Grid -->
         <div class="sp-stats">
@@ -542,81 +567,77 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       `;
 
-      // Render bot explainer messages below the stats
-      const botMsgs = generateBotMessages(r, details);
-      const botContainer = document.createElement("div");
-      botContainer.className = "sp-bot-container";
+      // Render remaining bot messages below the stats
+      if (otherMsgs.length > 0) {
+        const botContainer = document.createElement("div");
+        botContainer.className = "sp-bot-container";
 
-      botMsgs.forEach((msg, idx) => {
-        const msgDiv = document.createElement("div");
-        msgDiv.className = `sp-bot-message sp-bot-accent-${msg.accent}`;
-        msgDiv.dataset.messageIndex = idx;
-        msgDiv.style.animationDelay =
-          idx === 0 ? "0s" : `${600 + (idx - 1) * 900}ms`;
+        otherMsgs.forEach((msg, idx) => {
+          const msgDiv = document.createElement("div");
+          msgDiv.className = `sp-bot-message sp-bot-accent-${msg.accent}`;
+          msgDiv.dataset.messageIndex = idx;
+          msgDiv.style.animationDelay = `${600 + idx * 900}ms`;
 
-        const categoryIcons = {
-          summary: {
-            label: "Analysis Summary",
-            icon: '<circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/>',
-          },
-          verdict: {
-            label: "Verdict",
-            icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
-          },
-          "score-meaning": {
-            label: "Risk Score",
-            icon: '<path d="M3 3v18h18M7 16l4-7 4 4 5-9"/>',
-          },
-          http: {
-            label: "Connection",
-            icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM12 8v4M12 16h.01"/>',
-          },
-          whois: {
-            label: "Domain Info",
-            icon: '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
-          },
-          ssl: {
-            label: "SSL Certificate",
-            icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4"/>',
-          },
-          "ssl-err": {
-            label: "SSL Warning",
-            icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM15 9l-6 6M9 9l6 6"/>',
-          },
-          final: {
-            label: "Recommendation",
-            icon: '<path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>',
-          },
-        };
+          const categoryIcons = {
+            verdict: {
+              label: "Verdict",
+              icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+            },
+            "score-meaning": {
+              label: "Risk Score",
+              icon: '<path d="M3 3v18h18M7 16l4-7 4 4 5-9"/>',
+            },
+            http: {
+              label: "Connection",
+              icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM12 8v4M12 16h.01"/>',
+            },
+            whois: {
+              label: "Domain Info",
+              icon: '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+            },
+            ssl: {
+              label: "SSL Certificate",
+              icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4"/>',
+            },
+            "ssl-err": {
+              label: "SSL Warning",
+              icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM15 9l-6 6M9 9l6 6"/>',
+            },
+            final: {
+              label: "Recommendation",
+              icon: '<path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>',
+            },
+          };
 
-        const catInfo = categoryIcons[msg.id] || {
-          label: "Info",
-          icon: '<circle cx="12" cy="12" r="10"/>',
-        };
+          const catInfo = categoryIcons[msg.id] || {
+            label: "Info",
+            icon: '<circle cx="12" cy="12" r="10"/>',
+          };
 
-        msgDiv.innerHTML = `
-          <div class="sp-bot-header">
-            <div class="sp-bot-icon">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                ${catInfo.icon}
-              </svg>
+          msgDiv.innerHTML = `
+            <div class="sp-bot-header">
+              <div class="sp-bot-icon">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  ${catInfo.icon}
+                </svg>
+              </div>
+              <span>${catInfo.label}</span>
             </div>
-            <span>${catInfo.label}</span>
-          </div>
-          <div class="sp-bot-content">${renderMarkdown(msg.text)}</div>
-        `;
+            <div class="sp-bot-content">${renderMarkdown(msg.text)}</div>
+          `;
 
-        botContainer.appendChild(msgDiv);
-      });
+          botContainer.appendChild(msgDiv);
+        });
 
-      spContent.appendChild(botContainer);
+        spContent.appendChild(botContainer);
 
-      // Auto-scroll to bottom
-      setTimeout(() => {
-        if (botContainer) {
-          botContainer.scrollTop = botContainer.scrollHeight;
-        }
-      }, 100);
+        // Auto-scroll to bottom
+        setTimeout(() => {
+          if (botContainer) {
+            botContainer.scrollTop = botContainer.scrollHeight;
+          }
+        }, 100);
+      }
     }
 
     // ── Bot Explainer: Generate natural language messages ──

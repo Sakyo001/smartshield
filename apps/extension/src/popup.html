@@ -2494,7 +2494,30 @@
         box-shadow: 0 8px 28px rgba(84, 91, 255, 0.12);
       }
 
+      .sp-bot-message[data-message-index="summary-card"] {
+        background: linear-gradient(135deg, rgba(84, 91, 255, 0.15) 0%, rgba(84, 91, 255, 0.08) 100%);
+        border: 2px solid rgba(84, 91, 255, 0.35);
+        border-radius: 14px;
+        padding: 18px 16px;
+        margin-bottom: 16px;
+        font-weight: 500;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 28px rgba(84, 91, 255, 0.12);
+      }
+
       .sp-bot-message[data-message-index="0"]::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        animation: shimmer-slow 3s infinite;
+      }
+
+      .sp-bot-message[data-message-index="summary-card"]::before {
         content: "";
         position: absolute;
         top: 0;
@@ -2555,7 +2578,21 @@
         letter-spacing: 0.1em;
       }
 
+      .sp-bot-message[data-message-index="summary-card"] .sp-bot-header {
+        font-size: 11px;
+        color: var(--primary);
+        margin-bottom: 10px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+      }
+
       .sp-bot-message[data-message-index="0"] .sp-bot-content {
+        font-size: 13px;
+        line-height: 1.6;
+        font-weight: 500;
+      }
+
+      .sp-bot-message[data-message-index="summary-card"] .sp-bot-content {
         font-size: 13px;
         line-height: 1.6;
         font-weight: 500;
@@ -2567,7 +2604,19 @@
         color: var(--text);
       }
 
+      .sp-bot-message[data-message-index="summary-card"] strong {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text);
+      }
+
       .sp-bot-message[data-message-index="0"] em {
+        color: var(--primary);
+        font-style: normal;
+        font-weight: 600;
+      }
+
+      .sp-bot-message[data-message-index="summary-card"] em {
         color: var(--primary);
         font-style: normal;
         font-weight: 600;
