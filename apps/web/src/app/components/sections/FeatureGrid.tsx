@@ -1,16 +1,15 @@
 ﻿"use client";
 
-import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useInView } from "motion/react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 // Feature accent colors use actual CSS values so they work as inline styles
 const FEATURES = [
   {
     id: 1,
     from: "#818cf8",
-    to:   "#60a5fa",
-    icon: "/images/Artificial Intelligence.png",
+    to: "#60a5fa",
+    icon: "neural",
     title: "AI Threat Detection",
     label: "NEURAL·SCAN",
     description:
@@ -21,8 +20,8 @@ const FEATURES = [
   {
     id: 2,
     from: "#34d399",
-    to:   "#2dd4bf",
-    icon: "/images/Geography.png",
+    to: "#2dd4bf",
+    icon: "monitor",
     title: "Real-Time Defense",
     label: "LIVE·MONITOR",
     description:
@@ -33,8 +32,8 @@ const FEATURES = [
   {
     id: 3,
     from: "#fb923c",
-    to:   "#fbbf24",
-    icon: "/images/Layers.png",
+    to: "#fbbf24",
+    icon: "layers",
     title: "Multi-Layer Security",
     label: "DEPTH·SCAN",
     description:
@@ -45,8 +44,8 @@ const FEATURES = [
   {
     id: 4,
     from: "#c084fc",
-    to:   "#818cf8",
-    icon: "/images/Search More.png",
+    to: "#818cf8",
+    icon: "search",
     title: "Deep Link Analysis",
     label: "URL·PARSE",
     description:
@@ -57,8 +56,8 @@ const FEATURES = [
   {
     id: 5,
     from: "#38bdf8",
-    to:   "#34d399",
-    icon: "/images/Security Lock.png",
+    to: "#34d399",
+    icon: "shield",
     title: "SSL & Domain Verification",
     label: "CERT·CHECK",
     description:
@@ -69,8 +68,8 @@ const FEATURES = [
   {
     id: 6,
     from: "#f87171",
-    to:   "#fb923c",
-    icon: "/images/Protect.png",
+    to: "#fb923c",
+    icon: "zeroday",
     title: "Zero-Day Protection",
     label: "0DAY·SHIELD",
     description:
@@ -83,18 +82,142 @@ const FEATURES = [
 const STATS = [
   { value: "96.9%", label: "Detection rate" },
   { value: "<200ms", label: "Scan speed" },
-  { value: "6×",    label: "Layered defense" },
+  { value: "6×", label: "Layered defense" },
 ];
 
-const CARD_H    = 360;
-const SHOWN     = 3;
-const PEEK      = 20;
-const SCALE_D   = 0.055;
-const OPACITY_D = 0.17;
-const ROTATE_Z  = [0, 2.5, -1.5] as const;
-const DECK_H    = CARD_H + (SHOWN - 1) * PEEK + 8;
+/* SVG Icon Renderer — adapts to light/dark mode */
+function IconRenderer({ type, color }: { type: string; color: string }) {
+  const iconMap: Record<string, React.ReactNode> = {
+    neural: (
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="12" r="1" fill="currentColor" />
+        <circle cx="12" cy="5" r="1" fill="currentColor" />
+        <circle cx="19" cy="12" r="1" fill="currentColor" />
+        <circle cx="12" cy="19" r="1" fill="currentColor" />
+        <circle cx="5" cy="12" r="1" fill="currentColor" />
+        <path d="M12 6v6M12 12v6M6 12h6M12 12h6" strokeWidth="1" />
+      </svg>
+    ),
+    monitor: (
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="2" y="3" width="20" height="14" rx="2" />
+        <path d="M8 21h8M12 17v4" />
+        <circle cx="7" cy="10" r="1.5" fill="currentColor" />
+        <circle cx="12" cy="10" r="1.5" fill="currentColor" />
+        <circle cx="17" cy="10" r="1.5" fill="currentColor" />
+      </svg>
+    ),
+    layers: (
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 2L2 7v4c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
+        <path d="M12 8v4M8 10h8" />
+        <path d="M9 16h6" />
+      </svg>
+    ),
+    search: (
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="11" cy="11" r="8" />
+        <path d="M21 21l-4.35-4.35" />
+        <line x1="11" y1="8" x2="11" y2="14" />
+        <line x1="8" y1="11" x2="14" y2="11" />
+      </svg>
+    ),
+    shield: (
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <path d="M12 12l-3-3M12 12l3 3M12 12l3-3M12 12l-3 3" />
+      </svg>
+    ),
+    zeroday: (
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <text
+          x="12"
+          y="16"
+          textAnchor="middle"
+          fontSize="10"
+          fontWeight="bold"
+          fill="currentColor"
+        >
+          0
+        </text>
+        <path d="M3 12h18M12 3v18" />
+        <circle cx="12" cy="12" r="2" fill="currentColor" />
+      </svg>
+    ),
+  };
 
-const SPRING = { type: "spring" as const, stiffness: 380, damping: 36, mass: 0.85 };
+  return <div style={{ color }}>{iconMap[type] || iconMap.neural}</div>;
+}
+
+const CARD_H = 360;
+const SHOWN = 3;
+const PEEK = 20;
+const SCALE_D = 0.055;
+const OPACITY_D = 0.17;
+const ROTATE_Z = [0, 2.5, -1.5] as const;
+const DECK_H = CARD_H + (SHOWN - 1) * PEEK + 8;
+
+const SPRING = {
+  type: "spring" as const,
+  stiffness: 380,
+  damping: 36,
+  mass: 0.85,
+};
 
 /* CSS dot-grid texture — mirrors HeroSection's DotGrid aesthetic */
 function DeckDotGrid() {
@@ -102,7 +225,8 @@ function DeckDotGrid() {
     <div
       className="absolute inset-0 pointer-events-none"
       style={{
-        backgroundImage: "radial-gradient(circle, rgba(84,91,255,0.55) 1px, transparent 1px)",
+        backgroundImage:
+          "radial-gradient(circle, rgba(84,91,255,0.55) 1px, transparent 1px)",
         backgroundSize: "24px 24px",
         opacity: 0.055,
       }}
@@ -154,7 +278,9 @@ function FeatureCard({
       {/* Top gradient wash */}
       <div
         className="absolute top-0 inset-x-0 h-28 pointer-events-none"
-        style={{ background: `linear-gradient(to bottom, ${feature.from}0d, transparent)` }}
+        style={{
+          background: `linear-gradient(to bottom, ${feature.from}0d, transparent)`,
+        }}
       />
 
       {/* HUD terminal header bar */}
@@ -168,7 +294,10 @@ function FeatureCard({
         {/* Traffic-light status dots */}
         <span
           className="w-2 h-2 rounded-full shrink-0"
-          style={{ background: feature.from, boxShadow: `0 0 6px ${feature.from}cc` }}
+          style={{
+            background: feature.from,
+            boxShadow: `0 0 6px ${feature.from}cc`,
+          }}
         />
         <span className="w-2 h-2 rounded-full bg-[#545BFF]/25 shrink-0" />
         <span className="w-2 h-2 rounded-full bg-[#545BFF]/12 shrink-0" />
@@ -185,7 +314,8 @@ function FeatureCard({
         <div className="flex-1 mx-2 h-px bg-gradient-to-r from-transparent via-[#545BFF]/15 to-transparent" />
 
         <span className="text-[8.5px] font-mono text-faded/30 tabular-nums shrink-0">
-          {String(feature.id).padStart(2, "0")}/{String(FEATURES.length).padStart(2, "0")}
+          {String(feature.id).padStart(2, "0")}/
+          {String(FEATURES.length).padStart(2, "0")}
         </span>
       </div>
 
@@ -210,19 +340,23 @@ function FeatureCard({
               style={{ background: accentGrad }}
             />
             <div
-              className="relative w-full h-full rounded-xl flex items-center justify-center"
+              className="relative w-full h-full rounded-xl flex items-center justify-center
+                dark:bg-[#070810]/85 bg-white/50 dark:border-[#545BFF]/28 border-[#545BFF]/15 border"
               style={{
-                background: "rgba(7,8,16,0.85)",
-                border: `1px solid ${feature.from}28`,
+                transition:
+                  "background-color 0.3s ease, border-color 0.3s ease",
               }}
             >
-              <Image src={feature.icon} alt={feature.title} width={22} height={22} className="object-contain" />
+              <IconRenderer type={feature.icon} color={feature.from} />
             </div>
             {/* Pulse scan ring around icon — front card only */}
             {isFront && (
               <div
                 className="absolute -inset-1.5 rounded-2xl border pointer-events-none"
-                style={{ borderColor: feature.from, animation: "ss-icon-ring 2.8s ease-out infinite" }}
+                style={{
+                  borderColor: feature.from,
+                  animation: "ss-icon-ring 2.8s ease-out infinite",
+                }}
               />
             )}
           </div>
@@ -253,10 +387,14 @@ function FeatureCard({
         {/* Confidence bar */}
         <div className="mb-3">
           <div className="flex justify-between items-center mb-1.5">
-            <span className="text-[8px] font-mono uppercase tracking-widest text-faded/38">Confidence</span>
+            <span className="text-[8px] font-mono uppercase tracking-widest text-faded/38">
+              Confidence
+            </span>
             <span
               className="text-[8px] font-mono tabular-nums"
-              style={{ color: isFront ? feature.from : "rgba(148,163,184,0.45)" }}
+              style={{
+                color: isFront ? feature.from : "rgba(148,163,184,0.45)",
+              }}
             >
               {feature.confidence}%
             </span>
@@ -267,7 +405,11 @@ function FeatureCard({
               style={{ background: accentGrad }}
               initial={{ width: "0%" }}
               animate={{ width: `${feature.confidence}%` }}
-              transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.12 }}
+              transition={{
+                duration: 0.9,
+                ease: [0.22, 1, 0.36, 1],
+                delay: 0.12,
+              }}
             />
           </div>
         </div>
@@ -291,7 +433,17 @@ function FeatureCard({
 
         {isFront && (
           <p className="mt-2 text-[8px] text-faded/28 font-mono flex items-center gap-1.5">
-            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <svg
+              width="8"
+              height="8"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
             CLICK · SWIPE · ← →
@@ -303,24 +455,29 @@ function FeatureCard({
 }
 
 function CardSwapDeck() {
-  const count               = FEATURES.length;
-  const [front, setFront]   = useState(0);
+  const count = FEATURES.length;
+  const [front, setFront] = useState(0);
   const [hovered, setHovered] = useState(false);
-  const locked              = useRef(false);
-  const dragX               = useRef(0);
+  const locked = useRef(false);
+  const dragX = useRef(0);
 
-  const advance = useCallback((dir = 1) => {
-    if (locked.current) return;
-    locked.current = true;
-    setFront((f) => (f + dir + count) % count);
-    setTimeout(() => { locked.current = false; }, 300);
-  }, [count]);
+  const advance = useCallback(
+    (dir = 1) => {
+      if (locked.current) return;
+      locked.current = true;
+      setFront((f) => (f + dir + count) % count);
+      setTimeout(() => {
+        locked.current = false;
+      }, 300);
+    },
+    [count],
+  );
 
   /* Keyboard: ← / → navigate cards */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") advance(1);
-      if (e.key === "ArrowLeft")  advance(-1);
+      if (e.key === "ArrowLeft") advance(-1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -350,7 +507,9 @@ function CardSwapDeck() {
         <div
           className="relative w-full touch-pan-y"
           style={{ height: DECK_H }}
-          onPointerDown={(e) => { dragX.current = e.clientX; }}
+          onPointerDown={(e) => {
+            dragX.current = e.clientX;
+          }}
           onPointerUp={(e) => {
             const delta = e.clientX - dragX.current;
             if (Math.abs(delta) > 36) advance(delta < 0 ? 1 : -1);
@@ -359,8 +518,8 @@ function CardSwapDeck() {
           onMouseLeave={() => setHovered(false)}
         >
           {FEATURES.map((feat, i) => {
-            const pos  = (i - front + count) % count;
-            const vis  = pos < SHOWN;
+            const pos = (i - front + count) % count;
+            const vis = pos < SHOWN;
             const zIdx = vis ? SHOWN - pos : 0;
 
             return (
@@ -375,13 +534,14 @@ function CardSwapDeck() {
                   willChange: "transform, opacity",
                 }}
                 animate={{
-                  y:       vis ? pos * PEEK     : CARD_H + 24,
-                  scale:   vis ? 1 - pos * SCALE_D : 0.78,
-                  rotateZ: vis ? ROTATE_Z[pos] ?? 0 : 0,
+                  y: vis ? pos * PEEK : CARD_H + 24,
+                  scale: vis ? 1 - pos * SCALE_D : 0.78,
+                  rotateZ: vis ? (ROTATE_Z[pos] ?? 0) : 0,
                   opacity: vis ? 1 - pos * OPACITY_D : 0,
-                  filter:  vis && pos > 0
-                    ? `blur(${pos * 0.45}px) saturate(0.65)`
-                    : "blur(0px) saturate(1)",
+                  filter:
+                    vis && pos > 0
+                      ? `blur(${pos * 0.45}px) saturate(0.65)`
+                      : "blur(0px) saturate(1)",
                 }}
                 transition={SPRING}
                 onClick={pos === 0 ? () => advance(1) : undefined}
@@ -395,23 +555,32 @@ function CardSwapDeck() {
       </div>
 
       {/* Pill dot nav — active pill hue tracks front card accent */}
-      <div className="flex items-center gap-2" role="group" aria-label="Feature navigation">
+      <div
+        className="flex items-center gap-2"
+        role="group"
+        aria-label="Feature navigation"
+      >
         {FEATURES.map((feat, i) => (
           <button
             key={i}
-            onClick={() => { locked.current = false; setFront(i); }}
+            onClick={() => {
+              locked.current = false;
+              setFront(i);
+            }}
             aria-label={feat.title}
             aria-current={i === front ? "true" : undefined}
             className="rounded-full"
             suppressHydrationWarning={true}
             style={{
-              width:      i === front ? 24 : 8,
-              height:     8,
-              background: i === front
-                ? `linear-gradient(to right, ${frontFeat.from}, ${frontFeat.to})`
-                : "rgba(84,91,255,0.14)",
+              width: i === front ? 24 : 8,
+              height: 8,
+              background:
+                i === front
+                  ? `linear-gradient(to right, ${frontFeat.from}, ${frontFeat.to})`
+                  : "rgba(84,91,255,0.14)",
               boxShadow: i === front ? `0 0 12px ${frontFeat.from}85` : "none",
-              transition: "width 0.3s ease, background 0.4s ease, box-shadow 0.4s ease",
+              transition:
+                "width 0.3s ease, background 0.4s ease, box-shadow 0.4s ease",
             }}
           />
         ))}
@@ -432,7 +601,7 @@ function CardSwapDeck() {
 }
 
 function SectionBridge() {
-  const ref   = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: false, margin: "0px 0px -40% 0px" });
 
   return (
@@ -464,25 +633,30 @@ function SectionBridge() {
               boxShadow: "0 0 10px rgba(84,91,255,0.8)",
             }}
             initial={{ opacity: 0, scale: 0 }}
-            animate={inView
-              ? { opacity: [0, 1, 0.5, 1], scale: 1 }
-              : { opacity: 0, scale: 0 }}
+            animate={
+              inView
+                ? { opacity: [0, 1, 0.5, 1], scale: 1 }
+                : { opacity: 0, scale: 0 }
+            }
             transition={{
               delay: 0.15 + i * 0.12,
               duration: 0.5,
-              opacity: { repeat: Infinity, duration: 2.4, delay: 0.15 + i * 0.12 },
+              opacity: {
+                repeat: Infinity,
+                duration: 2.4,
+                delay: 0.15 + i * 0.12,
+              },
             }}
           />
         ))}
       </div>
-
     </div>
   );
 }
 
 export default function FeatureGrid() {
   const contentRef = useRef<HTMLDivElement>(null);
-  const inView     = useInView(contentRef, { once: true, margin: "-80px" });
+  const inView = useInView(contentRef, { once: true, margin: "-80px" });
 
   return (
     <>
@@ -500,7 +674,6 @@ export default function FeatureGrid() {
 
         <div ref={contentRef} className="max-w-7xl mx-auto relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-16 xl:gap-24 items-center">
-
             {/* Left: copy + stats — shown first on mobile */}
             <motion.div
               className="lg:order-1"
@@ -548,8 +721,9 @@ export default function FeatureGrid() {
                 transition={{ duration: 0.5, delay: 0.2 }}
                 className="text-copy/70 text-[13px] sm:text-sm md:text-base leading-relaxed mb-6 sm:mb-8 max-w-[400px]"
               >
-                We combine cutting-edge technology with proactive defense mechanisms
-                to create an impenetrable barrier for your browsing experience.
+                We combine cutting-edge technology with proactive defense
+                mechanisms to create an impenetrable barrier for your browsing
+                experience.
               </motion.p>
 
               {/* Stats — matches HeroSection stat card pattern exactly */}
@@ -559,7 +733,11 @@ export default function FeatureGrid() {
                     key={stat.label}
                     initial={{ opacity: 0, y: 18, scale: 0.92 }}
                     animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
-                    transition={{ duration: 0.45, delay: 0.28 + i * 0.09, ease: [0.22, 1, 0.36, 1] }}
+                    transition={{
+                      duration: 0.45,
+                      delay: 0.28 + i * 0.09,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
                     className="group relative overflow-hidden px-2.5 py-2.5 sm:px-3 sm:py-3 md:py-3.5 rounded-xl cursor-default
                       dark:bg-[#0c0d1c]/60 bg-white/85 backdrop-blur-sm
                       border border-[#545BFF]/18 hover:border-[#545BFF]/45
@@ -568,8 +746,10 @@ export default function FeatureGrid() {
                   >
                     {/* Left accent bar — same as HeroSection stat cards */}
                     <div className="absolute left-0 top-2 bottom-2 w-[2px] rounded-full bg-gradient-to-b from-[#545BFF] to-[#b19eef] opacity-70 group-hover:opacity-100 transition-opacity" />
-                    <div className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight mb-0.5 pl-1
-                      text-transparent bg-clip-text bg-gradient-to-r from-[#545BFF] to-[#b19eef]">
+                    <div
+                      className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight mb-0.5 pl-1
+                      text-transparent bg-clip-text bg-gradient-to-r from-[#545BFF] to-[#b19eef]"
+                    >
                       {stat.value}
                     </div>
                     <div className="text-[9px] sm:text-[10px] text-faded font-medium tracking-wide pl-1">
@@ -586,7 +766,18 @@ export default function FeatureGrid() {
                 transition={{ delay: 0.52 }}
                 className="flex items-center gap-2 text-faded/40 text-[10px] font-mono tracking-widest uppercase"
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#545BFF]/50 shrink-0" aria-hidden>
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-[#545BFF]/50 shrink-0"
+                  aria-hidden
+                >
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                 </svg>
                 All 6 defenses · every scan
@@ -598,11 +789,14 @@ export default function FeatureGrid() {
               className="lg:order-2"
               initial={{ opacity: 0, x: 32 }}
               animate={inView ? { opacity: 1, x: 0 } : {}}
-              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.12 }}
+              transition={{
+                duration: 0.7,
+                ease: [0.22, 1, 0.36, 1],
+                delay: 0.12,
+              }}
             >
               <CardSwapDeck />
             </motion.div>
-
           </div>
         </div>
 

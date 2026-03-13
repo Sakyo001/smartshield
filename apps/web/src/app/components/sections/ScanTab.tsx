@@ -347,19 +347,19 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
   // 1 — Greeting + overall verdict
   const verdictPhrase =
     status === "Dangerous"
-      ? `This site is **highly dangerous** with a risk score of **${s} out of 100**. I strongly recommend you **do not visit** this website.`
+      ? `**Bottom line:** This site is **highly dangerous**. I strongly recommend you **do not visit** it.`
       : status === "Warning"
-      ? `This site looks **suspicious** — it scored **${s} out of 100** on our risk scale. You should be careful before interacting with it.`
-      : `Good news — this site looks **safe**! It scored only **${s} out of 100** on our risk scale, meaning no major threats were detected.`;
+      ? `**Bottom line:** This site looks **suspicious**. You should be careful before interacting with it.`
+      : `**Bottom line:** This site looks **safe**. You can browse it normally, but always stay alert.`;
   msgs.push({ id: "verdict", text: verdictPhrase, accent: verdictColor });
 
-  // 2 — Score meaning (contextual)
+  // 2 — Score meaning (contextual - unified traffic light metaphor)
   const scoreMeaning =
-    s >= 70
-      ? `A score of **${s}** is very high. This means our AI model and multiple security layers detected serious red flags. Think of it like a danger meter — the higher the number, the more likely this is a scam or phishing site designed to steal your information.`
-      : s >= 40
-      ? `A score of **${s}** is in the caution zone. We spotted some warning signs, but nothing definitively confirmed as malicious. Think of it like a yellow traffic light — slow down and look both ways before proceeding.`
-      : `A score of **${s}** is low, which is good. The site passed our security checks without raising major concerns. It's like getting a clean bill of health from a doctor.`;
+    s >= 67
+      ? `**Bottom line:** Red light zone — score of **${s}**. Our AI model and multiple security layers detected serious threats. This is likely a scam or phishing site designed to steal your information.`
+      : s >= 34
+      ? `**Bottom line:** Yellow light zone — score of **${s}**. We spotted some warning signs. Proceed with caution and verify legitimacy before entering any personal information.`
+      : `**Bottom line:** Green light zone — score of **${s}**. The site passed our security checks. You can browse it normally.`;
   msgs.push({ id: "score-meaning", text: scoreMeaning, accent: "blue" });
 
   // 3 — Specific threat flags
@@ -401,7 +401,7 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
   if (isHTTP) {
     msgs.push({
       id: "http",
-      text: "This site uses **HTTP instead of HTTPS**, which means your connection is **not encrypted**. Anyone on the same network (like public Wi-Fi) could potentially intercept what you type — including passwords and credit card numbers.",
+      text: "**Bottom line:** Always use HTTPS websites. This site uses **HTTP**, which means your connection is **not encrypted**. Anyone on the same network (like public Wi-Fi) could intercept what you type — passwords, credit cards, personal information.",
       accent: "yellow",
     });
   }
@@ -418,39 +418,43 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
         const now = new Date();
         const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
         if (diffDays < 30)
-          whoisText += `It was created only **${diffDays} day${diffDays !== 1 ? "s" : ""} ago** — that's extremely new. Scam sites are typically created and abandoned within days, so this is a major red flag.`;
+          whoisText += `Domain age: **very new** (${diffDays} day${diffDays !== 1 ? "s" : ""} old), so ownership history is limited.`;
         else if (diffDays < 365)
-          whoisText += `It was created **${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) !== 1 ? "s" : ""} ago**. Relatively new, which isn't necessarily bad, but combined with other factors it's worth noting.`;
+          whoisText += `Domain age: **moderately established** (${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) !== 1 ? "s" : ""} old).`;
         else
-          whoisText += `It's been around for **${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) !== 1 ? "s" : ""}** — established sites are generally more trustworthy, since scammers rarely maintain domains that long.`;
+          whoisText += `Domain age: **well-established** (${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) !== 1 ? "s" : ""} old), indicating longevity.`;
       }
       msgs.push({ id: "whois", text: whoisText.trim(), accent: status === "Dangerous" && whois.creation_date ? "yellow" : "blue" });
     }
   }
 
-  // 7 — SSL (contextual — warns that SSL doesn't mean safe for dangerous sites)
+  // 7 — SSL (unified message with status-specific caveat)
   if (ssl && !ssl.error) {
     const rawIssuer = ssl.issuer || ssl.issuer_organization || null;
     const issuer = rawIssuer && typeof rawIssuer === "object"
       ? (rawIssuer.O || rawIssuer.CN || rawIssuer.organizationName || Object.values(rawIssuer).find((v: unknown) => typeof v === "string") || null) as string | null
       : rawIssuer;
-    if (status === "Dangerous") {
-      msgs.push({
-        id: "ssl",
-        text: issuer
-          ? `Note: This site does have an SSL certificate (issued by **${issuer}**), which might make it look legitimate. But **don't be fooled** — scammers routinely get free SSL certificates to put a padlock icon in your browser. An encrypted connection only means no one else can see your data — it doesn't mean the site itself is trustworthy.`
-          : "Note: This site has an SSL certificate, but that **does not make it safe**. Scammers often use free SSL certificates to display a padlock icon and trick users into thinking the site is legitimate. The padlock only means your connection is encrypted — not that the site is honest.",
-        accent: "yellow",
-      });
-    } else {
-      msgs.push({
-        id: "ssl",
-        text: issuer
-          ? `The site has a valid SSL certificate issued by **${issuer}**. This means your connection is encrypted, which is a positive sign. Just remember that SSL alone doesn't guarantee safety.`
-          : "The site has an SSL certificate (HTTPS), so your connection is encrypted. That's a good baseline, but keep in mind scammers can also get SSL certificates.",
-        accent: "green",
-      });
+
+    let sslText = `**Bottom line:** Connection is encrypted (good), but SSL doesn't guarantee legitimacy. `;
+    if (issuer) {
+      sslText += `SSL certificate verified by **${issuer}**. `;
     }
+    sslText += `An encrypted connection prevents eavesdropping, but scammers can also get SSL certificates. `;
+
+    if (status === "Dangerous") {
+      sslText += `However, given this site's risk profile, I still recommend avoiding it.`;
+    } else if (status === "Warning") {
+      sslText += `Combined with the other warning signs we found, proceed with caution.`;
+    } else {
+      sslText += `This is a positive security indicator along with the other checks.`;
+    }
+
+    const sslAccent = status === "Dangerous" ? "yellow" : status === "Warning" ? "yellow" : "green";
+    msgs.push({
+      id: "ssl",
+      text: sslText,
+      accent: sslAccent,
+    });
   } else if (ssl?.error) {
     msgs.push({
       id: "ssl-err",

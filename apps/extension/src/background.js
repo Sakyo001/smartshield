@@ -1,7 +1,7 @@
 /**
  * Background Script - SmartShield
  * Optimized for fast real-time scanning.
- * 
+ *
  * Key optimizations:
  * - Scans by ROOT DOMAIN (not full URL) — sub-routes reuse the cached result
  * - Single API call for scan (domain-info fetched lazily on demand)
@@ -10,7 +10,7 @@
  * - AbortController for proper request cancellation/timeout
  */
 
-const WHOIS_API_URL = 'https://railway-whois-production.up.railway.app';
+const WHOIS_API_URL = "https://railway-whois-production.up.railway.app";
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 const SCAN_TIMEOUT = 30000;
 const DETAIL_TIMEOUT = 30000;
@@ -28,8 +28,9 @@ const resultCache = new Map();
 const tabNotified = new Map();
 
 // ── Initialize ──
-chrome.storage.local.get(['safeModeEnabled'], (result) => {
-  safeModeEnabled = result.safeModeEnabled !== undefined ? result.safeModeEnabled : true;
+chrome.storage.local.get(["safeModeEnabled"], (result) => {
+  safeModeEnabled =
+    result.safeModeEnabled !== undefined ? result.safeModeEnabled : true;
   updateBadge(safeModeEnabled);
 });
 
@@ -37,7 +38,7 @@ chrome.storage.local.get(['safeModeEnabled'], (result) => {
 function getRootDomain(url) {
   try {
     const u = new URL(url);
-    return u.protocol + '//' + u.hostname;
+    return u.protocol + "//" + u.hostname;
   } catch {
     return url;
   }
@@ -45,20 +46,27 @@ function getRootDomain(url) {
 
 // ── Message Listener ──
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'safeModeChanged') {
+  if (message.action === "openPopup") {
+    if (chrome.action.openPopup) {
+      chrome.action.openPopup().catch(() => {});
+    }
+    sendResponse({ ok: true });
+    return true;
+  }
+  if (message.action === "safeModeChanged") {
     safeModeEnabled = message.enabled;
     updateBadge(safeModeEnabled);
     sendResponse({ success: true });
     return true;
   }
 
-  if (message.action === 'checkURL') {
+  if (message.action === "checkURL") {
     const rootDomain = getRootDomain(message.url);
     scanURL(rootDomain).then(sendResponse);
     return true;
   }
 
-  if (message.action === 'getDetails') {
+  if (message.action === "getDetails") {
     const rootDomain = getRootDomain(message.url);
     fetchDomainDetails(rootDomain).then(sendResponse);
     return true;
@@ -67,29 +75,38 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // ── Badge helpers ──
 function updateBadge(enabled) {
-  chrome.action.setBadgeText({ text: enabled ? 'ON' : 'OFF' });
-  chrome.action.setBadgeBackgroundColor({ color: enabled ? '#10b981' : '#6b7280' });
+  chrome.action.setBadgeText({ text: enabled ? "ON" : "OFF" });
+  chrome.action.setBadgeBackgroundColor({
+    color: enabled ? "#10b981" : "#6b7280",
+  });
 }
 
 function updateTabBadge(tabId, result) {
   if (!result) return;
   if (result.isSuspicious) {
-    chrome.action.setBadgeText({ text: '!', tabId });
+    chrome.action.setBadgeText({ text: "!", tabId });
     chrome.action.setBadgeBackgroundColor({
-      color: result.riskLevel === 'high' ? '#ef4444' : '#f59e0b',
-      tabId
+      color: result.riskLevel === "high" ? "#ef4444" : "#f59e0b",
+      tabId,
     });
   } else {
-    chrome.action.setBadgeText({ text: '✓', tabId });
-    chrome.action.setBadgeBackgroundColor({ color: '#10b981', tabId });
+    chrome.action.setBadgeText({ text: "✓", tabId });
+    chrome.action.setBadgeBackgroundColor({ color: "#10b981", tabId });
   }
 }
 
 // ── Should we skip this URL? ──
 function shouldSkip(url) {
   if (!url) return true;
-  const skip = ['chrome://', 'edge://', 'chrome-extension://', 'about:', 'moz-extension://', 'devtools://'];
-  return skip.some(prefix => url.startsWith(prefix));
+  const skip = [
+    "chrome://",
+    "edge://",
+    "chrome-extension://",
+    "about:",
+    "moz-extension://",
+    "devtools://",
+  ];
+  return skip.some((prefix) => url.startsWith(prefix));
 }
 
 // ── Core: Fast URL scan with dedup + cache (keyed by root domain) ──
@@ -98,22 +115,30 @@ async function scanURL(rootDomain) {
 
   // 1. Check in-memory cache
   const cached = resultCache.get(rootDomain);
-  if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return cached.result;
   }
 
   // 2. Check storage cache
   const storageKey = `result_${rootDomain}`;
   try {
-    const stored = await chrome.storage.local.get([storageKey, `${storageKey}_ts`]);
+    const stored = await chrome.storage.local.get([
+      storageKey,
+      `${storageKey}_ts`,
+    ]);
     if (stored[storageKey] && stored[`${storageKey}_ts`]) {
       const age = Date.now() - stored[`${storageKey}_ts`];
       if (age < CACHE_TTL) {
-        resultCache.set(rootDomain, { result: stored[storageKey], timestamp: stored[`${storageKey}_ts`] });
+        resultCache.set(rootDomain, {
+          result: stored[storageKey],
+          timestamp: stored[`${storageKey}_ts`],
+        });
         return stored[storageKey];
       }
     }
-  } catch (e) { /* continue to API */ }
+  } catch (e) {
+    /* continue to API */
+  }
 
   // 3. Deduplicate in-flight requests
   if (pendingScans.has(rootDomain)) {
@@ -130,7 +155,7 @@ async function scanURL(rootDomain) {
     resultCache.set(rootDomain, { result, timestamp: now });
     chrome.storage.local.set({
       [storageKey]: result,
-      [`${storageKey}_ts`]: now
+      [`${storageKey}_ts`]: now,
     });
     return result;
   } finally {
@@ -141,78 +166,80 @@ async function scanURL(rootDomain) {
 // ── Perform the actual API scan ──
 async function performScan(rootDomain) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort('Scan timeout'), SCAN_TIMEOUT);
+  const timeoutId = setTimeout(
+    () => controller.abort("Scan timeout"),
+    SCAN_TIMEOUT,
+  );
 
   try {
     const response = await fetch(`${WHOIS_API_URL}/api/scan`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: rootDomain }),
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
     if (!response.ok) throw new Error(`API ${response.status}`);
     const data = await response.json();
     return processScanResult(rootDomain, data);
-
   } catch (error) {
     clearTimeout(timeoutId);
-    if (error.name === 'AbortError') {
-      console.warn('Scan timed out for:', rootDomain);
+    if (error.name === "AbortError") {
+      console.warn("Scan timed out for:", rootDomain);
     } else {
-      console.error('Scan error for', rootDomain, error.message);
+      console.error("Scan error for", rootDomain, error.message);
     }
 
     return {
       isSuspicious: false,
-      riskLevel: 'low',
+      riskLevel: "low",
       riskScore: 0,
       warnings: [],
-      decision: 'UNKNOWN',
+      decision: "UNKNOWN",
       confidence: 0,
       details: null,
-      scanPending: true
+      scanPending: true,
     };
   }
 }
 
 // ── Process raw API scan result ──
 function processScanResult(rootDomain, data) {
-  let riskLevel = 'low';
+  let riskLevel = "low";
   let isSuspicious = false;
   let warnings = [];
   let riskScore = 0;
 
-  if (data.decision === 'PHISHING') {
+  if (data.decision === "PHISHING") {
     riskScore = Math.round(data.confidence || 100);
     if (riskScore >= 70) {
-      riskLevel = 'high';
+      riskLevel = "high";
       isSuspicious = true;
-      warnings.push('High risk of phishing detected');
+      warnings.push("High risk of phishing detected");
     } else if (riskScore >= 40) {
-      riskLevel = 'medium';
+      riskLevel = "medium";
       isSuspicious = true;
-      warnings.push('Suspicious activity detected');
+      warnings.push("Suspicious activity detected");
     }
-  } else if (data.decision === 'LEGITIMATE') {
+  } else if (data.decision === "LEGITIMATE") {
     riskScore = Math.round(100 - (data.confidence || 0));
     if (riskScore >= 70) {
-      riskLevel = 'high';
+      riskLevel = "high";
       isSuspicious = true;
-      warnings.push('High risk detected despite legitimate classification');
+      warnings.push("High risk detected despite legitimate classification");
     } else if (riskScore >= 40) {
-      riskLevel = 'medium';
+      riskLevel = "medium";
       isSuspicious = true;
-      warnings.push('Some suspicious indicators detected');
+      warnings.push("Some suspicious indicators detected");
     }
   }
 
-  if (rootDomain.startsWith('http://')) {
-    warnings.push('Insecure HTTP connection - data is not encrypted');
+  if (rootDomain.startsWith("http://")) {
+    warnings.push("Insecure HTTP connection - data is not encrypted");
     if (riskScore < 40) {
       riskScore = 40;
-      riskLevel = 'medium';
+      riskLevel = "medium";
       isSuspicious = true;
     }
   }
@@ -225,21 +252,24 @@ function processScanResult(rootDomain, data) {
     decision: data.decision,
     confidence: data.confidence,
     details: null,
-    rawResponse: data
+    rawResponse: data,
   };
 }
 
 // ── Lazy: Fetch domain details ──
 async function fetchDomainDetails(rootDomain) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort('Detail fetch timeout'), DETAIL_TIMEOUT);
+  const timeoutId = setTimeout(
+    () => controller.abort("Detail fetch timeout"),
+    DETAIL_TIMEOUT,
+  );
 
   try {
     const response = await fetch(`${WHOIS_API_URL}/api/domain-info`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: rootDomain }),
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
@@ -251,9 +281,9 @@ async function fetchDomainDetails(rootDomain) {
       dns: domainData.dns,
       ssl: domainData.ssl,
       riskAdjustment: domainData.risk_adjustment,
-      registrar: domainData.whois?.registrar || 'Unknown',
-      creationDate: domainData.whois?.creation_date || 'Unknown',
-      expirationDate: domainData.whois?.expiration_date || 'Unknown'
+      registrar: domainData.whois?.registrar || "Unknown",
+      creationDate: domainData.whois?.creation_date || "Unknown",
+      expirationDate: domainData.whois?.expiration_date || "Unknown",
     };
 
     // Attach details to cached result
@@ -269,7 +299,7 @@ async function fetchDomainDetails(rootDomain) {
     return details;
   } catch (error) {
     clearTimeout(timeoutId);
-    console.warn('Domain detail fetch failed:', error.message);
+    console.warn("Domain detail fetch failed:", error.message);
     return null;
   }
 }
@@ -278,7 +308,7 @@ async function fetchDomainDetails(rootDomain) {
 // Only scans when the ROOT DOMAIN changes for each tab.
 // Sub-route navigations within the same domain are skipped entirely.
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status !== 'complete' || !tab.url || !safeModeEnabled) return;
+  if (changeInfo.status !== "complete" || !tab.url || !safeModeEnabled) return;
   if (shouldSkip(tab.url)) return;
 
   const rootDomain = getRootDomain(tab.url);
@@ -287,13 +317,13 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (tabNotified.get(tabId) === rootDomain) {
     // Just update badge from cache
     const cached = resultCache.get(rootDomain);
-    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
       updateTabBadge(tabId, cached.result);
     }
     return;
   }
 
-  scanURL(rootDomain).then(result => {
+  scanURL(rootDomain).then((result) => {
     if (!result) return;
 
     // Mark this tab as notified for this domain
@@ -303,51 +333,68 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
     // Send result to content script for banner display
     // Check if user has badge pinned so it stays persistent on new pages
-    chrome.storage.local.get(['badgeForceVisible'], (flags) => {
-      chrome.tabs.sendMessage(tabId, {
-        action: 'showScanResult',
-        result,
-        rootDomain,
-        persistent: !!flags.badgeForceVisible
-      }).catch(() => {});
+    chrome.storage.local.get(["badgeForceVisible"], (flags) => {
+      chrome.tabs
+        .sendMessage(tabId, {
+          action: "showScanResult",
+          result,
+          rootDomain,
+          persistent: !!flags.badgeForceVisible,
+        })
+        .catch(() => {});
     });
 
     if (result.isSuspicious) {
-      const isHighRisk = result.riskLevel === 'high' || result.riskScore >= 70;
+      const isHighRisk = result.riskLevel === "high" || result.riskScore >= 70;
       chrome.notifications.create({
-        type: 'basic',
-        iconUrl: 'images/icon48.png',
-        title: isHighRisk ? '🚨 Dangerous Website Detected' : '⚠️ Suspicious Website',
+        type: "basic",
+        iconUrl: "images/icon48.png",
+        title: isHighRisk
+          ? "🚨 Dangerous Website Detected"
+          : "⚠️ Suspicious Website",
         message: isHighRisk
-          ? 'SmartShield has detected a phishing attempt. Leave this site immediately.'
-          : 'SmartShield has flagged this page as suspicious. Proceed with caution.',
+          ? "SmartShield has detected a phishing attempt. Leave this site immediately."
+          : "SmartShield has flagged this page as suspicious. Proceed with caution.",
         priority: 2,
-        requireInteraction: isHighRisk
+        requireInteraction: isHighRisk,
       });
     }
   });
 });
 
-// ── On tab switch: restore badge in both toolbar AND page ──
+// ── On tab switch: restore badge only if user pinned it via "Show Badge on Page" ──
 chrome.tabs.onActivated.addListener((activeInfo) => {
   chrome.tabs.get(activeInfo.tabId, (tab) => {
     if (!tab || !tab.url || shouldSkip(tab.url)) return;
     const rootDomain = getRootDomain(tab.url);
 
-    chrome.storage.local.get(['badgeForceVisible'], (flags) => {
+    chrome.storage.local.get(["badgeForceVisible"], (flags) => {
       const persistent = !!flags.badgeForceVisible;
+
+      // Only re-send to content script if the user explicitly pinned the badge.
+      // Otherwise the badge auto-dismissed for a reason and should stay gone.
+      if (!persistent) {
+        // Still update the toolbar badge from cache
+        const cached = resultCache.get(rootDomain);
+        if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+          updateTabBadge(activeInfo.tabId, cached.result);
+        }
+        return;
+      }
 
       // Always update toolbar badge from cache
       const cached = resultCache.get(rootDomain);
-      if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
         updateTabBadge(activeInfo.tabId, cached.result);
-        // Re-send to content script so the floating badge re-appears after auto-dismiss
-        chrome.tabs.sendMessage(activeInfo.tabId, {
-          action: 'showScanResult',
-          result: cached.result,
-          rootDomain,
-          persistent
-        }).catch(() => {});
+        // Re-send to content script so the floating badge re-appears (user pinned it)
+        chrome.tabs
+          .sendMessage(activeInfo.tabId, {
+            action: "showScanResult",
+            result: cached.result,
+            rootDomain,
+            persistent,
+          })
+          .catch(() => {});
         return;
       }
 
@@ -358,14 +405,19 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
           const age = Date.now() - stored[`${storageKey}_ts`];
           if (age < CACHE_TTL) {
             const result = stored[storageKey];
-            resultCache.set(rootDomain, { result, timestamp: stored[`${storageKey}_ts`] });
-            updateTabBadge(activeInfo.tabId, result);
-            chrome.tabs.sendMessage(activeInfo.tabId, {
-              action: 'showScanResult',
+            resultCache.set(rootDomain, {
               result,
-              rootDomain,
-              persistent
-            }).catch(() => {});
+              timestamp: stored[`${storageKey}_ts`],
+            });
+            updateTabBadge(activeInfo.tabId, result);
+            chrome.tabs
+              .sendMessage(activeInfo.tabId, {
+                action: "showScanResult",
+                result,
+                rootDomain,
+                persistent,
+              })
+              .catch(() => {});
           }
         }
       });
@@ -387,18 +439,18 @@ chrome.runtime.onStartup.addListener(() => {
   updateBadge(safeModeEnabled);
 });
 
-console.log('SmartShield background loaded — root-domain scanning');
+console.log("SmartShield background loaded — root-domain scanning");
 
 // ── Keep-alive ping to prevent Render cold starts (every 14 minutes) ──
 // MV3 service workers get suspended — chrome.alarms survives suspension unlike setInterval
 function pingServer() {
-  fetch(`${WHOIS_API_URL}/health`, { method: 'GET' })
-    .then(() => console.log('SmartShield: server keep-alive ping sent'))
+  fetch(`${WHOIS_API_URL}/health`, { method: "GET" })
+    .then(() => console.log("SmartShield: server keep-alive ping sent"))
     .catch(() => {}); // silently ignore network errors
 }
 
-chrome.alarms.create('keepAlive', { periodInMinutes: 14 });
+chrome.alarms.create("keepAlive", { periodInMinutes: 14 });
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === 'keepAlive') pingServer();
+  if (alarm.name === "keepAlive") pingServer();
 });
 pingServer(); // ping immediately on extension load/wake
