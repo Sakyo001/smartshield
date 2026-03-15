@@ -99,16 +99,11 @@ export default function HeroSection() {
 
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
-      const lowMemory =
-        typeof (navigator as Navigator & { deviceMemory?: number }).deviceMemory === "number" &&
-        ((navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8) <= 4;
-      const lowCpu = typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4;
       const smallViewport = window.innerWidth < 768;
-
-      const lowEnd = reducedMotion || coarsePointer || lowMemory || lowCpu || smallViewport;
       setAllowAnimatedEffects(!reducedMotion && !coarsePointer);
 
-      if (lowEnd) {
+      // Desktop should always render the 3D shield; only disable it on mobile viewport.
+      if (smallViewport) {
         setShowShield3D(false);
         return;
       }
