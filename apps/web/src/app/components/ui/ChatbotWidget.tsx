@@ -51,7 +51,8 @@ const FAQS = [
   },
 ];
 
-const TYPING_SPEED_MS = 14; // ms per character
+const TYPING_FRAME_MS = 32;
+const TYPING_CHARS_PER_FRAME = 2;
 
 // ─── Small HUD corner brackets (mirrors ScrollToTopButton aesthetic) ─────────
 function HudCorners() {
@@ -71,38 +72,80 @@ export default function ChatbotWidget() {
   const [selected, setSelected] = useState<number | null>(null);
   const [displayed, setDisplayed] = useState("");
   const [typing, setTyping] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const { theme } = useTheme();
   const isDark = theme === "dark";
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const lastTickRef = useRef(0);
+  const typingTextRef = useRef("");
+  const typingIndexRef = useRef(0);
   const bodyRef = useRef<HTMLDivElement>(null);
+
+  const stopTyping = () => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+  };
 
   // Start typing animation for a chosen FAQ
   const startTyping = (idx: number) => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
+    stopTyping();
     setSelected(idx);
     setDisplayed("");
     setTyping(true);
-    const full = FAQS[idx].a;
-    let i = 0;
-    intervalRef.current = setInterval(() => {
-      i++;
-      setDisplayed(full.slice(0, i));
-      if (i >= full.length) {
-        clearInterval(intervalRef.current!);
-        setTyping(false);
+    typingTextRef.current = FAQS[idx].a;
+    typingIndexRef.current = 0;
+    lastTickRef.current = 0;
+
+    const tick = (ts: number) => {
+      if (lastTickRef.current === 0) {
+        lastTickRef.current = ts;
       }
-    }, TYPING_SPEED_MS);
+
+      const elapsed = ts - lastTickRef.current;
+      if (elapsed >= TYPING_FRAME_MS) {
+        lastTickRef.current = ts;
+        typingIndexRef.current = Math.min(
+          typingIndexRef.current + TYPING_CHARS_PER_FRAME,
+          typingTextRef.current.length
+        );
+        setDisplayed(typingTextRef.current.slice(0, typingIndexRef.current));
+
+        if (typingIndexRef.current >= typingTextRef.current.length) {
+          stopTyping();
+          setTyping(false);
+          return;
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
   };
 
   const reset = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
+    stopTyping();
     setSelected(null);
     setDisplayed("");
     setTyping(false);
+    typingIndexRef.current = 0;
+    typingTextRef.current = "";
   };
 
   // Cleanup on unmount
-  useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
+  useEffect(() => () => { stopTyping(); }, []);
+
+  useEffect(() => {
+    const updateViewport = () => {
+      setIsMobileViewport(window.innerWidth < 640);
+    };
+
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, []);
 
   // Auto-scroll the body as text is typed
   useEffect(() => {
@@ -168,17 +211,17 @@ export default function ChatbotWidget() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.88, y: 18 }}
             transition={{ type: "spring", stiffness: 300, damping: 26 }}
-            className="fixed bottom-[152px] right-7 z-99 w-[340px] sm:w-[380px] rounded-2xl overflow-hidden"
+            className="fixed bottom-[124px] right-3 sm:bottom-[152px] sm:right-7 z-99 w-[calc(100vw-24px)] max-w-[330px] sm:w-[380px] rounded-xl sm:rounded-2xl overflow-hidden"
             style={panelStyle}
           >
             {/* Header */}
             <div
-              className="px-4 py-3 flex items-center gap-3 border-b"
+              className="px-3 py-2.5 sm:px-4 sm:py-3 flex items-center gap-2.5 sm:gap-3 border-b"
               style={{ borderColor: headerBorder }}
             >
               {/* Avatar */}
               <div
-                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                className="relative flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg sm:rounded-xl"
                 style={{ background: "linear-gradient(135deg,#545BFF 0%,#9B73FF 100%)" }}
               >
                 {/* Shield icon */}
@@ -200,10 +243,10 @@ export default function ChatbotWidget() {
               </div>
 
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold leading-none" style={{ color: headingText }}>
+                <p className="text-[13px] sm:text-sm font-bold leading-none" style={{ color: headingText }}>
                   SmartShield AI
                 </p>
-                <p className="text-[11px] mt-0.5" style={{ color: subText }}>
+                <p className="text-[10px] sm:text-[11px] mt-0.5" style={{ color: subText }}>
                   Ask me anything · always here
                 </p>
               </div>
@@ -223,8 +266,16 @@ export default function ChatbotWidget() {
             {/* Body */}
             <div
               ref={bodyRef}
-              className="overflow-y-auto px-4 py-3 space-y-2.5 scrollbar-hide"
-              style={{ maxHeight: selected === null ? "360px" : "300px" }}
+              className="overflow-y-auto px-3 py-2.5 sm:px-4 sm:py-3 space-y-2 sm:space-y-2.5 scrollbar-hide"
+              style={{
+                maxHeight: isMobileViewport
+                  ? selected === null
+                    ? "300px"
+                    : "240px"
+                  : selected === null
+                    ? "360px"
+                    : "300px",
+              }}
             >
               {selected === null ? (
                 <>
@@ -239,7 +290,7 @@ export default function ChatbotWidget() {
                       </svg>
                     </div>
                     <div
-                      className="rounded-2xl rounded-tl-sm px-3.5 py-2.5 text-xs leading-relaxed flex-1"
+                      className="rounded-2xl rounded-tl-sm px-3 py-2 sm:px-3.5 sm:py-2.5 text-[11px] sm:text-xs leading-relaxed flex-1"
                       style={{ background: bubbleBg, color: bubbleText }}
                     >
                       Hi! I'm SmartShield AI. Tap a question below and I'll explain how I keep you safe online.
@@ -252,7 +303,7 @@ export default function ChatbotWidget() {
                       <button
                         key={i}
                         onClick={() => startTyping(i)}
-                        className="w-full text-left text-xs px-3 py-2.5 rounded-xl flex items-center gap-2.5 transition-all duration-150"
+                        className="w-full text-left text-[11px] sm:text-xs px-2.5 py-2 sm:px-3 sm:py-2.5 rounded-lg sm:rounded-xl flex items-center gap-2 sm:gap-2.5 transition-all duration-150"
                         style={{ background: chipBg, border: `1px solid ${chipBorder}`, color: chipText }}
                         onMouseEnter={(e) => {
                           const el = e.currentTarget as HTMLElement;
@@ -281,7 +332,7 @@ export default function ChatbotWidget() {
                   {/* User bubble */}
                   <div className="flex justify-end">
                     <div
-                      className="max-w-[80%] rounded-2xl rounded-br-sm px-3.5 py-2.5 text-xs leading-relaxed font-medium"
+                      className="max-w-[82%] rounded-2xl rounded-br-sm px-3 py-2 sm:px-3.5 sm:py-2.5 text-[11px] sm:text-xs leading-relaxed font-medium"
                       style={{ background: "linear-gradient(135deg,#545BFF,#7B73FF)", color: "#fff" }}
                     >
                       {FAQS[selected].q}
@@ -299,7 +350,7 @@ export default function ChatbotWidget() {
                       </svg>
                     </div>
                     <div
-                      className="rounded-2xl rounded-tl-sm px-3.5 py-2.5 text-xs leading-relaxed flex-1 whitespace-pre-line"
+                      className="rounded-2xl rounded-tl-sm px-3 py-2 sm:px-3.5 sm:py-2.5 text-[11px] sm:text-xs leading-relaxed flex-1 whitespace-pre-line"
                       style={{ background: bubbleBg, color: bubbleText }}
                     >
                       {displayed}
@@ -318,10 +369,10 @@ export default function ChatbotWidget() {
 
             {/* Footer — only in answer view */}
             {selected !== null && (
-              <div className="px-4 pb-3.5 pt-1">
+              <div className="px-3 sm:px-4 pb-3 pt-1">
                 <button
                   onClick={reset}
-                  className="w-full text-xs py-2 rounded-xl font-medium flex items-center justify-center gap-1.5 transition-all duration-150"
+                  className="w-full text-[11px] sm:text-xs py-2 rounded-lg sm:rounded-xl font-medium flex items-center justify-center gap-1.5 transition-all duration-150"
                   style={{
                     background: isDark ? "rgba(84,91,255,0.10)" : "rgba(84,91,255,0.07)",
                     border: isDark ? "1px solid rgba(84,91,255,0.24)" : "1px solid rgba(84,91,255,0.20)",
@@ -358,7 +409,7 @@ export default function ChatbotWidget() {
         transition={{ type: "spring", stiffness: 320, damping: 26, delay: 0.2 }}
         whileHover={{ scale: 1.1, y: -3 }}
         whileTap={{ scale: 0.86 }}
-        className="fixed bottom-[88px] right-7 z-100 w-[52px] h-[52px] rounded-xl flex items-center justify-center cursor-pointer overflow-visible"
+        className="fixed bottom-[86px] right-3 sm:bottom-[88px] sm:right-7 z-100 w-[46px] h-[46px] sm:w-[52px] sm:h-[52px] rounded-lg sm:rounded-xl flex items-center justify-center cursor-pointer overflow-visible"
         style={btnStyle}
       >
         {/* Pulse ring — only when closed */}

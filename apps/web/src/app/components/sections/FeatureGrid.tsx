@@ -250,9 +250,11 @@ function ScanBeam({ color }: { color: string }) {
 function FeatureCard({
   feature,
   isFront,
+  compact = false,
 }: {
   feature: (typeof FEATURES)[number];
   isFront: boolean;
+  compact?: boolean;
 }) {
   const accentGrad = `linear-gradient(155deg, ${feature.from}, ${feature.to})`;
 
@@ -273,7 +275,7 @@ function FeatureCard({
       <DeckDotGrid />
 
       {/* Scanning beam only on front card */}
-      {isFront && <ScanBeam color={feature.from} />}
+      {isFront && !compact && <ScanBeam color={feature.from} />}
 
       {/* Top gradient wash */}
       <div
@@ -320,7 +322,7 @@ function FeatureCard({
       </div>
 
       {/* Card body */}
-      <div className="relative z-10 flex flex-col flex-1 px-5 pt-4 pb-3">
+      <div className={`relative z-10 flex flex-col flex-1 ${compact ? "px-4 pt-3 pb-2.5" : "px-5 pt-4 pb-3"}`}>
         {/* Left accent bar */}
         <div
           className="absolute left-0 top-0 bottom-0 w-[2.5px] rounded-r-full"
@@ -332,8 +334,8 @@ function FeatureCard({
         />
 
         {/* Icon + title row */}
-        <div className="flex items-start gap-3 mb-3">
-          <div className="relative shrink-0 w-11 h-11">
+        <div className={`flex items-start ${compact ? "gap-2.5 mb-2.5" : "gap-3 mb-3"}`}>
+          <div className={`relative shrink-0 ${compact ? "w-10 h-10" : "w-11 h-11"}`}>
             {/* Icon glow halo */}
             <div
               className="absolute inset-0 rounded-xl blur-md opacity-35"
@@ -350,7 +352,7 @@ function FeatureCard({
               <IconRenderer type={feature.icon} color={feature.from} />
             </div>
             {/* Pulse scan ring around icon — front card only */}
-            {isFront && (
+            {isFront && !compact && (
               <div
                 className="absolute -inset-1.5 rounded-2xl border pointer-events-none"
                 style={{
@@ -362,10 +364,10 @@ function FeatureCard({
           </div>
 
           <div className="flex-1 min-w-0">
-            <h3 className="text-[1.05rem] font-extrabold text-heading tracking-tight leading-tight">
+            <h3 className={`${compact ? "text-[1rem]" : "text-[1.05rem]"} font-extrabold text-heading tracking-tight leading-tight`}>
               {feature.title}
             </h3>
-            {isFront && (
+            {isFront && !compact && (
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span
                   className="w-[5px] h-[5px] rounded-full shrink-0 animate-pulse"
@@ -380,7 +382,7 @@ function FeatureCard({
         </div>
 
         {/* Description */}
-        <p className="text-copy/65 text-[13px] leading-relaxed flex-1 mb-3">
+        <p className={`text-copy/65 ${compact ? "text-[12.5px]" : "text-[13px]"} leading-relaxed flex-1 mb-3`}>
           {feature.description}
         </p>
 
@@ -431,7 +433,7 @@ function FeatureCard({
           ))}
         </div>
 
-        {isFront && (
+        {isFront && !compact && (
           <p className="mt-2 text-[8px] text-faded/28 font-mono flex items-center gap-1.5">
             <svg
               width="8"
@@ -458,8 +460,23 @@ function CardSwapDeck() {
   const count = FEATURES.length;
   const [front, setFront] = useState(0);
   const [hovered, setHovered] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const locked = useRef(false);
   const dragX = useRef(0);
+
+  useEffect(() => {
+    const updateViewport = () => {
+      setIsMobileViewport(window.innerWidth < 768);
+    };
+
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, []);
+
+  const shownCount = isMobileViewport ? 2 : SHOWN;
+  const cardHeight = isMobileViewport ? 332 : CARD_H;
+  const deckHeight = cardHeight + (shownCount - 1) * PEEK + 8;
 
   const advance = useCallback(
     (dir = 1) => {
@@ -485,16 +502,16 @@ function CardSwapDeck() {
 
   /* Auto-cycle — paused while hovering the deck */
   useEffect(() => {
-    if (hovered) return;
+    if (hovered || isMobileViewport) return;
     const id = setInterval(() => advance(1), 4200);
     return () => clearInterval(id);
-  }, [advance, hovered]);
+  }, [advance, hovered, isMobileViewport]);
 
   const frontFeat = FEATURES[front];
 
   return (
     <div className="w-full flex flex-col items-center gap-5">
-      <div className="relative w-full" style={{ height: DECK_H }}>
+      <div className="relative w-full" style={{ height: deckHeight }}>
         {/* Dynamic ambient glow — hue follows front card accent */}
         <div
           className="absolute -inset-8 rounded-[40px] blur-3xl pointer-events-none transition-all duration-700"
@@ -506,7 +523,7 @@ function CardSwapDeck() {
         {/* Deck interactive area */}
         <div
           className="relative w-full touch-pan-y"
-          style={{ height: DECK_H }}
+          style={{ height: deckHeight }}
           onPointerDown={(e) => {
             dragX.current = e.clientX;
           }}
@@ -519,8 +536,8 @@ function CardSwapDeck() {
         >
           {FEATURES.map((feat, i) => {
             const pos = (i - front + count) % count;
-            const vis = pos < SHOWN;
-            const zIdx = vis ? SHOWN - pos : 0;
+            const vis = pos < shownCount;
+            const zIdx = vis ? shownCount - pos : 0;
 
             return (
               <motion.div
@@ -528,18 +545,18 @@ function CardSwapDeck() {
                 style={{
                   position: "absolute",
                   inset: 0,
-                  height: CARD_H,
+                  height: cardHeight,
                   zIndex: zIdx,
                   cursor: pos === 0 ? "pointer" : "default",
                   willChange: "transform, opacity",
                 }}
                 animate={{
-                  y: vis ? pos * PEEK : CARD_H + 24,
+                  y: vis ? pos * PEEK : cardHeight + 24,
                   scale: vis ? 1 - pos * SCALE_D : 0.78,
-                  rotateZ: vis ? (ROTATE_Z[pos] ?? 0) : 0,
+                  rotateZ: vis ? (isMobileViewport ? 0 : (ROTATE_Z[pos] ?? 0)) : 0,
                   opacity: vis ? 1 - pos * OPACITY_D : 0,
                   filter:
-                    vis && pos > 0
+                    !isMobileViewport && vis && pos > 0
                       ? `blur(${pos * 0.45}px) saturate(0.65)`
                       : "blur(0px) saturate(1)",
                 }}
@@ -547,7 +564,7 @@ function CardSwapDeck() {
                 onClick={pos === 0 ? () => advance(1) : undefined}
                 whileTap={pos === 0 ? { scale: 0.993 } : {}}
               >
-                <FeatureCard feature={feat} isFront={pos === 0} />
+                <FeatureCard feature={feat} isFront={pos === 0} compact={isMobileViewport} />
               </motion.div>
             );
           })}
@@ -662,7 +679,7 @@ export default function FeatureGrid() {
     <>
       <section
         id="features"
-        className="min-h-screen py-10 sm:py-12 md:py-16 lg:py-20 px-4 sm:px-5 md:px-6 bg-page relative overflow-hidden flex flex-col justify-center"
+        className="min-h-screen py-8 sm:py-12 md:py-16 lg:py-20 px-4 sm:px-5 md:px-6 bg-page relative overflow-hidden flex flex-col justify-center"
       >
         {/* Ambient glow blobs */}
         <div className="absolute inset-0 pointer-events-none">
@@ -673,7 +690,7 @@ export default function FeatureGrid() {
         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#545BFF]/35 to-transparent" />
 
         <div ref={contentRef} className="max-w-7xl mx-auto relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-16 xl:gap-24 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10 lg:gap-16 xl:gap-24 items-center">
             {/* Left: copy + stats — shown first on mobile */}
             <motion.div
               className="lg:order-1"
@@ -686,7 +703,7 @@ export default function FeatureGrid() {
                 initial={{ opacity: 0, y: -10 }}
                 animate={inView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: 0.05 }}
-                className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full mb-4 sm:mb-5
+                className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full mb-3.5 sm:mb-5
                   dark:bg-[#545BFF]/10 bg-[#545BFF]/12
                   dark:border-[#545BFF]/20 border-[#545BFF]/30 border
                   backdrop-blur-sm shadow-sm dark:shadow-none"
@@ -705,7 +722,7 @@ export default function FeatureGrid() {
                 initial={{ opacity: 0, y: 14 }}
                 animate={inView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.55, delay: 0.13 }}
-                className="text-2xl sm:text-3xl md:text-[2.5rem] font-extrabold text-heading tracking-tight leading-[1.1] mb-3 sm:mb-4"
+                className="text-[1.85rem] sm:text-3xl md:text-[2.5rem] font-extrabold text-heading tracking-tight leading-[1.1] mb-3 sm:mb-4"
               >
                 Six Ways{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#545BFF] to-[#b19eef]">
@@ -719,7 +736,7 @@ export default function FeatureGrid() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={inView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                className="text-copy/70 text-[13px] sm:text-sm md:text-base leading-relaxed mb-6 sm:mb-8 max-w-[400px]"
+                className="text-copy/70 text-[13px] sm:text-sm md:text-base leading-relaxed mb-5 sm:mb-8 max-w-[400px]"
               >
                 We combine cutting-edge technology with proactive defense
                 mechanisms to create an impenetrable barrier for your browsing
@@ -727,7 +744,7 @@ export default function FeatureGrid() {
               </motion.p>
 
               {/* Stats — matches HeroSection stat card pattern exactly */}
-              <div className="grid grid-cols-3 gap-2 sm:gap-2.5 md:gap-3 mb-5 sm:mb-6">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5 md:gap-3 mb-4.5 sm:mb-6">
                 {STATS.map((stat, i) => (
                   <motion.div
                     key={stat.label}
@@ -738,7 +755,7 @@ export default function FeatureGrid() {
                       delay: 0.28 + i * 0.09,
                       ease: [0.22, 1, 0.36, 1],
                     }}
-                    className="group relative overflow-hidden px-2.5 py-2.5 sm:px-3 sm:py-3 md:py-3.5 rounded-xl cursor-default
+                    className="group relative overflow-hidden px-2 py-2.5 sm:px-3 sm:py-3 md:py-3.5 rounded-xl cursor-default
                       dark:bg-[#0c0d1c]/60 bg-white/85 backdrop-blur-sm
                       border border-[#545BFF]/18 hover:border-[#545BFF]/45
                       shadow-[0_1px_10px_rgba(84,91,255,0.07)]

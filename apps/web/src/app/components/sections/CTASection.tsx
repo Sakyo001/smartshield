@@ -2,84 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useCallback } from "react";
+import { useRef } from "react";
 import { motion, useInView } from "motion/react";
-
-/* â”€â”€ Animated dot-grid canvas â€” mirrors HeroSection â”€â”€ */
-function DotGrid() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animRef = useRef<number>(0);
-  const nodesRef = useRef<{ x: number; y: number; vx: number; vy: number }[]>([]);
-  const lastRef = useRef(0);
-
-  const initNodes = useCallback((w: number, h: number) => {
-    const count = Math.min(Math.floor((w * h) / 34000), 22);
-    nodesRef.current = Array.from({ length: count }, () => ({
-      x: Math.random() * w,
-      y: Math.random() * h,
-      vx: (Math.random() - 0.5) * 0.18,
-      vy: (Math.random() - 0.5) * 0.18,
-    }));
-  }, []);
-
-  useEffect(() => {
-    const cvs = canvasRef.current;
-    if (!cvs) return;
-    const ctx = cvs.getContext("2d")!;
-    let w = (cvs.width = cvs.offsetWidth);
-    let h = (cvs.height = cvs.offsetHeight);
-    initNodes(w, h);
-    const onResize = () => {
-      w = cvs.width = cvs.offsetWidth;
-      h = cvs.height = cvs.offsetHeight;
-      initNodes(w, h);
-    };
-    window.addEventListener("resize", onResize);
-    const draw = (ts: number) => {
-      animRef.current = requestAnimationFrame(draw);
-      if (ts - lastRef.current < 34) return;
-      lastRef.current = ts;
-      ctx.clearRect(0, 0, w, h);
-      const nodes = nodesRef.current;
-      for (const n of nodes) {
-        n.x += n.vx; n.y += n.vy;
-        if (n.x < 0 || n.x > w) n.vx *= -1;
-        if (n.y < 0 || n.y > h) n.vy *= -1;
-      }
-      const maxDist = 85;
-      const maxDist2 = maxDist * maxDist;
-      for (let i = 0; i < nodes.length; i++) {
-        for (let j = i + 1; j < nodes.length; j++) {
-          const dx = nodes[i].x - nodes[j].x;
-          const dy = nodes[i].y - nodes[j].y;
-          const dist2 = dx * dx + dy * dy;
-          if (dist2 < maxDist2) {
-            const alpha = (1 - Math.sqrt(dist2) / maxDist) * 0.22;
-            ctx.beginPath();
-            ctx.moveTo(nodes[i].x, nodes[i].y);
-            ctx.lineTo(nodes[j].x, nodes[j].y);
-            ctx.strokeStyle = `rgba(84,91,255,${alpha})`;
-            ctx.lineWidth = 0.65;
-            ctx.stroke();
-          }
-        }
-      }
-      for (const n of nodes) {
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, 1.6, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(84,91,255,0.5)";
-        ctx.fill();
-      }
-    };
-    animRef.current = requestAnimationFrame(draw);
-    return () => {
-      cancelAnimationFrame(animRef.current);
-      window.removeEventListener("resize", onResize);
-    };
-  }, [initNodes]);
-
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />;
-}
+import DotGridCanvas from "../ui/DotGridCanvas";
 
 /* â”€â”€ Pulsing scan rings â”€â”€ */
 function ScanRings() {
@@ -125,7 +50,7 @@ export default function CTASection() {
     >
       {/* â”€â”€ Dot-grid canvas â”€â”€ */}
       <div className="absolute inset-0 z-[1]">
-        <DotGrid />
+        <DotGridCanvas maxNodes={22} />
       </div>
 
       {/* â”€â”€ Gradient vignette overlays â”€â”€ */}

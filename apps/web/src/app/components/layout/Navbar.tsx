@@ -71,19 +71,42 @@ export default function Navbar() {
   const effectiveTheme = mounted ? theme : "dark";
 
   useEffect(() => {
-    const onScroll = () => {
+    const sections = ["home", "scan", "about", "faq"];
+    const sectionEls = sections
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => Boolean(el));
+
+    let ticking = false;
+    let rafId: number | null = null;
+
+    const updateState = () => {
       setIsScrolled(window.scrollY > 20);
-      const sections = ["home", "scan", "about", "faq"];
-      for (const id of sections) {
-        const el = document.getElementById(id);
-        if (el) {
-          const { top } = el.getBoundingClientRect();
-          if (top >= -100 && top <= 300) { setActiveSection(id); break; }
+      for (const el of sectionEls) {
+        const { top } = el.getBoundingClientRect();
+        if (top >= -100 && top <= 300) {
+          setActiveSection(el.id);
+          break;
         }
       }
+      ticking = false;
+      rafId = null;
     };
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      rafId = window.requestAnimationFrame(updateState);
+    };
+
+    updateState();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("resize", updateState);
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", updateState);
+      if (rafId !== null) window.cancelAnimationFrame(rafId);
+    };
   }, []);
 
   const handleSmoothScroll = (
@@ -100,7 +123,17 @@ export default function Navbar() {
       window.dispatchEvent(
         new CustomEvent("smartshield:tabchange", { detail: { tab: targetId } })
       );
+      return;
     }
+
+    // Fallback for deferred sections: persist hash and retry once after mount.
+    window.location.hash = targetId;
+    window.setTimeout(() => {
+      const retryEl = document.getElementById(targetId);
+      if (!retryEl) return;
+      retryEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      setActiveSection(targetId);
+    }, 120);
   };
 
   return (
