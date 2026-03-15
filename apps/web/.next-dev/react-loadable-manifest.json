@@ -1,0 +1,46 @@
+{
+  "..\\..\\..\\node_modules\\.pnpm\\@react-three+drei@10.7.7_@react-three+fiber@9.5.0_@types+react@19.1.0_react-dom@19.1.0_react@_rx325guhtwka672cfk2ivxboqe\\node_modules\\@react-three\\drei\\core\\VideoTexture.js -> hls.js": {
+    "id": "..\\..\\..\\node_modules\\.pnpm\\@react-three+drei@10.7.7_@react-three+fiber@9.5.0_@types+react@19.1.0_react-dom@19.1.0_react@_rx325guhtwka672cfk2ivxboqe\\node_modules\\@react-three\\drei\\core\\VideoTexture.js -> hls.js",
+    "files": []
+  },
+  "..\\..\\..\\node_modules\\.pnpm\\@react-three+drei@10.7.7_@react-three+fiber@9.5.0_@types+react@19.1.0_react-dom@19.1.0_react@_rx325guhtwka672cfk2ivxboqe\\node_modules\\@react-three\\drei\\web\\FaceLandmarker.js -> @mediapipe/tasks-vision": {
+    "id": "..\\..\\..\\node_modules\\.pnpm\\@react-three+drei@10.7.7_@react-three+fiber@9.5.0_@types+react@19.1.0_react-dom@19.1.0_react@_rx325guhtwka672cfk2ivxboqe\\node_modules\\@react-three\\drei\\web\\FaceLandmarker.js -> @mediapipe/tasks-vision",
+    "files": []
+  },
+  "..\\..\\..\\node_modules\\.pnpm\\next@15.5.7_react-dom@19.1.0_react@19.1.0__react@19.1.0\\node_modules\\next\\dist\\client\\dev\\hot-reloader\\app\\use-websocket.js -> @vercel/turbopack-ecmascript-runtime/browser/dev/hmr-client/hmr-client.ts": {
+    "id": "..\\..\\..\\node_modules\\.pnpm\\next@15.5.7_react-dom@19.1.0_react@19.1.0__react@19.1.0\\node_modules\\next\\dist\\client\\dev\\hot-reloader\\app\\use-websocket.js -> @vercel/turbopack-ecmascript-runtime/browser/dev/hmr-client/hmr-client.ts",
+    "files": [
+      "static/chunks/_app-pages-browser_node_modules_pnpm_next_15_5_7_react-dom_19_1_0_react_19_1_0__react_19_1_0_-214dc9.js"
+    ]
+  },
+  "app\\components\\sections\\DeferredScanTab.tsx -> ./ScanTab": {
+    "id": "app\\components\\sections\\DeferredScanTab.tsx -> ./ScanTab",
+    "files": [
+      "static/chunks/_app-pages-browser_src_app_components_sections_ScanTab_tsx.js"
+    ]
+  },
+  "app\\components\\sections\\HeroSection.tsx -> ../ui/ShieldModel": {
+    "id": "app\\components\\sections\\HeroSection.tsx -> ../ui/ShieldModel",
+    "files": [
+      "static/chunks/_app-pages-browser_src_app_components_ui_ShieldModel_tsx.js"
+    ]
+  },
+  "app\\components\\ui\\DeferredChatbot.tsx -> ./ChatbotWidget": {
+    "id": "app\\components\\ui\\DeferredChatbot.tsx -> ./ChatbotWidget",
+    "files": [
+      "static/chunks/_app-pages-browser_src_app_components_ui_ChatbotWidget_tsx.js"
+    ]
+  },
+  "app\\providers.tsx -> ./components/ui/CookieConsent": {
+    "id": "app\\providers.tsx -> ./components/ui/CookieConsent",
+    "files": [
+      "static/chunks/_app-pages-browser_src_app_components_ui_CookieConsent_tsx.js"
+    ]
+  },
+  "app\\providers.tsx -> ./components/ui/TermsModal": {
+    "id": "app\\providers.tsx -> ./components/ui/TermsModal",
+    "files": [
+      "static/chunks/_app-pages-browser_src_app_components_ui_TermsModal_tsx.js"
+    ]
+  }
+}
