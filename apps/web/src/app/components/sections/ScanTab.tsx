@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion, useInView, AnimatePresence, useMotionValue, useSpring, useTransform } from "motion/react";
+import DotGridCanvas from "../ui/DotGridCanvas";
 
 /* ─────────────────────────────────────────────
    Types
@@ -43,84 +44,6 @@ async function fetchWithTimeout(resource: RequestInfo, options: any = {}) {
     if (error.name === "AbortError") throw new Error("Request timeout: API is taking too long to respond");
     throw error;
   }
-}
-
-/* ─────────────────────────────────────────────
-   Animated dot-grid background
-───────────────────────────────────────────── */
-function DotGrid() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animRef = useRef<number>(0);
-  const nodesRef = useRef<{ x: number; y: number; vx: number; vy: number }[]>([]);
-  const lastRef = useRef(0);
-
-  const initNodes = useCallback((w: number, h: number) => {
-    const count = Math.min(Math.floor((w * h) / 36000), 22);
-    nodesRef.current = Array.from({ length: count }, () => ({
-      x: Math.random() * w,
-      y: Math.random() * h,
-      vx: (Math.random() - 0.5) * 0.18,
-      vy: (Math.random() - 0.5) * 0.18,
-    }));
-  }, []);
-
-  useEffect(() => {
-    const cvs = canvasRef.current;
-    if (!cvs) return;
-    const ctx = cvs.getContext("2d")!;
-    let w = (cvs.width = cvs.offsetWidth);
-    let h = (cvs.height = cvs.offsetHeight);
-    initNodes(w, h);
-    const onResize = () => {
-      w = cvs.width = cvs.offsetWidth;
-      h = cvs.height = cvs.offsetHeight;
-      initNodes(w, h);
-    };
-    window.addEventListener("resize", onResize);
-    const draw = (ts: number) => {
-      animRef.current = requestAnimationFrame(draw);
-      if (ts - lastRef.current < 34) return; // ~30 fps cap
-      lastRef.current = ts;
-      ctx.clearRect(0, 0, w, h);
-      const nodes = nodesRef.current;
-      for (const n of nodes) {
-        n.x += n.vx; n.y += n.vy;
-        if (n.x < 0 || n.x > w) n.vx *= -1;
-        if (n.y < 0 || n.y > h) n.vy *= -1;
-      }
-      const maxDist = 80;
-      const maxDist2 = maxDist * maxDist;
-      for (let i = 0; i < nodes.length; i++) {
-        for (let j = i + 1; j < nodes.length; j++) {
-          const dx = nodes[i].x - nodes[j].x;
-          const dy = nodes[i].y - nodes[j].y;
-          const dist2 = dx * dx + dy * dy;
-          if (dist2 < maxDist2) {
-            const alpha = (1 - Math.sqrt(dist2) / maxDist) * 0.2;
-            ctx.beginPath();
-            ctx.moveTo(nodes[i].x, nodes[i].y);
-            ctx.lineTo(nodes[j].x, nodes[j].y);
-            ctx.strokeStyle = `rgba(84,91,255,${alpha})`;
-            ctx.lineWidth = 0.6;
-            ctx.stroke();
-          }
-        }
-      }
-      for (const n of nodes) {
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, 1.4, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(84,91,255,0.45)";
-        ctx.fill();
-      }
-    };
-    animRef.current = requestAnimationFrame(draw);
-    return () => {
-      cancelAnimationFrame(animRef.current);
-      window.removeEventListener("resize", onResize);
-    };
-  }, [initNodes]);
-
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />;
 }
 
 /* ─────────────────────────────────────────────
@@ -825,7 +748,7 @@ function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
 /* ─────────────────────────────────────────────
    Guest Scanner (no auth required)
 ───────────────────────────────────────────── */
-function GuestScanner({ inView }: { inView: boolean }) {
+function GuestScanner({ inView, lowPerformanceMode }: { inView: boolean; lowPerformanceMode: boolean }) {
   const WHOIS_API_URL = process.env.NEXT_PUBLIC_WHOIS_API_URL;
 
   const [urlInput, setUrlInput] = useState("");
@@ -864,11 +787,12 @@ function GuestScanner({ inView }: { inView: boolean }) {
   const shieldY = useTransform(smy, [-0.5, 0.5], [-9, 9]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (lowPerformanceMode) return;
     const rect = contentRef.current?.getBoundingClientRect();
     if (!rect) return;
     mxRaw.set((e.clientX - rect.left) / rect.width - 0.5);
     myRaw.set((e.clientY - rect.top) / rect.height - 0.5);
-  }, [mxRaw, myRaw]);
+  }, [lowPerformanceMode, mxRaw, myRaw]);
 
   // Countdown for rate-limit banner
   useEffect(() => {
@@ -904,7 +828,7 @@ function GuestScanner({ inView }: { inView: boolean }) {
   }, [currentScan?.url, currentScan?.riskScore]);
 
   // Typewriter placeholder (active when input is empty + not scanning)
-  const typingPlaceholder = useTypingPlaceholder(!urlInput && !scanning && inView);
+  const typingPlaceholder = useTypingPlaceholder(!lowPerformanceMode && !urlInput && !scanning && inView);
   const displayScore = useCountUp(currentScan?.riskScore ?? 0, scoreActive);
   useEffect(() => {
     (async () => {
@@ -1144,29 +1068,33 @@ function GuestScanner({ inView }: { inView: boolean }) {
   };
 
   return (
-    <div ref={contentRef} onMouseMove={handleMouseMove} className="max-w-4xl mx-auto px-4 sm:px-6">
+    <div ref={contentRef} onMouseMove={lowPerformanceMode ? undefined : handleMouseMove} className="max-w-4xl mx-auto px-4 sm:px-6">
 
       {/* ─── Shield Logo (mouse-parallax + rotating HUD rings) ─── */}
       <motion.div
         initial={{ y: -100, opacity: 0, scale: 1.4 }}
         animate={inView ? { y: 0, opacity: 1, scale: 1 } : {}}
         transition={{ type: "spring", stiffness: 58, damping: 14, delay: 0.05 }}
-        style={{ x: shieldX, y: shieldY }}
+        style={{ x: lowPerformanceMode ? 0 : shieldX, y: lowPerformanceMode ? 0 : shieldY }}
         className="relative flex justify-center mb-6 sm:mb-8 will-change-transform"
       >
         <div className="relative w-20 h-20 sm:w-28 sm:h-28 md:w-36 md:h-36">
           {/* Slow-rotating dashed outer ring */}
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
-            className="absolute -inset-5 rounded-full border border-dashed border-[#545BFF]/20 pointer-events-none"
-          />
+          {!lowPerformanceMode && (
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
+              className="absolute -inset-5 rounded-full border border-dashed border-[#545BFF]/20 pointer-events-none"
+            />
+          )}
           {/* Counter-rotating dashed accent ring */}
-          <motion.div
-            animate={{ rotate: -360 }}
-            transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-            className="absolute -inset-2.5 rounded-full border border-dashed border-[#545BFF]/12 pointer-events-none"
-          />
+          {!lowPerformanceMode && (
+            <motion.div
+              animate={{ rotate: -360 }}
+              transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+              className="absolute -inset-2.5 rounded-full border border-dashed border-[#545BFF]/12 pointer-events-none"
+            />
+          )}
           {/* The 3D shield */}
           <Image
             src="/images/3D Logo.png"
@@ -1174,25 +1102,27 @@ function GuestScanner({ inView }: { inView: boolean }) {
             width={144}
             height={144}
             className="relative z-10 w-full h-full object-contain drop-shadow-[0_0_44px_rgba(84,91,255,0.58)]"
-            priority
           />
           {/* Ripple rings expanding after settle */}
-          {[0, 1, 2].map((i) => (
-            <motion.div
-              key={i}
-              initial={{ scale: 0.6, opacity: 0 }}
-              animate={inView ? { scale: 3.4 + i * 1.5, opacity: 0 } : {}}
-              transition={{ duration: 1.9, delay: 0.48 + i * 0.2, ease: "easeOut" }}
-              className="absolute inset-0 rounded-full border-2 border-[#545BFF]/30 pointer-events-none"
-            />
-          ))}
+          {!lowPerformanceMode &&
+            [0, 1, 2].map((i) => (
+              <motion.div
+                key={i}
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={inView ? { scale: 3.4 + i * 1.5, opacity: 0 } : {}}
+                transition={{ duration: 1.9, delay: 0.48 + i * 0.2, ease: "easeOut" }}
+                className="absolute inset-0 rounded-full border-2 border-[#545BFF]/30 pointer-events-none"
+              />
+            ))}
           {/* Sustained ambient glow */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={inView ? { opacity: 1 } : {}}
-            transition={{ delay: 1.2, duration: 0.9 }}
-            className="absolute -inset-12 rounded-full bg-[#545BFF]/5 dark:bg-[#545BFF]/13 blur-3xl pointer-events-none -z-10"
-          />
+          {!lowPerformanceMode && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={inView ? { opacity: 1 } : {}}
+              transition={{ delay: 1.2, duration: 0.9 }}
+              className="absolute -inset-12 rounded-full bg-[#545BFF]/5 dark:bg-[#545BFF]/13 blur-3xl pointer-events-none -z-10"
+            />
+          )}
           {/* HUD corner accent dots */}
           {["top-0 left-0", "top-0 right-0", "bottom-0 left-0", "bottom-0 right-0"].map((pos, i) => (
             <motion.div
@@ -2199,6 +2129,37 @@ function GuestScanner({ inView }: { inView: boolean }) {
 export default function ScanTab() {
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
+  const [lowPerformanceMode, setLowPerformanceMode] = useState(false);
+
+  useEffect(() => {
+    const evaluateMode = () => {
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+      const smallViewport = window.innerWidth < 1024;
+      const lowMemory =
+        typeof (navigator as Navigator & { deviceMemory?: number }).deviceMemory === "number" &&
+        ((navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8) <= 4;
+      const lowCpu = typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4;
+
+      setLowPerformanceMode(reducedMotion || coarsePointer || smallViewport || lowMemory || lowCpu);
+    };
+
+    evaluateMode();
+
+    const reducedMq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const coarseMq = window.matchMedia("(pointer: coarse)");
+    const onMediaChange = () => evaluateMode();
+
+    reducedMq.addEventListener("change", onMediaChange);
+    coarseMq.addEventListener("change", onMediaChange);
+    window.addEventListener("resize", evaluateMode);
+
+    return () => {
+      reducedMq.removeEventListener("change", onMediaChange);
+      coarseMq.removeEventListener("change", onMediaChange);
+      window.removeEventListener("resize", evaluateMode);
+    };
+  }, []);
 
   // Section-level mouse tracking → moves rings + glow
   const mxRaw = useMotionValue(0.5);
@@ -2211,10 +2172,11 @@ export default function ScanTab() {
   const ringsY = useTransform(smy, [0, 1], [-15, 15]);
 
   const onSectionMouse = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    if (lowPerformanceMode) return;
     const rect = e.currentTarget.getBoundingClientRect();
     mxRaw.set((e.clientX - rect.left) / rect.width);
     myRaw.set((e.clientY - rect.top) / rect.height);
-  }, [mxRaw, myRaw]);
+  }, [lowPerformanceMode, mxRaw, myRaw]);
 
   const TICKER = [
     "AI-POWERED THREAT DETECTION",
@@ -2231,8 +2193,8 @@ export default function ScanTab() {
     <section
       ref={ref}
       id="scan"
-      className="relative min-h-screen bg-page overflow-hidden flex flex-col items-center justify-start scroll-mt-20"
-      onMouseMove={onSectionMouse}
+      className={`relative min-h-screen bg-page overflow-hidden flex flex-col items-center justify-start scroll-mt-20 ${lowPerformanceMode ? "ss-low-perf" : ""}`}
+      onMouseMove={lowPerformanceMode ? undefined : onSectionMouse}
     >
       {/* ── Inline keyframes for ticker + persistent scan beam ── */}
       <style>{`
@@ -2240,6 +2202,8 @@ export default function ScanTab() {
         @keyframes ss-beam { 0%{opacity:0;transform:translateY(-100%)} 4%{opacity:0.8} 92%{opacity:0.5} 100%{opacity:0;transform:translateY(110vh)} }
         .ss-ticker-inner { display:flex; width:max-content; animation:ss-ticker 42s linear infinite; }
         .ss-beam { animation:ss-beam 14s ease-in-out 4s infinite; }
+        .ss-low-perf .ss-ticker-inner { animation: none; transform: translateX(0) !important; }
+        .ss-low-perf .ss-beam { animation: none; opacity: 0; }
       `}</style>
 
       {/* ── Security ticker bar ── */}
@@ -2259,7 +2223,15 @@ export default function ScanTab() {
 
       {/* ── Layer 1: Animated dot-grid ── */}
       <div className="absolute inset-0 z-[1]">
-        <DotGrid />
+        <DotGridCanvas
+          densityDivisor={36000}
+          maxNodes={22}
+          maxDistance={80}
+          nodeRadius={1.4}
+          nodeAlpha={0.45}
+          lineAlpha={0.2}
+          lineWidth={0.6}
+        />
       </div>
 
       {/* ── Layer 2: Gradient vignettes ── */}
@@ -2298,21 +2270,23 @@ export default function ScanTab() {
         initial={{ opacity: 0, scale: 0.7 }}
         animate={inView ? { opacity: 1, scale: 1 } : {}}
         transition={{ duration: 1.4, delay: 0.2 }}
-        style={{ x: glowX, y: glowY }}
+        style={{ x: lowPerformanceMode ? 0 : glowX, y: lowPerformanceMode ? 0 : glowY }}
       >
         <div className="w-[380px] h-[380px] md:w-[600px] md:h-[600px] rounded-full bg-[#545BFF]/6 dark:bg-[#545BFF]/11 blur-[110px]" />
       </motion.div>
 
       {/* ── Layer 5: Scan rings — mouse-reactive (desktop) ── */}
-      <motion.div
-        className="absolute top-[36%] left-1/2 z-[5] pointer-events-none hidden md:block"
-        initial={{ opacity: 0 }}
-        animate={inView ? { opacity: 1 } : {}}
-        transition={{ duration: 0.9, delay: 0.4 }}
-        style={{ x: ringsX, y: ringsY }}
-      >
-        <ScanRings />
-      </motion.div>
+      {!lowPerformanceMode && (
+        <motion.div
+          className="absolute top-[36%] left-1/2 z-[5] pointer-events-none hidden md:block"
+          initial={{ opacity: 0 }}
+          animate={inView ? { opacity: 1 } : {}}
+          transition={{ duration: 0.9, delay: 0.4 }}
+          style={{ x: ringsX, y: ringsY }}
+        >
+          <ScanRings />
+        </motion.div>
+      )}
 
       {/* ── Persistent slow scan beam (looping) ── */}
       <div
@@ -2325,7 +2299,7 @@ export default function ScanTab() {
       />
 
       {/* ── Entry scan beam (one-time on inView) ── */}
-      {inView && (
+      {inView && !lowPerformanceMode && (
         <motion.div
           initial={{ top: "-2px", opacity: 0.9 }}
           animate={{ top: "100%", opacity: 0 }}
@@ -2346,7 +2320,7 @@ export default function ScanTab() {
 
       {/* ── Content ── */}
       <div className="relative z-[10] w-full pt-[calc(4rem+1px)] pb-16 sm:pt-[calc(5rem+1px)] sm:pb-20 md:pt-[calc(7rem+1px)] md:pb-28 lg:pt-[calc(8rem+1px)] lg:pb-32">
-        <GuestScanner inView={inView} />
+        <GuestScanner inView={inView} lowPerformanceMode={lowPerformanceMode} />
       </div>
     </section>
   );

@@ -1,10 +1,12 @@
 ﻿"use client";
 
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import { Poppins } from "next/font/google";
 import Link from "next/link";
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform, useSpring } from "motion/react";
+import DotGridCanvas from "../ui/DotGridCanvas";
 
 const ShieldModel = dynamic(() => import("../ui/ShieldModel"), {
   ssr: false,
@@ -24,84 +26,8 @@ const stats = [
   { value: "24/7", label: "Active Monitoring" },
 ];
 
-/* ── Animated dot-grid background ── */
-function DotGrid() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animRef = useRef<number>(0);
-  const nodesRef = useRef<{ x: number; y: number; vx: number; vy: number }[]>([]);
-  const lastRef = useRef(0);
-
-  const initNodes = useCallback((w: number, h: number) => {
-    const count = Math.min(Math.floor((w * h) / 34000), 26);
-    nodesRef.current = Array.from({ length: count }, () => ({
-      x: Math.random() * w,
-      y: Math.random() * h,
-      vx: (Math.random() - 0.5) * 0.18,
-      vy: (Math.random() - 0.5) * 0.18,
-    }));
-  }, []);
-
-  useEffect(() => {
-    const cvs = canvasRef.current;
-    if (!cvs) return;
-    const ctx = cvs.getContext("2d")!;
-    let w = (cvs.width = cvs.offsetWidth);
-    let h = (cvs.height = cvs.offsetHeight);
-    initNodes(w, h);
-    const onResize = () => {
-      w = cvs.width = cvs.offsetWidth;
-      h = cvs.height = cvs.offsetHeight;
-      initNodes(w, h);
-    };
-    window.addEventListener("resize", onResize);
-    const draw = (ts: number) => {
-      animRef.current = requestAnimationFrame(draw);
-      if (ts - lastRef.current < 34) return; // ~30 fps cap
-      lastRef.current = ts;
-      ctx.clearRect(0, 0, w, h);
-      const nodes = nodesRef.current;
-      for (const n of nodes) {
-        n.x += n.vx; n.y += n.vy;
-        if (n.x < 0 || n.x > w) n.vx *= -1;
-        if (n.y < 0 || n.y > h) n.vy *= -1;
-      }
-      const maxDist = 85;
-      const maxDist2 = maxDist * maxDist;
-      for (let i = 0; i < nodes.length; i++) {
-        for (let j = i + 1; j < nodes.length; j++) {
-          const dx = nodes[i].x - nodes[j].x;
-          const dy = nodes[i].y - nodes[j].y;
-          const dist2 = dx * dx + dy * dy;
-          if (dist2 < maxDist2) {
-            const alpha = (1 - Math.sqrt(dist2) / maxDist) * 0.22;
-            ctx.beginPath();
-            ctx.moveTo(nodes[i].x, nodes[i].y);
-            ctx.lineTo(nodes[j].x, nodes[j].y);
-            ctx.strokeStyle = `rgba(84,91,255,${alpha})`;
-            ctx.lineWidth = 0.65;
-            ctx.stroke();
-          }
-        }
-      }
-      for (const n of nodes) {
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, 1.6, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(84,91,255,0.5)";
-        ctx.fill();
-      }
-    };
-    animRef.current = requestAnimationFrame(draw);
-    return () => {
-      cancelAnimationFrame(animRef.current);
-      window.removeEventListener("resize", onResize);
-    };
-  }, [initNodes]);
-
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />;
-}
-
 /* ── Pulsing scan rings — children positioned centered at parent's 0,0 point ── */
-function ScanRings() {
+function ScanRings({ animated = true }: { animated?: boolean }) {
   const rings = [
     { size: 200, delay: 0 },
     { size: 320, delay: 1.6 },
@@ -125,7 +51,7 @@ function ScanRings() {
             height: size,
             top: -size / 2,
             left: -size / 2,
-            animation: `pulseScaleRing 5s ease-out ${delay}s infinite`,
+            animation: animated ? `pulseScaleRing 5s ease-out ${delay}s infinite` : undefined,
           }}
         />
       ))}
@@ -137,12 +63,79 @@ function ScanRings() {
 export default function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [allowAnimatedEffects, setAllowAnimatedEffects] = useState(true);
+  const [showShield3D, setShowShield3D] = useState(false);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
+  }, []);
+
+  useEffect(() => {
+    type IdleWindow = Window & {
+      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+
+    const w = window as IdleWindow;
+    let idleId: number | null = null;
+    let timeoutId: number | null = null;
+
+    const clearPending = () => {
+      if (idleId !== null && typeof w.cancelIdleCallback === "function") {
+        w.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+      idleId = null;
+      timeoutId = null;
+    };
+
+    const evaluate = () => {
+      clearPending();
+
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+      const lowMemory =
+        typeof (navigator as Navigator & { deviceMemory?: number }).deviceMemory === "number" &&
+        ((navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8) <= 4;
+      const lowCpu = typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4;
+      const smallViewport = window.innerWidth < 768;
+
+      const lowEnd = reducedMotion || coarsePointer || lowMemory || lowCpu || smallViewport;
+      setAllowAnimatedEffects(!reducedMotion && !coarsePointer);
+
+      if (lowEnd) {
+        setShowShield3D(false);
+        return;
+      }
+
+      if (typeof w.requestIdleCallback === "function") {
+        idleId = w.requestIdleCallback(() => setShowShield3D(true), { timeout: 1500 });
+      } else {
+        timeoutId = window.setTimeout(() => setShowShield3D(true), 900);
+      }
+    };
+
+    evaluate();
+
+    const reducedMq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const coarseMq = window.matchMedia("(pointer: coarse)");
+    const onMediaChange = () => evaluate();
+
+    reducedMq.addEventListener("change", onMediaChange);
+    coarseMq.addEventListener("change", onMediaChange);
+    window.addEventListener("resize", evaluate);
+
+    return () => {
+      clearPending();
+      reducedMq.removeEventListener("change", onMediaChange);
+      coarseMq.removeEventListener("change", onMediaChange);
+      window.removeEventListener("resize", evaluate);
+    };
   }, []);
 
   /* scroll tracking relative to this container */
@@ -163,7 +156,7 @@ export default function HeroSection() {
   const shieldXMobile  = useTransform(smooth, [0, 1],    ["0px",  "0px"]);
 
   /* ── Shield on mobile: upper-center in hero, glides subtly upward; desktop stays centered ── */
-  const shieldYMobile  = useTransform(smooth, [0, 0.35], ["-16vh", "-28vh"]);
+  const shieldYMobile  = useTransform(smooth, [0, 0.35], ["-14vh", "-23vh"]);
   const shieldYDesktop = useTransform(smooth, [0, 1],    ["0px", "0px"]);
 
   /* ── Scale: shrinks slightly (not too much) ── */
@@ -189,11 +182,11 @@ export default function HeroSection() {
      * The sticky inner stays at the top of the viewport the whole time.
      */
     <div ref={containerRef} className="relative" style={{ height: isMobile ? "160vh" : "220vh" }}>
-      <div className="sticky top-0 h-screen overflow-hidden bg-page">
+      <div className="sticky top-0 h-[100dvh] md:h-screen overflow-hidden bg-page">
 
         {/* ── Layer 1: dot-grid background ── */}
         <div className="absolute inset-0 z-[1]">
-          <DotGrid />
+          <DotGridCanvas maxNodes={26} />
         </div>
 
         {/* ── Layer 2: gradient vignettes for readability — light/dark mode aware ── */}
@@ -219,7 +212,7 @@ export default function HeroSection() {
           className="absolute top-1/2 left-1/2 z-[5] pointer-events-none transform-gpu"
           style={{ x: shieldX, y: shieldY, translateX: "-50%", translateY: "-50%", scale: shieldScale }}
         >
-          <ScanRings />
+          <ScanRings animated={allowAnimatedEffects} />
         </motion.div>
 
         {/* ── Layer 6: THE 3-D SHIELD ── */}
@@ -228,7 +221,28 @@ export default function HeroSection() {
           style={{ x: shieldX, y: shieldY, scale: shieldScale }}
         >
           <div className="w-[48vw] h-[48vw] sm:w-[54vw] sm:h-[54vw] md:w-[52vw] md:h-[52vw] max-w-[700px] max-h-[700px]">
-            <ShieldModel />
+            {isMobile ? (
+              <div className="relative w-full h-full flex items-center justify-center -translate-y-[9%] sm:-translate-y-[6%]">
+                <Image
+                  src="/images/3D Logo.png"
+                  alt="SmartShield 3D logo"
+                  width={420}
+                  height={420}
+                  sizes="(max-width: 768px) 68vw, 420px"
+                  className="w-[72%] sm:w-[74%] h-auto object-contain drop-shadow-[0_0_24px_rgba(84,91,255,0.35)]"
+                  priority={false}
+                />
+              </div>
+            ) : showShield3D ? (
+              <ShieldModel />
+            ) : (
+              <div className="relative w-full h-full flex items-center justify-center">
+                <div className="w-[82%] h-[82%] rounded-[28%] border border-[#545BFF]/35 dark:bg-[#0a0b18]/85 bg-[#eef1ff]/80 shadow-[0_20px_60px_rgba(84,91,255,0.22)]" />
+                <div className="absolute flex items-center justify-center w-[42%] h-[42%] rounded-2xl border border-[#545BFF]/40 dark:bg-[#11142a]/95 bg-white/95 text-[#545BFF] text-4xl font-black">
+                  S
+                </div>
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -240,14 +254,14 @@ export default function HeroSection() {
         {/* ── Layer 8: mobile HUD status strip — follows shield as it moves upward ── */}
         <motion.div
           className="absolute inset-x-0 z-[9] flex items-center justify-center gap-3 pointer-events-none md:hidden"
-          style={{ top: "47vh", opacity: heroOpacity }}
+          style={{ top: "41vh", opacity: heroOpacity }}
         >
           <div className="h-px w-16 bg-gradient-to-l from-[#545BFF]/50 to-transparent" />
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 dark:bg-[#07080f]/95 border border-[#545BFF]/35 dark:border-[#545BFF]/25 backdrop-blur-md shadow-sm dark:shadow-none">
             <motion.span
               className="w-1.5 h-1.5 rounded-full bg-[#22c55e]"
-              animate={{ opacity: [1, 0.2, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
+              animate={allowAnimatedEffects ? { opacity: [1, 0.2, 1] } : { opacity: 1 }}
+              transition={allowAnimatedEffects ? { duration: 1.5, repeat: Infinity } : undefined}
             />
             <span className="font-mono text-[8px] tracking-[0.2em] text-[#4349cd] dark:text-[#7c83ff] uppercase font-semibold">Threat Scanner</span>
             <span className="font-mono text-[8px] text-[#22c55e] dark:text-[#4ade80] font-bold">Active</span>
@@ -265,15 +279,15 @@ export default function HeroSection() {
           className="absolute inset-0 z-[10] flex flex-col md:items-center pointer-events-none transform-gpu"
           style={{ opacity: heroOpacity, y: heroY }}
         >
-          <div className="w-full max-w-7xl mx-auto px-5 sm:px-6 lg:px-16 flex flex-col justify-end md:justify-center h-full md:pt-20 lg:pt-24 xl:pt-16 2xl:pt-0">
-            <div className="max-w-[360px] sm:max-w-[420px] md:max-w-[520px] pb-11 sm:pb-12 md:pb-0">
+          <div className="w-full max-w-7xl mx-auto px-5 sm:px-6 lg:px-16 flex flex-col justify-start md:justify-center h-full pt-[47vh] sm:pt-[49vh] md:pt-20 lg:pt-24 xl:pt-16 2xl:pt-0">
+            <div className="mx-auto md:mx-0 max-w-[350px] sm:max-w-[420px] md:max-w-[520px] pb-6 sm:pb-8 md:pb-0 text-center sm:text-left">
 
               {/* Badge */}
               <motion.div
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
-                className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full dark:bg-[#545BFF]/10 bg-[#545BFF]/15 dark:border-[#545BFF]/20 border-[#545BFF]/35 border backdrop-blur-sm mb-2.5 sm:mb-3 md:mb-4 shadow-sm dark:shadow-none"
+                className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full dark:bg-[#545BFF]/10 bg-[#545BFF]/15 dark:border-[#545BFF]/20 border-[#545BFF]/35 border backdrop-blur-sm mb-2.5 sm:mb-3 md:mb-4 shadow-sm dark:shadow-none mx-auto sm:mx-0"
               >
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#545BFF] opacity-75" />
@@ -286,7 +300,7 @@ export default function HeroSection() {
 
               {/* Headline — improved light mode contrast */}
               <motion.h1
-                className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-extrabold dark:text-heading text-[#0a0d1a] leading-[1.1] mb-2 sm:mb-3 md:mb-4 tracking-tight"
+                className="text-[2.05rem] sm:text-3xl md:text-5xl lg:text-6xl font-extrabold dark:text-heading text-[#0a0d1a] leading-[1.06] mb-2.5 sm:mb-3 md:mb-4 tracking-tight"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
@@ -309,18 +323,18 @@ export default function HeroSection() {
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.35 }}
-                className="mb-3.5 sm:mb-4 md:mb-7"
+                className="mb-4 sm:mb-4 md:mb-7"
               >
                 {/* Mobile-only compact stat chips */}
-                <div className="flex items-center gap-2 sm:hidden mb-3.5">
+                <div className="flex items-center gap-2 sm:hidden mb-4">
                   {[
-                    { val: "99.2%", label: "Accuracy" },
-                    { val: "<0.5s", label: "Speed" },
-                    { val: "50K+", label: "Blocked" },
+                    { val: "96.9%", label: "Accuracy" },
+                    { val: "<200ms", label: "Speed" },
+                    { val: "3 AI", label: "Models" },
                   ].map(({ val, label }) => (
                     <div
                       key={label}
-                      className="flex-1 text-center py-2 px-1 rounded-xl border dark:border-[#545BFF]/25 border-[#545BFF]/35 dark:bg-[#545BFF]/7 bg-[#545BFF]/12 backdrop-blur-sm"
+                      className="flex-1 text-center py-2.5 px-1 rounded-xl border dark:border-[#545BFF]/25 border-[#545BFF]/35 dark:bg-[#545BFF]/7 bg-[#545BFF]/12 backdrop-blur-sm"
                     >
                       <div className="dark:text-[#7c83ff] text-[#4349cd] font-bold text-[13px] leading-none mb-[3px]">{val}</div>
                       <div className="dark:text-faded/55 text-faded/65 text-[9px] font-medium uppercase tracking-wider">{label}</div>

@@ -1,22 +1,45 @@
 "use client";
 
 import Image from "next/image";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { motion, useInView } from "motion/react";
 
 export default function AIBanner() {
   const imageRef = useRef<HTMLDivElement>(null);
   const rotateRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const pendingRotationRef = useRef({ rx: 0, ry: 0 });
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!imageRef.current || !rotateRef.current) return;
     const rect = imageRef.current.getBoundingClientRect();
-    const rx = ((e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2)) * 15;
-    const ry = -((e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2)) * 15;
-    rotateRef.current.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+    pendingRotationRef.current = {
+      rx: ((e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2)) * 15,
+      ry: -((e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2)) * 15,
+    };
+
+    if (rafRef.current !== null) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      if (!rotateRef.current) return;
+      const { rx, ry } = pendingRotationRef.current;
+      rotateRef.current.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+    });
   };
 
   const handleMouseLeave = () => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
     if (rotateRef.current) rotateRef.current.style.transform = "rotateX(0deg) rotateY(0deg)";
   };
 
@@ -144,7 +167,6 @@ export default function AIBanner() {
                     width={650}
                     height={650}
                     className="w-full h-auto drop-shadow-2xl"
-                    priority
                   />
                 </div>
               </div>
