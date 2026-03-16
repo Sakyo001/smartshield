@@ -16,7 +16,7 @@ export default function PrivacyPolicy() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-white mb-4">1. Introduction</h2>
             <p className="text-gray-300 mb-4">
-              SmartShield ("we," "our," "us," or "Company") is committed to protecting your privacy. 
+              SmartShield (&quot;we,&quot; &quot;our,&quot; &quot;us,&quot; or &quot;Company&quot;) is committed to protecting your privacy. 
               This Privacy Policy explains how we collect, use, disclose, and safeguard your information 
               when you use our browser extension and related services.
             </p>
@@ -124,7 +124,7 @@ export default function PrivacyPolicy() {
               You can disable SmartShield at any time by:
             </p>
             <ul className="list-disc list-inside text-gray-300 space-y-2">
-              <li>Toggling "Safe Mode" off in the extension popup</li>
+              <li>Toggling &quot;Safe Mode&quot; off in the extension popup</li>
               <li>Removing the extension from Chrome</li>
               <li>Using the Chrome settings to disable the extension</li>
             </ul>
@@ -144,7 +144,7 @@ export default function PrivacyPolicy() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4">7. Children's Privacy</h2>
+            <h2 className="text-2xl font-semibold text-white mb-4">7. Children&apos;s Privacy</h2>
             <p className="text-gray-300">
               SmartShield is not intended for children under 13. We do not knowingly collect personal 
               information from children. If we learn that we have collected personal information from a 
@@ -157,7 +157,7 @@ export default function PrivacyPolicy() {
             <p className="text-gray-300 mb-4">
               We may update this Privacy Policy from time to time to reflect changes in our practices, 
               technology, legal requirements, or other factors. We will notify you of any material changes 
-              by updating the "Last Updated" date at the top of this page.
+              by updating the &quot;Last Updated&quot; date at the top of this page.
             </p>
             <p className="text-gray-300">
               Continued use of SmartShield after changes are posted means you accept the updated Privacy Policy.
@@ -167,7 +167,7 @@ export default function PrivacyPolicy() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-white mb-4">9. Contact Us</h2>
             <p className="text-gray-300 mb-4">
-              If you have questions about this Privacy Policy or SmartShield's privacy practices, please contact us at:
+              If you have questions about this Privacy Policy or SmartShield&apos;s privacy practices, please contact us at:
             </p>
             <div className="bg-gray-800 p-4 rounded-lg">
               <p className="text-gray-300">
@@ -187,7 +187,7 @@ export default function PrivacyPolicy() {
             <ul className="list-disc list-inside text-gray-300 space-y-2">
               <li>Know what personal data is collected</li>
               <li>Delete your personal data</li>
-              <li>Opt-out of data sales (we don't sell data)</li>
+              <li>Opt-out of data sales (we don&apos;t sell data)</li>
               <li>Non-discrimination for exercising your rights</li>
             </ul>
             <p className="text-gray-300 mt-4">

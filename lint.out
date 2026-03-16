@@ -1,0 +1,117 @@
+
+> web@0.1.0 lint
+> next lint
+
+`next lint` is deprecated and will be removed in Next.js 16.
+For new projects, use create-next-app to choose your preferred linter.
+For existing projects, migrate to the ESLint CLI:
+npx @next/codemod@canary next-lint-to-eslint-cli .
+
+
+./src/app/admin/dashboard/AdminDashboardClient.tsx
+24:44  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+30:10  Warning: 'showFeedbackModal' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+30:29  Warning: 'setShowFeedbackModal' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+31:60  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32:44  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+81:41  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+97:52  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+119:15  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+119:23  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+137:53  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+138:55  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+139:55  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+180:29  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+181:30  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+196:38  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+206:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+222:25  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+258:33  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+286:27  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+356:51  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+366:46  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+369:49  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+387:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+395:44  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+665:23  Warning: 'legitimatePercent' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+844:76  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+850:85  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+913:40  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/app/components/sections/AboutTab.tsx
+76:7  Warning: 'models' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/sections/FeatureGrid.tsx
+213:7  Warning: 'DECK_H' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+620:10  Warning: 'SectionBridge' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/sections/ScanTab.tsx
+22:17  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+23:18  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+24:23  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+26:22  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+34:65  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+42:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+258:53  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+313:62  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+437:63  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+459:6  Warning: React Hook useEffect has a missing dependency: 'messages'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+765:56  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+769:56  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+773:62  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+828:6  Warning: React Hook useEffect has a missing dependency: 'currentScan'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+842:6  Warning: React Hook useEffect has a missing dependency: 'WHOIS_API_URL'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+876:6  Warning: React Hook useEffect has a missing dependency: 'WHOIS_API_URL'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+897:6  Warning: React Hook useEffect has a missing dependency: 'WHOIS_API_URL'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+918:6  Warning: React Hook useEffect has missing dependencies: 'WHOIS_API_URL', 'historicalData', and 'loadingHistory'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+970:11  Error: 'whoisInfo' is never reassigned. Use 'const' instead.  prefer-const
+971:11  Error: 'dnsRecords' is never reassigned. Use 'const' instead.  prefer-const
+972:11  Error: 'sslInfo' is never reassigned. Use 'const' instead.  prefer-const
+973:11  Error: 'riskAdjustment' is never reassigned. Use 'const' instead.  prefer-const
+974:11  Error: 'screenshot' is never reassigned. Use 'const' instead.  prefer-const
+1849:73  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+1876:77  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+1931:72  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+1938:103  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+1964:70  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+1971:109  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+1999:80  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/app/components/ui/Aurora.tsx
+140:9  Error: 'program' is never reassigned. Use 'const' instead.  prefer-const
+206:6  Warning: React Hook useEffect has missing dependencies: 'blend' and 'colorStops'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/components/ui/ChatbotWidget.tsx
+296:28  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+296:73  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/app/components/ui/TermsModal.tsx
+61:51  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+61:63  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+
+./src/app/lib/supabase-server.ts
+18:20  Warning: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+27:20  Warning: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/lib/supabase.ts
+175:15  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+308:83  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/app/privacy-policy/page.tsx
+19:28  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+19:32  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+19:34  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+19:39  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+19:41  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+19:45  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+19:50  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+19:58  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+127:28  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+127:38  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+147:79  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+160:31  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+160:44  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+170:77  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+190:48  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
