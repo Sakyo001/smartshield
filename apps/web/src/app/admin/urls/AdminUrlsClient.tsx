@@ -32,6 +32,39 @@ export default function AdminUrlsClient() {
   const [loading, setLoading] = useState(true);
   const [adminEmail, setAdminEmail] = useState("");
   const [rows, setRows] = useState<UrlRow[]>([]);
+  const [exporting, setExporting] = useState(false);
+
+  const onExportCsv = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const res = await fetch("/api/admin/urls/export", { method: "GET" });
+
+      if (!res.ok) {
+        alert("Export failed. Please try again.");
+        return;
+      }
+
+      const blob = await res.blob();
+
+      const contentDisposition = res.headers.get("content-disposition") ?? "";
+      const match = /filename=\"([^\"]+)\"/i.exec(contentDisposition);
+      const filename = match?.[1] || "urls.csv";
+
+      const objectUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(objectUrl);
+    } catch {
+      alert("Export failed. Please try again.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     const run = async () => {
@@ -108,8 +141,18 @@ export default function AdminUrlsClient() {
             <h1 className="text-2xl font-semibold text-white">URLs</h1>
             <p className="text-sm text-gray-400">Newest to oldest</p>
           </div>
-          <div className="text-sm text-gray-400">
-            Admin: <span className="text-white font-medium">{adminEmail}</span>
+          <div className="flex flex-col items-end gap-2 text-sm text-gray-400">
+            <div>
+              Admin: <span className="text-white font-medium">{adminEmail}</span>
+            </div>
+            <button
+              type="button"
+              onClick={onExportCsv}
+              disabled={exporting}
+              className="inline-flex items-center justify-center rounded-md border border-gray-800 bg-black/30 px-3 py-2 text-xs font-medium text-gray-200 hover:text-white hover:border-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {exporting ? "Exporting..." : "Export CSV"}
+            </button>
           </div>
         </div>
 
