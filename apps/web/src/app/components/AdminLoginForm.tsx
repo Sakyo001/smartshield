@@ -51,16 +51,6 @@ export function AdminLoginForm() {
         }
 
         // User is authenticated and is an admin
-        localStorage.setItem(
-          "adminSession",
-          JSON.stringify({
-            email: data.user.email,
-            userId: data.user.id,
-            displayName: adminUser.display_name,
-            loginTime: new Date().toISOString(),
-            isAdmin: true,
-          })
-        );
         router.push("/admin/dashboard");
       } else {
         setError("Invalid email or password");

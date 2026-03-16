@@ -1,6 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function getStringField(obj: unknown, key: string): string | null {
+  if (!isRecord(obj)) return null;
+  const value = obj[key];
+  return typeof value === "string" ? value : null;
+}
+
+function getNumberField(obj: unknown, key: string): number | null {
+  if (!isRecord(obj)) return null;
+  const value = obj[key];
+  return typeof value === "number" ? value : null;
+}
 
 // Lazily initialised so a missing env var doesn't crash the module at build/boot
 // time — it only fails at request time when we can return a proper error.
@@ -96,6 +113,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
+  const scannedUrl = getStringField(body, "url") ?? "";
+  const scannedDomain = (() => {
+    if (!scannedUrl) return "";
+    try {
+      return new URL(scannedUrl).hostname;
+    } catch {
+      return "";
+    }
+  })();
+
   try {
     const upstream = await fetch(`${backendUrl}/api/scan`, {
       method: "POST",
@@ -108,11 +135,93 @@ export async function POST(req: NextRequest) {
       signal: AbortSignal.timeout(50000),
     });
 
-    const data = await upstream.json();
-    return NextResponse.json(data, {
+    const data: unknown = await upstream.json();
+
+    const response = NextResponse.json(data, {
       status: upstream.status,
       headers: rlHeaders,
     });
+
+    // Best-effort activity logging so admin "Recent Scan Activity" includes
+    // web scans even when the user is anonymous.
+    if (upstream.ok && scannedUrl) {
+      try {
+        const supabase = createServerClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          {
+            cookies: {
+              get(name: string) {
+                return req.cookies.get(name)?.value;
+              },
+              set(name: string, value: string, options: CookieOptions) {
+                response.cookies.set({ name, value, ...options });
+              },
+              remove(name: string, options: CookieOptions) {
+                response.cookies.set({ name, value: "", ...options });
+              },
+            },
+          }
+        );
+
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        const upstreamDecision = getStringField(data, "decision") ?? "";
+        const confidence = getNumberField(data, "confidence");
+        const domain =
+          getStringField(data, "domain")
+            ? (getStringField(data, "domain") as string)
+            : scannedDomain;
+
+        // Map upstream results to the dashboard's decision buckets.
+        // Dashboard expects: safe | warning | dangerous
+        let riskScore = 0;
+        if (upstreamDecision === "PHISHING") {
+          riskScore = Math.round((confidence ?? 100) as number);
+        } else if (upstreamDecision === "LEGITIMATE") {
+          riskScore = Math.round(100 - ((confidence ?? 0) as number));
+        } else {
+          const score = getNumberField(data, "score");
+          if (typeof score === "number") riskScore = Math.round(score * 100);
+        }
+
+        // Basic URL heuristic (matches web UI)
+        if (scannedUrl.toLowerCase().startsWith("http://") && riskScore < 40) {
+          riskScore = 40;
+        }
+
+        // If the backend provides risk_adjustment indicators, respect CRITICAL.
+        let indicators: unknown = null;
+        if (isRecord(data) && isRecord(data["risk_adjustment"])) {
+          indicators = (data["risk_adjustment"] as Record<string, unknown>)["indicators"];
+        }
+        if (Array.isArray(indicators)) {
+          const critical = indicators.some(
+            (i: unknown) => typeof i === "string" && (i.includes("CRITICAL") || i.includes("🚨"))
+          );
+          if (critical) riskScore = 100;
+        }
+
+        const normalizedDecision = riskScore >= 70 ? "dangerous" : riskScore >= 40 ? "warning" : "safe";
+
+        await supabase.from("extension_activity").insert({
+          user_id: user?.id ?? null,
+          url: scannedUrl,
+          domain,
+          confidence,
+          decision: normalizedDecision,
+          // The dashboard expects `prediction.risk_adjustment.indicators`, so
+          // store the full upstream payload when a nested `prediction` isn't present.
+          prediction: isRecord(data) && data["prediction"] !== undefined ? data["prediction"] : data,
+        });
+      } catch (err) {
+        console.warn("[SmartShield] Failed to log scan activity:", err);
+      }
+    }
+
+    return response;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Upstream request failed";
     return NextResponse.json({ error: message }, { status: 502 });
