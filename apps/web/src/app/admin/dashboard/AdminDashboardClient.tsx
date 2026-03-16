@@ -175,10 +175,10 @@ export default function AdminDashboardClient() {
 
         if (recentScans) {
           // Count unique users from last 7 days
-            const uniqueUsers = new Set(
+            const uniqueUsers = new Set<string>(
               recentScans
                 .map((scan: any) => scan.user_id)
-                .filter((id: any) => typeof id === "string" && id.length > 0)
+                .filter((id: unknown): id is string => typeof id === "string" && id.length > 0)
             );
           activeUserIdsRef.current = uniqueUsers;
           setActiveUsers(uniqueUsers.size);
