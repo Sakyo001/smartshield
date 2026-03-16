@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -206,7 +207,7 @@ export async function POST(req: NextRequest) {
 
         const normalizedDecision = riskScore >= 70 ? "dangerous" : riskScore >= 40 ? "warning" : "safe";
 
-        await supabase.from("extension_activity").insert({
+        const activityPayload = {
           user_id: user?.id ?? null,
           url: scannedUrl,
           domain,
@@ -215,7 +216,35 @@ export async function POST(req: NextRequest) {
           // The dashboard expects `prediction.risk_adjustment.indicators`, so
           // store the full upstream payload when a nested `prediction` isn't present.
           prediction: isRecord(data) && data["prediction"] !== undefined ? data["prediction"] : data,
-        });
+        };
+
+        const { error: insertError } = await supabase.from("extension_activity").insert(activityPayload);
+
+        if (insertError) {
+          const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+          if (!serviceRoleKey) {
+            console.warn(
+              "[SmartShield] Failed to log scan activity with anon/session client and no SUPABASE_SERVICE_ROLE_KEY is configured:",
+              insertError
+            );
+          } else {
+            const adminSupabase = createSupabaseClient(
+              process.env.NEXT_PUBLIC_SUPABASE_URL!,
+              serviceRoleKey,
+              {
+                auth: { persistSession: false, autoRefreshToken: false },
+              }
+            );
+
+            const { error: adminInsertError } = await adminSupabase
+              .from("extension_activity")
+              .insert(activityPayload);
+
+            if (adminInsertError) {
+              console.warn("[SmartShield] Failed to log scan activity with service role fallback:", adminInsertError);
+            }
+          }
+        }
       } catch (err) {
         console.warn("[SmartShield] Failed to log scan activity:", err);
       }
