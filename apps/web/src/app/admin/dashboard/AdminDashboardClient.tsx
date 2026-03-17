@@ -3,12 +3,92 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@lib/supabase";
 import Aurora from "@components/ui/Aurora";
 
+function normalizeDecision(decision: unknown): "dangerous" | "warning" | "safe" {
+  if (decision === "dangerous" || decision === "warning" || decision === "safe") return decision;
+  if (decision === "PHISHING") return "dangerous";
+  if (decision === "LEGITIMATE") return "safe";
+  return "warning";
+}
+
+function getDayKey(value: string | Date): string {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  // en-CA produces YYYY-MM-DD in local time.
+  return date.toLocaleDateString("en-CA");
+}
+
+function createLast7DaysTemplate(): Record<string, number> {
+  const template: Record<string, number> = {};
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    template[getDayKey(date)] = 0;
+  }
+  return template;
+}
+
+function formatActivityRow(report: any) {
+  const createdAt = report?.created_at || new Date().toISOString();
+  const decision = report?.decision;
+  const d = normalizeDecision(decision);
+  const risk = d === "dangerous" ? "Phishing" : d === "safe" ? "Legitimate" : "Suspicious";
+
+  return {
+    id: report?.id,
+    createdAt,
+    date: new Date(createdAt).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }),
+    url: typeof report?.url === "string" && report.url.length > 0 ? report.url : "(unknown URL)",
+    domain: report?.domain || "",
+    confidence: report?.confidence ?? null,
+    decision: decision || "",
+    prediction: report?.prediction || null,
+    risk,
+    feedback: true,
+  };
+}
+
+function buildUrlCandidates(rawUrl: string): string[] {
+  const trimmed = (rawUrl || "").trim();
+  if (!trimmed) return [];
+
+  const candidates = new Set<string>([trimmed]);
+
+  // Handle trailing slash differences between scan URLs and user-submitted report URLs.
+  if (trimmed.endsWith("/")) {
+    candidates.add(trimmed.slice(0, -1));
+  } else {
+    candidates.add(`${trimmed}/`);
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    const normalized = `${parsed.protocol}//${parsed.host}${parsed.pathname}${parsed.search}`;
+    candidates.add(normalized);
+    if (normalized.endsWith("/")) {
+      candidates.add(normalized.slice(0, -1));
+    } else {
+      candidates.add(`${normalized}/`);
+    }
+  } catch {
+    // Ignore invalid URLs and keep string-based candidates only.
+  }
+
+  return Array.from(candidates).filter((value) => value.length > 0);
+}
+
 export default function AdminDashboardClient() {
+  const WHOIS_API_URL = process.env.NEXT_PUBLIC_WHOIS_API_URL;
   const router = useRouter();
+  const activeUserIdsRef = useRef<Set<string>>(new Set());
+  const processedRealtimeScanIdsRef = useRef<Set<string>>(new Set());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminEmail, setAdminEmail] = useState("");
   const [loading, setLoading] = useState(true);
@@ -22,7 +102,11 @@ export default function AdminDashboardClient() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState<any>(null);
   const [comments, setComments] = useState<any[]>([]);
+  const [communityReportCounts, setCommunityReportCounts] = useState<Record<string, number>>({});
   const [commentsLoading, setCommentsLoading] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
+  const [realtimeConnected, setRealtimeConnected] = useState(false);
+  const [realtimeEvents, setRealtimeEvents] = useState(0);
 
   // Authentication Check with Supabase
   useEffect(() => {
@@ -34,23 +118,6 @@ export default function AdminDashboardClient() {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         
         if (userError || !user) {
-          // Check localStorage fallback for hardcoded admin
-          const session = localStorage.getItem("adminSession");
-          if (session) {
-            try {
-              const data = JSON.parse(session);
-              if (data.isAdmin) {
-                setAdminEmail(data.email);
-                setIsAuthenticated(true);
-                // Fetch reports after auth
-                await fetchReports(supabase);
-                setLoading(false);
-                return;
-              }
-            } catch (err) {
-              console.error("Error parsing session:", err);
-            }
-          }
           router.push("/admin/login");
           return;
         }
@@ -84,50 +151,69 @@ export default function AdminDashboardClient() {
   }, [router]);
 
   // Fetch reports from Supabase
+  const fetchRecentScanActivity = async (supabase: any) => {
+    const { data: reports, error } = await supabase
+      .from("extension_activity")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (error) {
+      console.error("Error fetching recent scan activity:", error.message || JSON.stringify(error));
+      return;
+    }
+
+    if (reports && reports.length > 0) {
+      const formattedData = reports.map((report: any) => formatActivityRow(report));
+      const uniqueUrls = Array.from(
+        new Set(
+          formattedData
+            .map((row: any) => row.url)
+            .filter((url: unknown): url is string => typeof url === "string" && url.length > 0 && url !== "(unknown URL)")
+        )
+      );
+
+      let reportCountMap: Record<string, number> = {};
+      if (uniqueUrls.length > 0) {
+        const { data: communityRows, error: communityError } = await supabase
+          .from("reports")
+          .select("url")
+          .in("url", uniqueUrls);
+
+        if (communityError) {
+          console.error("Error fetching community report counts:", communityError.message || JSON.stringify(communityError));
+        } else if (communityRows) {
+          reportCountMap = communityRows.reduce((acc: Record<string, number>, row: any) => {
+            if (typeof row?.url === "string" && row.url.length > 0) {
+              acc[row.url] = (acc[row.url] ?? 0) + 1;
+            }
+            return acc;
+          }, {});
+        }
+      }
+
+      setCommunityReportCounts(reportCountMap);
+
+      const withCommunityCount = formattedData.map((row: any) => ({
+        ...row,
+        reportCount: reportCountMap[row.url] ?? 0,
+      }));
+
+      withCommunityCount.sort(
+        (a: any, b: any) =>
+          (Date.parse(b.createdAt ?? "") || 0) - (Date.parse(a.createdAt ?? "") || 0)
+      );
+      setScanData(withCommunityCount);
+      return;
+    }
+
+    setScanData([]);
+    setCommunityReportCounts({});
+  };
+
   const fetchReports = async (supabase: any) => {
     try {
-      // Fetch recent scan activity without join (limit 10 for table display)
-      const { data: reports, error } = await supabase
-        .from("extension_activity")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      if (error) {
-        console.error("Error fetching reports:", error.message || JSON.stringify(error));
-        return;
-      }
-
-      if (reports && reports.length > 0) {
-        // Get user emails for the reports
-        const userIds = [...new Set(reports.map((r: any) => r.user_id))];
-        const { data: users } = await supabase
-          .from("users")
-          .select("id, email")
-          .in("id", userIds);
-
-        const userMap = new Map(users?.map((u: any) => [u.id, u.email]) || []);
-
-        // Format data for display
-        const formattedData = reports.map((report: any) => ({
-          id: report.id,
-          email: userMap.get(report.user_id) || "Unknown",
-          date: new Date(report.created_at).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          }),
-          url: report.url,
-          domain: report.domain || "",
-          confidence: report.confidence ?? null,
-          decision: report.decision || "",
-          prediction: report.prediction || null,
-          risk: report.decision === "dangerous" ? "Phishing" : report.decision === "safe" ? "Legitimate" : "Suspicious",
-          feedback: true,
-        }));
-
-        setScanData(formattedData);
-      }
+      await fetchRecentScanActivity(supabase);
 
       // Fetch all reports for stats calculation
       const { data: allReports, error: reportsError } = await supabase
@@ -140,9 +226,9 @@ export default function AdminDashboardClient() {
       }
 
       if (allReports) {
-        const phishingCount = allReports.filter((r: any) => r.decision === "dangerous").length;
-        const legitimateCount = allReports.filter((r: any) => r.decision === "safe").length;
-        const suspiciousCount = allReports.filter((r: any) => r.decision === "warning").length;
+        const phishingCount = allReports.filter((r: any) => normalizeDecision(r.decision) === "dangerous").length;
+        const legitimateCount = allReports.filter((r: any) => normalizeDecision(r.decision) === "safe").length;
+        const suspiciousCount = allReports.filter((r: any) => normalizeDecision(r.decision) === "warning").length;
 
         setStats({
           phishing: phishingCount,
@@ -167,7 +253,7 @@ export default function AdminDashboardClient() {
 
       // Count active users (those with scans in the last 7 days)
         const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
 
         const { data: recentScans, error: scansError } = await supabase
           .from("extension_activity")
@@ -181,22 +267,20 @@ export default function AdminDashboardClient() {
 
         if (recentScans) {
           // Count unique users from last 7 days
-          const uniqueUsers = new Set(recentScans.map((scan: any) => scan.user_id));
+            const uniqueUsers = new Set<string>(
+              recentScans
+                .map((scan: any) => scan.user_id)
+                .filter((id: unknown): id is string => typeof id === "string" && id.length > 0)
+            );
+          activeUserIdsRef.current = uniqueUsers;
           setActiveUsers(uniqueUsers.size);
 
           // Calculate daily scan counts for last 7 days
-          const dailyData: { [key: string]: number } = {};
-          
-          for (let i = 6; i >= 0; i--) {
-            const date = new Date();
-            date.setDate(date.getDate() - i);
-            const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD format
-            dailyData[dateStr] = 0;
-          }
+          const dailyData = createLast7DaysTemplate();
 
           recentScans.forEach((scan: any) => {
-            const dateStr = new Date(scan.created_at).toISOString().split('T')[0];
-            if (dailyData.hasOwnProperty(dateStr)) {
+            const dateStr = getDayKey(scan.created_at);
+            if (dateStr && Object.prototype.hasOwnProperty.call(dailyData, dateStr)) {
               dailyData[dateStr]++;
             }
           });
@@ -209,6 +293,213 @@ export default function AdminDashboardClient() {
     }
   };
 
+  // Realtime updates: monitor new scan activity as it happens
+  useEffect(() => {
+    if (!isAuthenticated || loading) return;
+
+    const supabase = createClient();
+    let syncing = false;
+    let needsResync = false;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    let recentDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const runSync = async () => {
+      if (syncing) {
+        needsResync = true;
+        return;
+      }
+
+      syncing = true;
+      try {
+        await fetchReports(supabase);
+      } finally {
+        syncing = false;
+      }
+
+      if (needsResync) {
+        needsResync = false;
+        void runSync();
+      }
+    };
+
+    const scheduleSync = () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+      debounceTimer = setTimeout(() => {
+        debounceTimer = null;
+        void runSync();
+      }, 250);
+    };
+
+    const scheduleRecentSync = () => {
+      if (recentDebounceTimer) {
+        clearTimeout(recentDebounceTimer);
+      }
+      recentDebounceTimer = setTimeout(() => {
+        recentDebounceTimer = null;
+        void fetchRecentScanActivity(supabase);
+      }, 120);
+    };
+
+    const channel = supabase
+      .channel("admin-extension-activity")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "extension_activity" },
+        async (payload: any) => {
+          try {
+            setRealtimeEvents((n) => n + 1);
+
+            // Optimistically append INSERT rows so activity appears instantly.
+            if (payload?.eventType === "INSERT" && payload?.new?.id) {
+              const insertedId = String(payload.new.id);
+              if (processedRealtimeScanIdsRef.current.has(insertedId)) {
+                scheduleSync();
+                return;
+              }
+
+              processedRealtimeScanIdsRef.current.add(insertedId);
+              if (processedRealtimeScanIdsRef.current.size > 5000) {
+                processedRealtimeScanIdsRef.current.clear();
+                processedRealtimeScanIdsRef.current.add(insertedId);
+              }
+
+              const row = formatActivityRow(payload.new);
+              setScanData((prev) => {
+                if (prev.some((r: any) => r?.id === row.id)) return prev;
+                return [{ ...row, reportCount: communityReportCounts[row.url] ?? 0 }, ...prev].slice(0, 10);
+              });
+
+              const decision = normalizeDecision(payload?.new?.decision);
+              setStats((prev) => ({
+                phishing: prev.phishing + (decision === "dangerous" ? 1 : 0),
+                suspicious: prev.suspicious + (decision === "warning" ? 1 : 0),
+                legitimate: prev.legitimate + (decision === "safe" ? 1 : 0),
+              }));
+              setTotalScans((prev) => prev + 1);
+
+              const createdAtValue =
+                typeof payload?.new?.created_at === "string" && payload.new.created_at.length > 0
+                  ? payload.new.created_at
+                  : new Date();
+              const dateKey = getDayKey(createdAtValue);
+              setDailyScanData((prev) => {
+                const next = Object.keys(prev).length > 0 ? { ...prev } : createLast7DaysTemplate();
+                if (dateKey && Object.prototype.hasOwnProperty.call(next, dateKey)) {
+                  next[dateKey] = (next[dateKey] ?? 0) + 1;
+                }
+                return next;
+              });
+
+              const userId = payload?.new?.user_id;
+              if (typeof userId === "string" && userId.length > 0 && !activeUserIdsRef.current.has(userId)) {
+                activeUserIdsRef.current.add(userId);
+                setActiveUsers(activeUserIdsRef.current.size);
+              }
+            }
+
+            scheduleRecentSync();
+            scheduleSync();
+          } catch (err) {
+            console.error("Realtime extension_activity insert handling failed:", err);
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "users" },
+        async () => {
+          try {
+            setRealtimeEvents((n) => n + 1);
+            scheduleSync();
+          } catch (err) {
+            console.error("Realtime users sync failed:", err);
+          }
+        }
+      )
+      .subscribe((status: any) => {
+        setRealtimeConnected(status === "SUBSCRIBED");
+      });
+
+    return () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+      if (recentDebounceTimer) {
+        clearTimeout(recentDebounceTimer);
+      }
+      setRealtimeConnected(false);
+      supabase.removeChannel(channel);
+    };
+  }, [isAuthenticated, loading, communityReportCounts]);
+
+  // AJAX-style polling fallback so dashboard stays fresh even if a realtime
+  // event is missed due to intermittent network/mobile conditions.
+  useEffect(() => {
+    if (!isAuthenticated || loading) return;
+
+    const supabase = createClient();
+    let polling = false;
+
+    const poll = async () => {
+      if (polling) return;
+      polling = true;
+      try {
+        await fetchReports(supabase);
+      } finally {
+        polling = false;
+      }
+    };
+
+    // Prime immediately after auth/load.
+    void poll();
+
+    const interval = setInterval(() => {
+      void poll();
+    }, 4000);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void poll();
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [isAuthenticated, loading]);
+
+  // Fast polling path for Recent Scan Activity only.
+  useEffect(() => {
+    if (!isAuthenticated || loading) return;
+
+    const supabase = createClient();
+    let polling = false;
+
+    const pollRecent = async () => {
+      if (polling) return;
+      polling = true;
+      try {
+        await fetchRecentScanActivity(supabase);
+      } finally {
+        polling = false;
+      }
+    };
+
+    void pollRecent();
+    const interval = setInterval(() => {
+      void pollRecent();
+    }, 2000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [isAuthenticated, loading]);
+
   // Scroll effect listener
   useEffect(() => {
     const handleScroll = () => {
@@ -220,37 +511,104 @@ export default function AdminDashboardClient() {
   }, []);
 
   const handleLogout = async () => {
+    if (logoutLoading) return;
+    setLogoutLoading(true);
     try {
       const supabase = createClient();
+
+      // Clear auth cookies server-side (authoritative for middleware)
+      await fetch("/api/admin/logout", { method: "POST" });
+
+      // Also clear any in-memory client state
       await supabase.auth.signOut();
     } catch (err) {
       console.error("Error signing out:", err);
+    } finally {
+      setLogoutLoading(false);
     }
-    localStorage.removeItem("adminSession");
-    router.push("/admin/login");
+
+    // Hard navigation so middleware runs with updated cookies
+    window.location.assign("/admin/login");
   };
 
   const fetchComments = async (url: string) => {
     setCommentsLoading(true);
     try {
       const supabase = createClient();
-      
-      // First, try to fetch reports with user data
-      const { data: reports, error } = await supabase
-        .from("reports")
-        .select("id, description, flag, created_at, user_id")
-        .eq("url", url)
-        .order("created_at", { ascending: false });
+      const urlCandidates = buildUrlCandidates(url);
 
-      if (error) {
-        console.error("Error fetching reports - Full error object:", {
-          message: error.message,
-          code: error.code,
-          details: error.details,
-          hint: error.hint,
-        });
-        setComments([]);
-        return;
+      let reports: any[] = [];
+
+      // Prefer the same API source used by the user dashboard comments panel.
+      if (WHOIS_API_URL) {
+        const candidates = urlCandidates.length > 0 ? urlCandidates : [url];
+        const reportMap = new Map<string, any>();
+
+        for (const candidate of candidates) {
+          try {
+            const res = await fetch(`${WHOIS_API_URL}/api/reports?url=${encodeURIComponent(candidate)}`);
+            if (!res.ok) continue;
+            const data = await res.json();
+            const rows = Array.isArray(data?.reports) ? data.reports : [];
+
+            for (const row of rows) {
+              const key = String(row?.id ?? `${row?.url ?? ""}-${row?.user_id ?? ""}-${row?.created_at ?? ""}`);
+              if (!reportMap.has(key)) {
+                reportMap.set(key, row);
+              }
+            }
+          } catch {
+            // Ignore candidate-level errors; fallback paths below will handle empty results.
+          }
+        }
+
+        reports = Array.from(reportMap.values()).sort(
+          (a: any, b: any) => (Date.parse(b?.created_at ?? "") || 0) - (Date.parse(a?.created_at ?? "") || 0)
+        );
+      }
+
+      // Fallback to direct Supabase query if API returned nothing.
+      if (reports.length === 0) {
+        const { data: exactReports, error } = await supabase
+          .from("reports")
+          .select("id, url, description, flag, created_at, user_id")
+          .in("url", urlCandidates.length > 0 ? urlCandidates : [url])
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Error fetching reports - Full error object:", {
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint,
+          });
+        } else {
+          reports = exactReports || [];
+        }
+      }
+
+      // Fallback: if there are no exact matches, fetch reports by domain pattern.
+      if (reports.length === 0) {
+        try {
+          const parsed = new URL(url);
+          const domain = parsed.hostname;
+          if (domain) {
+            const { data: domainReports, error: domainError } = await supabase
+              .from("reports")
+              .select("id, url, description, flag, created_at, user_id")
+              .ilike("url", `%${domain}%`)
+              .order("created_at", { ascending: false })
+              .limit(50);
+
+            if (domainError) {
+              console.error("Error fetching reports by domain:", domainError.message || JSON.stringify(domainError));
+            } else {
+              reports = domainReports || [];
+            }
+          }
+        } catch {
+          // Keep exact match result only when URL cannot be parsed.
+        }
       }
 
       if (!reports || reports.length === 0) {
@@ -276,6 +634,7 @@ export default function AdminDashboardClient() {
         const user = userMap.get(r.user_id) || { email: "Unknown", display_name: "Anonymous" };
         return {
           id: r.id,
+          url: r.url,
           author: user.display_name || user.email || "Anonymous",
           comment: r.description,
           flag: r.flag,
@@ -438,10 +797,16 @@ export default function AdminDashboardClient() {
 
           {/* Center Navigation Links */}
           <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-8">
-            {["Dashboard", "Analytics", "Users", "Settings"].map((item) => (
+            {["Dashboard", "URLs", "Settings"].map((item) => (
               <Link
                 key={item}
-                href={`#${item.toLowerCase()}`}
+                href={
+                  item === "URLs"
+                    ? "/admin/urls"
+                    : item === "Settings"
+                    ? "/admin/settings"
+                    : `#${item.toLowerCase()}`
+                }
                 className="nav-link text-sm font-medium text-gray-400 hover:text-white transition-colors"
               >
                 {item}
@@ -456,9 +821,10 @@ export default function AdminDashboardClient() {
             </div>
             <button
               onClick={handleLogout}
+              disabled={logoutLoading}
               className="logout-button px-4 py-2 text-sm font-medium text-gray-300 hover:text-white bg-gradient-to-r from-[#6B73FF]/20 to-[#5A62E8]/20 hover:from-[#6B73FF]/30 hover:to-[#5A62E8]/30 border border-[#6B73FF]/30 rounded-lg transition-all duration-300"
             >
-              Logout
+              {logoutLoading ? "Logging out..." : "Logout"}
             </button>
           </div>
         </div>
@@ -533,10 +899,10 @@ export default function AdminDashboardClient() {
                   dates.push(date);
                 }
 
-                const maxScans = Math.max(...dates.map(d => dailyScanData[d.toISOString().split('T')[0]] || 0), 1);
+                const maxScans = Math.max(...dates.map((d) => dailyScanData[getDayKey(d)] || 0), 1);
 
                 return dates.map((date, idx) => {
-                  const dateStr = date.toISOString().split('T')[0];
+                  const dateStr = getDayKey(date);
                   const scans = dailyScanData[dateStr] || 0;
                   const heightPercent = maxScans > 0 ? (scans / maxScans) * 100 : 0;
 
@@ -568,6 +934,29 @@ export default function AdminDashboardClient() {
                 const phishingPercent = total > 0 ? (stats.phishing / total) * 100 : 0;
                 const suspiciousPercent = total > 0 ? (stats.suspicious / total) * 100 : 0;
                 const legitimatePercent = total > 0 ? (stats.legitimate / total) * 100 : 0;
+                const breakdown = [
+                  {
+                    label: "Phishing",
+                    count: stats.phishing,
+                    percent: phishingPercent,
+                    dot: "bg-red-500",
+                    text: "text-red-300",
+                  },
+                  {
+                    label: "Suspicious",
+                    count: stats.suspicious,
+                    percent: suspiciousPercent,
+                    dot: "bg-orange-500",
+                    text: "text-orange-300",
+                  },
+                  {
+                    label: "Legitimate",
+                    count: stats.legitimate,
+                    percent: legitimatePercent,
+                    dot: "bg-green-500",
+                    text: "text-green-300",
+                  },
+                ];
 
                 return (
                   <>
@@ -578,13 +967,28 @@ export default function AdminDashboardClient() {
                       }}
                     >
                       <div className="w-32 h-32 rounded-full bg-gray-900 flex items-center justify-center z-10">
-                        <span className="text-xl font-bold text-white">{total > 0 ? ((stats.phishing / total) * 100).toFixed(1) : 0}%</span>
+                        <div className="text-center leading-tight">
+                          <div className="text-[11px] uppercase tracking-wide text-gray-400">Total</div>
+                          <div className="text-xl font-bold text-white">{total.toLocaleString()}</div>
+                        </div>
                       </div>
                     </div>
-                    <div className="text-sm text-gray-400 text-center space-y-1">
-                      <div className="hover:text-white transition-colors">🔴 Phishing: {stats.phishing}</div>
-                      <div className="hover:text-white transition-colors">🟠 Suspicious: {stats.suspicious}</div>
-                      <div className="hover:text-white transition-colors">🟢 Legitimate: {stats.legitimate}</div>
+                    <div className="w-full max-w-xs space-y-2">
+                      {breakdown.map((item) => (
+                        <div
+                          key={item.label}
+                          className="flex items-center justify-between rounded-md border border-gray-800/70 bg-gray-900/40 px-3 py-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className={`h-2.5 w-2.5 rounded-full ${item.dot}`} />
+                            <span className={`text-sm ${item.text}`}>{item.label}</span>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-semibold text-white">{item.percent.toFixed(1)}%</div>
+                            <div className="text-[11px] text-gray-400">{item.count.toLocaleString()} scans</div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </>
                 );
@@ -596,13 +1000,27 @@ export default function AdminDashboardClient() {
         {/* Recent Activity Table */}
         <div className="bg-gradient-to-br from-gray-900/50 to-gray-800/30 border border-gray-800/50 rounded-lg overflow-hidden backdrop-blur-sm hover:border-[#6B73FF]/30 transition-all duration-300">
           <div className="p-6 border-b border-gray-800/50 bg-gradient-to-r from-gray-900/50 to-transparent">
-            <h2 className="text-white font-semibold">Recent Scan Activity</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-white font-semibold">Recent Scan Activity</h2>
+              <div className="flex items-center gap-3 text-xs">
+                <span
+                  className={
+                    realtimeConnected
+                      ? "px-2 py-1 rounded-full bg-green-500/10 text-green-300 border border-green-500/20"
+                      : "px-2 py-1 rounded-full bg-gray-500/10 text-gray-300 border border-gray-500/20"
+                  }
+                >
+                  {realtimeConnected ? "Live" : "Offline"}
+                </span>
+                <span className="text-gray-400">Updates: {realtimeEvents}</span>
+              </div>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-800/30 border-b border-gray-700/50">
                 <tr>
-                  {["Email", "Date", "URL", "Risk", "Feedback"].map(
+                  {["Date", "URL", "Risk", "Feedback"].map(
                     (header) => (
                       <th
                         key={header}
@@ -621,9 +1039,6 @@ export default function AdminDashboardClient() {
                     className="hover:bg-gray-800/20 transition-colors duration-200 group"
                   >
                     <td className="px-6 py-4 text-sm text-gray-300 group-hover:text-white transition-colors">
-                      {item.email}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-300 group-hover:text-white transition-colors">
                       {item.date}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-300 truncate max-w-[200px] group-hover:text-white transition-colors">
@@ -639,8 +1054,8 @@ export default function AdminDashboardClient() {
                     <td className="px-6 py-4 text-sm">
                       <button
                         onClick={() => handleFeedbackClick(item)}
-                        className="p-2 bg-gradient-to-r from-[#6B73FF]/20 to-[#5A62E8]/20 hover:from-[#6B73FF]/40 hover:to-[#5A62E8]/40 border border-[#6B73FF]/30 rounded-lg transition-all duration-300 hover:scale-110"
-                        title="View Comments"
+                        className="p-2 bg-gradient-to-r from-[#6B73FF]/20 to-[#5A62E8]/20 hover:from-[#6B73FF]/40 hover:to-[#5A62E8]/40 border border-[#6B73FF]/30 rounded-lg transition-all duration-300 hover:scale-110 inline-flex items-center gap-2"
+                        title={`View community reports (${item.reportCount ?? 0})`}
                       >
                         <svg
                           width="18"
@@ -653,6 +1068,9 @@ export default function AdminDashboardClient() {
                         >
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                         </svg>
+                        <span className="text-xs font-semibold text-[#AEB3FF] min-w-4 text-center">
+                          {item.reportCount ?? 0}
+                        </span>
                       </button>
                     </td>
                   </tr>
@@ -677,11 +1095,6 @@ export default function AdminDashboardClient() {
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <p className="text-gray-400 text-sm">Email</p>
-                  <p className="text-white font-medium">{selectedFeedback.email}</p>
-                </div>
-
                 <div>
                   <p className="text-gray-400 text-sm">URL</p>
                   <p className="text-white font-mono text-sm break-all">{selectedFeedback.url}</p>
@@ -821,6 +1234,9 @@ export default function AdminDashboardClient() {
                               {c.flag?.charAt(0).toUpperCase() + c.flag?.slice(1) || 'Neutral'}
                             </span>
                           </div>
+                          {c.url && (
+                            <p className="text-gray-500 text-[11px] font-mono break-all mb-1">{c.url}</p>
+                          )}
                           <p className="text-gray-300 text-sm mb-1">{c.comment}</p>
                           <p className="text-gray-500 text-xs">{c.date}</p>
                         </div>
