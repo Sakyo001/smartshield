@@ -14,6 +14,47 @@ function normalizeDecision(decision: unknown): "dangerous" | "warning" | "safe" 
   return "warning";
 }
 
+function getDayKey(value: string | Date): string {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  // en-CA produces YYYY-MM-DD in local time.
+  return date.toLocaleDateString("en-CA");
+}
+
+function createLast7DaysTemplate(): Record<string, number> {
+  const template: Record<string, number> = {};
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    template[getDayKey(date)] = 0;
+  }
+  return template;
+}
+
+function formatActivityRow(report: any) {
+  const createdAt = report?.created_at || new Date().toISOString();
+  const decision = report?.decision;
+  const d = normalizeDecision(decision);
+  const risk = d === "dangerous" ? "Phishing" : d === "safe" ? "Legitimate" : "Suspicious";
+
+  return {
+    id: report?.id,
+    createdAt,
+    date: new Date(createdAt).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }),
+    url: typeof report?.url === "string" && report.url.length > 0 ? report.url : "(unknown URL)",
+    domain: report?.domain || "",
+    confidence: report?.confidence ?? null,
+    decision: decision || "",
+    prediction: report?.prediction || null,
+    risk,
+    feedback: true,
+  };
+}
+
 export default function AdminDashboardClient() {
   const router = useRouter();
   const activeUserIdsRef = useRef<Set<string>>(new Set());
@@ -94,26 +135,7 @@ export default function AdminDashboardClient() {
 
       if (reports && reports.length > 0) {
         // Format data for display
-        const formattedData = reports.map((report: any) => ({
-          // Support legacy decision strings while keeping UI consistent
-          id: report.id,
-          createdAt: report.created_at,
-          date: new Date(report.created_at).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          }),
-          url: report.url,
-          domain: report.domain || "",
-          confidence: report.confidence ?? null,
-          decision: report.decision || "",
-          prediction: report.prediction || null,
-          risk: (() => {
-            const d = normalizeDecision(report.decision);
-            return d === "dangerous" ? "Phishing" : d === "safe" ? "Legitimate" : "Suspicious";
-          })(),
-          feedback: true,
-        }));
+        const formattedData = reports.map((report: any) => formatActivityRow(report));
 
         formattedData.sort(
           (a: any, b: any) =>
@@ -121,6 +143,8 @@ export default function AdminDashboardClient() {
         );
 
         setScanData(formattedData);
+      } else {
+        setScanData([]);
       }
 
       // Fetch all reports for stats calculation
@@ -161,7 +185,7 @@ export default function AdminDashboardClient() {
 
       // Count active users (those with scans in the last 7 days)
         const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
 
         const { data: recentScans, error: scansError } = await supabase
           .from("extension_activity")
@@ -184,18 +208,11 @@ export default function AdminDashboardClient() {
           setActiveUsers(uniqueUsers.size);
 
           // Calculate daily scan counts for last 7 days
-          const dailyData: { [key: string]: number } = {};
-          
-          for (let i = 6; i >= 0; i--) {
-            const date = new Date();
-            date.setDate(date.getDate() - i);
-            const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD format
-            dailyData[dateStr] = 0;
-          }
+          const dailyData = createLast7DaysTemplate();
 
           recentScans.forEach((scan: any) => {
-            const dateStr = new Date(scan.created_at).toISOString().split('T')[0];
-            if (dailyData.hasOwnProperty(dateStr)) {
+            const dateStr = getDayKey(scan.created_at);
+            if (dateStr && Object.prototype.hasOwnProperty.call(dailyData, dateStr)) {
               dailyData[dateStr]++;
             }
           });
@@ -213,73 +230,72 @@ export default function AdminDashboardClient() {
     if (!isAuthenticated || loading) return;
 
     const supabase = createClient();
+    let syncing = false;
+    let needsResync = false;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const runSync = async () => {
+      if (syncing) {
+        needsResync = true;
+        return;
+      }
+
+      syncing = true;
+      try {
+        await fetchReports(supabase);
+      } finally {
+        syncing = false;
+      }
+
+      if (needsResync) {
+        needsResync = false;
+        void runSync();
+      }
+    };
+
+    const scheduleSync = () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+      debounceTimer = setTimeout(() => {
+        debounceTimer = null;
+        void runSync();
+      }, 250);
+    };
 
     const channel = supabase
       .channel("admin-extension-activity")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "extension_activity" },
+        { event: "*", schema: "public", table: "extension_activity" },
         async (payload: any) => {
           try {
-            const report = payload?.new;
-            if (!report?.id) return;
-
-            // Keep Active Users (unique users in last 7 days) in sync.
-            if (typeof report.user_id === "string" && report.user_id.length > 0) {
-              const createdAt = report.created_at ? new Date(report.created_at) : new Date();
-              const sevenDaysAgo = new Date();
-              sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-              if (createdAt >= sevenDaysAgo && !activeUserIdsRef.current.has(report.user_id)) {
-                activeUserIdsRef.current.add(report.user_id);
-                setActiveUsers((n) => n + 1);
-              }
-            }
-
-            const d = normalizeDecision(report.decision);
-            const risk = d === "dangerous" ? "Phishing" : d === "safe" ? "Legitimate" : "Suspicious";
-
-            const formattedRow = {
-              id: report.id,
-              date: new Date(report.created_at).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              }),
-              url: report.url,
-              domain: report.domain || "",
-              confidence: report.confidence ?? null,
-              decision: report.decision || "",
-              prediction: report.prediction || null,
-              risk,
-              feedback: true,
-            };
-
-            setScanData((prev) => {
-              if (prev.some((r: any) => r?.id === formattedRow.id)) return prev;
-              return [formattedRow, ...prev].slice(0, 10);
-            });
-
             setRealtimeEvents((n) => n + 1);
 
-            // Keep high-level counters roughly in sync without refetching everything
-            setTotalScans((n) => n + 1);
-            setStats((prev) => {
-              const nd = normalizeDecision(report.decision);
-              if (nd === "dangerous") return { ...prev, phishing: prev.phishing + 1 };
-              if (nd === "safe") return { ...prev, legitimate: prev.legitimate + 1 };
-              if (nd === "warning") return { ...prev, suspicious: prev.suspicious + 1 };
-              return prev;
-            });
+            // Optimistically append INSERT rows so activity appears instantly.
+            if (payload?.eventType === "INSERT" && payload?.new?.id) {
+              const row = formatActivityRow(payload.new);
+              setScanData((prev) => {
+                if (prev.some((r: any) => r?.id === row.id)) return prev;
+                return [row, ...prev].slice(0, 10);
+              });
+            }
 
-            // Increment daily scan data if we already have a 7-day window loaded
-            setDailyScanData((prev) => {
-              const dateStr = new Date(report.created_at).toISOString().split("T")[0];
-              if (!prev || Object.keys(prev).length === 0) return prev;
-              if (!Object.prototype.hasOwnProperty.call(prev, dateStr)) return prev;
-              return { ...prev, [dateStr]: (prev[dateStr] || 0) + 1 };
-            });
+            scheduleSync();
           } catch (err) {
             console.error("Realtime extension_activity insert handling failed:", err);
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "users" },
+        async () => {
+          try {
+            setRealtimeEvents((n) => n + 1);
+            scheduleSync();
+          } catch (err) {
+            console.error("Realtime users sync failed:", err);
           }
         }
       )
@@ -288,6 +304,9 @@ export default function AdminDashboardClient() {
       });
 
     return () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
       setRealtimeConnected(false);
       supabase.removeChannel(channel);
     };
@@ -628,10 +647,10 @@ export default function AdminDashboardClient() {
                   dates.push(date);
                 }
 
-                const maxScans = Math.max(...dates.map(d => dailyScanData[d.toISOString().split('T')[0]] || 0), 1);
+                const maxScans = Math.max(...dates.map((d) => dailyScanData[getDayKey(d)] || 0), 1);
 
                 return dates.map((date, idx) => {
-                  const dateStr = date.toISOString().split('T')[0];
+                  const dateStr = getDayKey(date);
                   const scans = dailyScanData[dateStr] || 0;
                   const heightPercent = maxScans > 0 ? (scans / maxScans) * 100 : 0;
 
