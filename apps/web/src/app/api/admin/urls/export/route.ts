@@ -21,7 +21,7 @@ function escapeCsvValue(value: string): string {
 
 function toCsv(rows: Array<Record<string, string>>): string {
   if (rows.length === 0) {
-    return "url_length,num_subdomains,has_ip_in_url,has_at_symbol,has_dash,is_https,is_phishing\n";
+    return "url_name,url_length,num_subdomains,has_ip_in_url,has_at_symbol,has_dash,is_https,is_phishing\n";
   }
 
   const headers = Object.keys(rows[0]);
@@ -84,6 +84,7 @@ function toFeatureRow(rawUrl: string, decision: unknown): Record<string, string>
   const isPhishing = normalizeDecision(decision) === "dangerous";
 
   return {
+    url_name: trimmedUrl,
     url_length: String(trimmedUrl.length),
     num_subdomains: String(getSubdomainCount(hostname)),
     has_ip_in_url: hasIp ? "1" : "0",
