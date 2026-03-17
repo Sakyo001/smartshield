@@ -9,7 +9,13 @@ import { createClient, syncUserToDatabase } from "@lib/supabase";
 export function UserAuthForm() {
 	const router = useRouter();
 	const supabase = createClient();
-	const GOOGLE_LOCAL_REDIRECT = "http://localhost:3001/auth/callback?next=/dashboard";
+
+	const getCallbackRedirectUrl = () => {
+		if (typeof window === "undefined") {
+			return "http://localhost:3001/auth/callback?next=/dashboard";
+		}
+		return `${window.location.origin}/auth/callback?next=/dashboard`;
+	};
 
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -57,10 +63,11 @@ export function UserAuthForm() {
 		setIsGoogleLoading(true);
 
 		try {
+			const callbackRedirectUrl = getCallbackRedirectUrl();
 			const { error: oauthError } = await supabase.auth.signInWithOAuth({
 				provider: "google",
 				options: {
-					redirectTo: GOOGLE_LOCAL_REDIRECT,
+					redirectTo: callbackRedirectUrl,
 				},
 			});
 
