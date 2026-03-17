@@ -14,7 +14,14 @@ export function UserAuthForm() {
 		if (typeof window === "undefined") {
 			return "http://localhost:3001/auth/callback?next=/dashboard";
 		}
-		return `${window.location.origin}/auth/callback?next=/dashboard`;
+
+		const { protocol, hostname } = window.location;
+		const canonicalOrigin =
+			hostname === "www.smartshield.it.com"
+				? "https://smartshield.it.com"
+				: `${protocol}//${hostname}${window.location.port ? `:${window.location.port}` : ""}`;
+
+		return `${canonicalOrigin}/auth/callback?next=/dashboard`;
 	};
 
 	const [email, setEmail] = useState("");
