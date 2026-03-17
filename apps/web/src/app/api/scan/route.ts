@@ -21,6 +21,12 @@ async function getOrCreateGuestUserId(adminSupabase: any): Promise<string | null
   if (guestUserLookupPromise) return guestUserLookupPromise;
 
   guestUserLookupPromise = (async () => {
+    const configuredGuestUserId = process.env.SMARTSHIELD_GUEST_USER_ID;
+    if (typeof configuredGuestUserId === "string" && configuredGuestUserId.trim().length > 0) {
+      cachedGuestUserId = configuredGuestUserId.trim();
+      return cachedGuestUserId;
+    }
+
     const guestEmail = process.env.SMARTSHIELD_GUEST_EMAIL ?? "guest-scanner@smartshield.app";
 
     // Try to find an existing guest account first.
@@ -210,6 +216,9 @@ export async function POST(req: NextRequest) {
       headers: rlHeaders,
     });
 
+    let activityLogged = false;
+    let activityLogReason = "skipped";
+
     // Best-effort activity logging so admin "Recent Scan Activity" includes
     // web scans even when the user is anonymous.
     if (upstream.ok && scannedUrl) {
@@ -276,6 +285,17 @@ export async function POST(req: NextRequest) {
 
         const serviceRoleKey = getServiceRoleKey();
 
+        const baseActivityPayload = {
+          user_id: user?.id ?? null,
+          url: scannedUrl,
+          domain,
+          confidence,
+          decision: normalizedDecision,
+          // The dashboard expects `prediction.risk_adjustment.indicators`, so
+          // store the full upstream payload when a nested `prediction` isn't present.
+          prediction: isRecord(data) && data["prediction"] !== undefined ? data["prediction"] : data,
+        };
+
         // Prefer service-role writes when available so guest scans are not blocked
         // by client/session RLS constraints. Fall back to the session client.
         if (serviceRoleKey) {
@@ -287,67 +307,74 @@ export async function POST(req: NextRequest) {
             }
           );
 
-          const resolvedUserId = user?.id ?? (await getOrCreateGuestUserId(adminSupabase));
-          if (!resolvedUserId) {
-            console.warn("[SmartShield] Skipping activity log: could not resolve a user_id for guest scan.");
-          } else {
-            const activityPayload = {
-              user_id: resolvedUserId,
-              url: scannedUrl,
-              domain,
-              confidence,
-              decision: normalizedDecision,
-              // The dashboard expects `prediction.risk_adjustment.indicators`, so
-              // store the full upstream payload when a nested `prediction` isn't present.
-              prediction: isRecord(data) && data["prediction"] !== undefined ? data["prediction"] : data,
-            };
+          const { error: adminInsertError } = await adminSupabase
+            .from("extension_activity")
+            .insert(baseActivityPayload);
 
-            const { error: adminInsertError } = await adminSupabase
-              .from("extension_activity")
-              .insert(activityPayload);
+          if (!adminInsertError) {
+            activityLogged = true;
+            activityLogReason = "ok";
+          } else if (adminInsertError.code === "23502" && !user?.id) {
+            const resolvedUserId = await getOrCreateGuestUserId(adminSupabase);
+            if (!resolvedUserId) {
+              activityLogReason = "guest_user_resolution_failed";
+              console.warn("[SmartShield] Skipping activity log: could not resolve a user_id for guest scan.");
+            } else {
+              const payloadWithGuestUser = {
+                ...baseActivityPayload,
+                user_id: resolvedUserId,
+              };
 
-            if (adminInsertError) {
-              console.warn("[SmartShield] Service-role activity logging failed, trying session client:", adminInsertError);
-              const { error: sessionInsertError } = await supabase
+              const { error: retryInsertError } = await adminSupabase
                 .from("extension_activity")
-                .insert(activityPayload);
-              if (sessionInsertError) {
-                console.warn("[SmartShield] Failed to log scan activity after fallback:", sessionInsertError);
+                .insert(payloadWithGuestUser);
+
+              if (!retryInsertError) {
+                activityLogged = true;
+                activityLogReason = "ok_guest_fallback";
+              } else {
+                activityLogReason = `admin_retry_failed:${retryInsertError.code ?? "unknown"}`;
+                console.warn("[SmartShield] Guest fallback insert failed:", retryInsertError);
               }
             }
+          } else {
+            activityLogReason = `admin_insert_failed:${adminInsertError.code ?? "unknown"}`;
+            console.warn("[SmartShield] Service-role activity logging failed:", adminInsertError);
           }
         } else {
           if (!user?.id) {
             console.warn(
               "[SmartShield] Cannot log guest scan: service-role key env is missing and extension_activity.user_id is required."
             );
+            activityLogReason = "missing_service_role_key";
+            response.headers.set("x-activity-logged", "false");
+            response.headers.set("x-activity-log-reason", activityLogReason);
             return response;
           }
 
-          const activityPayload = {
-            user_id: user.id,
-            url: scannedUrl,
-            domain,
-            confidence,
-            decision: normalizedDecision,
-            prediction: isRecord(data) && data["prediction"] !== undefined ? data["prediction"] : data,
-          };
-
           const { error: sessionInsertError } = await supabase
             .from("extension_activity")
-            .insert(activityPayload);
+            .insert(baseActivityPayload);
 
           if (sessionInsertError) {
+            activityLogReason = `session_insert_failed:${sessionInsertError.code ?? "unknown"}`;
             console.warn(
               "[SmartShield] Failed to log scan activity with session client and no SUPABASE_SERVICE_ROLE_KEY is configured:",
               sessionInsertError
             );
+          } else {
+            activityLogged = true;
+            activityLogReason = "ok";
           }
         }
       } catch (err) {
+        activityLogReason = "logging_exception";
         console.warn("[SmartShield] Failed to log scan activity:", err);
       }
     }
+
+    response.headers.set("x-activity-logged", activityLogged ? "true" : "false");
+    response.headers.set("x-activity-log-reason", activityLogReason);
 
     return response;
   } catch (err: unknown) {
