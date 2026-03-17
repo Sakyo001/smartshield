@@ -3,9 +3,11 @@
 import { Poppins } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTheme } from "@lib/theme-context";
+import { createClient } from "@lib/supabase";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -57,9 +59,12 @@ function ArrowIcon() {
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 
 export default function Navbar() {
+  const router = useRouter();
+  const supabase = createClient();
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { theme, toggleTheme } = useTheme();
   // mounted prevents theme-sensitive elements from diverging between SSR and client.
   // Before mount both sides agree: logo = dark-theme logo, icon = sun.
@@ -69,6 +74,33 @@ export default function Navbar() {
 
   // Derive the effective theme only after mount; pre-mount defaults match server
   const effectiveTheme = mounted ? theme : "dark";
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (isMounted) {
+        setIsAuthenticated(Boolean(session));
+      }
+    };
+
+    loadSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(Boolean(session));
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, [supabase.auth]);
 
   useEffect(() => {
     const sections = ["home", "scan", "about", "faq"];
@@ -134,6 +166,13 @@ export default function Navbar() {
       retryEl.scrollIntoView({ behavior: "smooth", block: "start" });
       setActiveSection(targetId);
     }, 120);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setMobileOpen(false);
+    router.push("/login");
+    router.refresh();
   };
 
   return (
@@ -320,22 +359,40 @@ export default function Navbar() {
             </button>
 
             {/* CTA button — desktop */}
-            <a
-              href="#scan"
-              onClick={(e) => handleSmoothScroll(e as React.MouseEvent<HTMLAnchorElement>, "#scan")}
-              className={`group relative hidden md:inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-full overflow-hidden
-                bg-gradient-to-r from-[#545BFF] to-[#6B73FF] hover:from-[#4349dd] hover:to-[#545BFF]
-                text-white
-                shadow-[0_0_20px_rgba(84,91,255,0.38)] hover:shadow-[0_0_36px_rgba(84,91,255,0.62)]
-                hover:-translate-y-0.5 transition-all duration-300 ${poppins.className}`}
-            >
-              <span className="relative z-10 flex items-center gap-2">
-                Scan Now
-                <ArrowIcon />
-              </span>
-              {/* Shimmer sweep */}
-              <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-            </a>
+            {isAuthenticated ? (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className={`group relative hidden md:inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-full overflow-hidden
+                  bg-gradient-to-r from-[#545BFF] to-[#6B73FF] hover:from-[#4349dd] hover:to-[#545BFF]
+                  text-white
+                  shadow-[0_0_20px_rgba(84,91,255,0.38)] hover:shadow-[0_0_36px_rgba(84,91,255,0.62)]
+                  hover:-translate-y-0.5 transition-all duration-300 ${poppins.className}`}
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  Logout
+                  <ArrowIcon />
+                </span>
+                {/* Shimmer sweep */}
+                <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+              </button>
+            ) : (
+              <a
+                href="/login"
+                className={`group relative hidden md:inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-full overflow-hidden
+                  bg-gradient-to-r from-[#545BFF] to-[#6B73FF] hover:from-[#4349dd] hover:to-[#545BFF]
+                  text-white
+                  shadow-[0_0_20px_rgba(84,91,255,0.38)] hover:shadow-[0_0_36px_rgba(84,91,255,0.62)]
+                  hover:-translate-y-0.5 transition-all duration-300 ${poppins.className}`}
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  Sign Up
+                  <ArrowIcon />
+                </span>
+                {/* Shimmer sweep */}
+                <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+              </a>
+            )}
 
             {/* Theme toggle — futuristic icon button (mobile) */}
             <button
@@ -469,20 +526,37 @@ export default function Navbar() {
 
               {/* Drawer footer — CTA */}
               <div className="px-5 py-5 border-t border-[#545BFF]/12 space-y-2.5">
-                <a
-                  href="#scan"
-                  onClick={(e) => { handleSmoothScroll(e as React.MouseEvent<HTMLAnchorElement>, "#scan"); setMobileOpen(false); }}
-                  className={`group relative flex items-center justify-center gap-2 w-full py-3 rounded-full text-sm font-semibold overflow-hidden
-                    bg-gradient-to-r from-[#545BFF] to-[#6B73FF] text-white
-                    shadow-[0_0_20px_rgba(84,91,255,0.38)] hover:shadow-[0_0_34px_rgba(84,91,255,0.58)]
-                    hover:-translate-y-0.5 transition-all duration-300 ${poppins.className}`}
-                >
-                  <span className="relative z-10 flex items-center gap-2">
-                    Scan Now
-                    <ArrowIcon />
-                  </span>
-                  <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-                </a>
+                {isAuthenticated ? (
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className={`group relative flex items-center justify-center gap-2 w-full py-3 rounded-full text-sm font-semibold overflow-hidden
+                      bg-gradient-to-r from-[#545BFF] to-[#6B73FF] text-white
+                      shadow-[0_0_20px_rgba(84,91,255,0.38)] hover:shadow-[0_0_34px_rgba(84,91,255,0.58)]
+                      hover:-translate-y-0.5 transition-all duration-300 ${poppins.className}`}
+                  >
+                    <span className="relative z-10 flex items-center gap-2">
+                      Logout
+                      <ArrowIcon />
+                    </span>
+                    <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+                  </button>
+                ) : (
+                  <a
+                    href="/login"
+                    onClick={() => setMobileOpen(false)}
+                    className={`group relative flex items-center justify-center gap-2 w-full py-3 rounded-full text-sm font-semibold overflow-hidden
+                      bg-gradient-to-r from-[#545BFF] to-[#6B73FF] text-white
+                      shadow-[0_0_20px_rgba(84,91,255,0.38)] hover:shadow-[0_0_34px_rgba(84,91,255,0.58)]
+                      hover:-translate-y-0.5 transition-all duration-300 ${poppins.className}`}
+                  >
+                    <span className="relative z-10 flex items-center gap-2">
+                      Sign Up
+                      <ArrowIcon />
+                    </span>
+                    <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+                  </a>
+                )}
 
                 {/* Version tag */}
                 <p className={`${poppins.className} text-center text-[10px] text-faded/60 tracking-widest uppercase`}>

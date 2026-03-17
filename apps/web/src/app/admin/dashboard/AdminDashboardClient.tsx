@@ -55,7 +55,37 @@ function formatActivityRow(report: any) {
   };
 }
 
+function buildUrlCandidates(rawUrl: string): string[] {
+  const trimmed = (rawUrl || "").trim();
+  if (!trimmed) return [];
+
+  const candidates = new Set<string>([trimmed]);
+
+  // Handle trailing slash differences between scan URLs and user-submitted report URLs.
+  if (trimmed.endsWith("/")) {
+    candidates.add(trimmed.slice(0, -1));
+  } else {
+    candidates.add(`${trimmed}/`);
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    const normalized = `${parsed.protocol}//${parsed.host}${parsed.pathname}${parsed.search}`;
+    candidates.add(normalized);
+    if (normalized.endsWith("/")) {
+      candidates.add(normalized.slice(0, -1));
+    } else {
+      candidates.add(`${normalized}/`);
+    }
+  } catch {
+    // Ignore invalid URLs and keep string-based candidates only.
+  }
+
+  return Array.from(candidates).filter((value) => value.length > 0);
+}
+
 export default function AdminDashboardClient() {
+  const WHOIS_API_URL = process.env.NEXT_PUBLIC_WHOIS_API_URL;
   const router = useRouter();
   const activeUserIdsRef = useRef<Set<string>>(new Set());
   const processedRealtimeScanIdsRef = useRef<Set<string>>(new Set());
@@ -72,6 +102,7 @@ export default function AdminDashboardClient() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState<any>(null);
   const [comments, setComments] = useState<any[]>([]);
+  const [communityReportCounts, setCommunityReportCounts] = useState<Record<string, number>>({});
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
   const [realtimeConnected, setRealtimeConnected] = useState(false);
@@ -134,15 +165,50 @@ export default function AdminDashboardClient() {
 
     if (reports && reports.length > 0) {
       const formattedData = reports.map((report: any) => formatActivityRow(report));
-      formattedData.sort(
+      const uniqueUrls = Array.from(
+        new Set(
+          formattedData
+            .map((row: any) => row.url)
+            .filter((url: unknown): url is string => typeof url === "string" && url.length > 0 && url !== "(unknown URL)")
+        )
+      );
+
+      let reportCountMap: Record<string, number> = {};
+      if (uniqueUrls.length > 0) {
+        const { data: communityRows, error: communityError } = await supabase
+          .from("reports")
+          .select("url")
+          .in("url", uniqueUrls);
+
+        if (communityError) {
+          console.error("Error fetching community report counts:", communityError.message || JSON.stringify(communityError));
+        } else if (communityRows) {
+          reportCountMap = communityRows.reduce((acc: Record<string, number>, row: any) => {
+            if (typeof row?.url === "string" && row.url.length > 0) {
+              acc[row.url] = (acc[row.url] ?? 0) + 1;
+            }
+            return acc;
+          }, {});
+        }
+      }
+
+      setCommunityReportCounts(reportCountMap);
+
+      const withCommunityCount = formattedData.map((row: any) => ({
+        ...row,
+        reportCount: reportCountMap[row.url] ?? 0,
+      }));
+
+      withCommunityCount.sort(
         (a: any, b: any) =>
           (Date.parse(b.createdAt ?? "") || 0) - (Date.parse(a.createdAt ?? "") || 0)
       );
-      setScanData(formattedData);
+      setScanData(withCommunityCount);
       return;
     }
 
     setScanData([]);
+    setCommunityReportCounts({});
   };
 
   const fetchReports = async (supabase: any) => {
@@ -302,7 +368,7 @@ export default function AdminDashboardClient() {
               const row = formatActivityRow(payload.new);
               setScanData((prev) => {
                 if (prev.some((r: any) => r?.id === row.id)) return prev;
-                return [row, ...prev].slice(0, 10);
+                return [{ ...row, reportCount: communityReportCounts[row.url] ?? 0 }, ...prev].slice(0, 10);
               });
 
               const decision = normalizeDecision(payload?.new?.decision);
@@ -366,7 +432,7 @@ export default function AdminDashboardClient() {
       setRealtimeConnected(false);
       supabase.removeChannel(channel);
     };
-  }, [isAuthenticated, loading]);
+  }, [isAuthenticated, loading, communityReportCounts]);
 
   // AJAX-style polling fallback so dashboard stays fresh even if a realtime
   // event is missed due to intermittent network/mobile conditions.
@@ -469,23 +535,80 @@ export default function AdminDashboardClient() {
     setCommentsLoading(true);
     try {
       const supabase = createClient();
-      
-      // First, try to fetch reports with user data
-      const { data: reports, error } = await supabase
-        .from("reports")
-        .select("id, description, flag, created_at, user_id")
-        .eq("url", url)
-        .order("created_at", { ascending: false });
+      const urlCandidates = buildUrlCandidates(url);
 
-      if (error) {
-        console.error("Error fetching reports - Full error object:", {
-          message: error.message,
-          code: error.code,
-          details: error.details,
-          hint: error.hint,
-        });
-        setComments([]);
-        return;
+      let reports: any[] = [];
+
+      // Prefer the same API source used by the user dashboard comments panel.
+      if (WHOIS_API_URL) {
+        const candidates = urlCandidates.length > 0 ? urlCandidates : [url];
+        const reportMap = new Map<string, any>();
+
+        for (const candidate of candidates) {
+          try {
+            const res = await fetch(`${WHOIS_API_URL}/api/reports?url=${encodeURIComponent(candidate)}`);
+            if (!res.ok) continue;
+            const data = await res.json();
+            const rows = Array.isArray(data?.reports) ? data.reports : [];
+
+            for (const row of rows) {
+              const key = String(row?.id ?? `${row?.url ?? ""}-${row?.user_id ?? ""}-${row?.created_at ?? ""}`);
+              if (!reportMap.has(key)) {
+                reportMap.set(key, row);
+              }
+            }
+          } catch {
+            // Ignore candidate-level errors; fallback paths below will handle empty results.
+          }
+        }
+
+        reports = Array.from(reportMap.values()).sort(
+          (a: any, b: any) => (Date.parse(b?.created_at ?? "") || 0) - (Date.parse(a?.created_at ?? "") || 0)
+        );
+      }
+
+      // Fallback to direct Supabase query if API returned nothing.
+      if (reports.length === 0) {
+        const { data: exactReports, error } = await supabase
+          .from("reports")
+          .select("id, url, description, flag, created_at, user_id")
+          .in("url", urlCandidates.length > 0 ? urlCandidates : [url])
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Error fetching reports - Full error object:", {
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint,
+          });
+        } else {
+          reports = exactReports || [];
+        }
+      }
+
+      // Fallback: if there are no exact matches, fetch reports by domain pattern.
+      if (reports.length === 0) {
+        try {
+          const parsed = new URL(url);
+          const domain = parsed.hostname;
+          if (domain) {
+            const { data: domainReports, error: domainError } = await supabase
+              .from("reports")
+              .select("id, url, description, flag, created_at, user_id")
+              .ilike("url", `%${domain}%`)
+              .order("created_at", { ascending: false })
+              .limit(50);
+
+            if (domainError) {
+              console.error("Error fetching reports by domain:", domainError.message || JSON.stringify(domainError));
+            } else {
+              reports = domainReports || [];
+            }
+          }
+        } catch {
+          // Keep exact match result only when URL cannot be parsed.
+        }
       }
 
       if (!reports || reports.length === 0) {
@@ -511,6 +634,7 @@ export default function AdminDashboardClient() {
         const user = userMap.get(r.user_id) || { email: "Unknown", display_name: "Anonymous" };
         return {
           id: r.id,
+          url: r.url,
           author: user.display_name || user.email || "Anonymous",
           comment: r.description,
           flag: r.flag,
@@ -676,7 +800,13 @@ export default function AdminDashboardClient() {
             {["Dashboard", "URLs", "Settings"].map((item) => (
               <Link
                 key={item}
-                href={item === "URLs" ? "/admin/urls" : `#${item.toLowerCase()}`}
+                href={
+                  item === "URLs"
+                    ? "/admin/urls"
+                    : item === "Settings"
+                    ? "/admin/settings"
+                    : `#${item.toLowerCase()}`
+                }
                 className="nav-link text-sm font-medium text-gray-400 hover:text-white transition-colors"
               >
                 {item}
@@ -924,8 +1054,8 @@ export default function AdminDashboardClient() {
                     <td className="px-6 py-4 text-sm">
                       <button
                         onClick={() => handleFeedbackClick(item)}
-                        className="p-2 bg-gradient-to-r from-[#6B73FF]/20 to-[#5A62E8]/20 hover:from-[#6B73FF]/40 hover:to-[#5A62E8]/40 border border-[#6B73FF]/30 rounded-lg transition-all duration-300 hover:scale-110"
-                        title="View Comments"
+                        className="p-2 bg-gradient-to-r from-[#6B73FF]/20 to-[#5A62E8]/20 hover:from-[#6B73FF]/40 hover:to-[#5A62E8]/40 border border-[#6B73FF]/30 rounded-lg transition-all duration-300 hover:scale-110 inline-flex items-center gap-2"
+                        title={`View community reports (${item.reportCount ?? 0})`}
                       >
                         <svg
                           width="18"
@@ -938,6 +1068,9 @@ export default function AdminDashboardClient() {
                         >
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                         </svg>
+                        <span className="text-xs font-semibold text-[#AEB3FF] min-w-4 text-center">
+                          {item.reportCount ?? 0}
+                        </span>
                       </button>
                     </td>
                   </tr>
@@ -1101,6 +1234,9 @@ export default function AdminDashboardClient() {
                               {c.flag?.charAt(0).toUpperCase() + c.flag?.slice(1) || 'Neutral'}
                             </span>
                           </div>
+                          {c.url && (
+                            <p className="text-gray-500 text-[11px] font-mono break-all mb-1">{c.url}</p>
+                          )}
                           <p className="text-gray-300 text-sm mb-1">{c.comment}</p>
                           <p className="text-gray-500 text-xs">{c.date}</p>
                         </div>

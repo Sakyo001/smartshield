@@ -31,8 +31,10 @@ export default function AdminUrlsClient() {
   const router = useRouter();
   const pageSize = 10;
   const [loading, setLoading] = useState(true);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [adminEmail, setAdminEmail] = useState("");
   const [rows, setRows] = useState<UrlRow[]>([]);
+  const [totalScannedUrls, setTotalScannedUrls] = useState(0);
   const [exporting, setExporting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -40,6 +42,21 @@ export default function AdminUrlsClient() {
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const pageRows = rows.slice(startIndex, endIndex);
+
+  const refreshTotalScannedUrls = async (supabase: any) => {
+    const { count, error } = await supabase
+      .from("extension_activity")
+      .select("id", { count: "exact", head: true })
+      .not("url", "is", null)
+      .neq("url", "");
+
+    if (error) {
+      console.error("Error fetching total scanned URLs:", error);
+      return;
+    }
+
+    setTotalScannedUrls(count ?? 0);
+  };
 
   const onExportCsv = async () => {
     if (exporting) return;
@@ -100,6 +117,7 @@ export default function AdminUrlsClient() {
         }
 
         setAdminEmail(adminUser.email);
+        setIsAdminAuthenticated(true);
 
         const { data: activity, error: activityError } = await supabase
           .from("extension_activity")
@@ -125,6 +143,7 @@ export default function AdminUrlsClient() {
 
         setRows(formatted);
         setCurrentPage(1);
+        await refreshTotalScannedUrls(supabase);
       } finally {
         setLoading(false);
       }
@@ -132,6 +151,37 @@ export default function AdminUrlsClient() {
 
     run();
   }, [router]);
+
+  useEffect(() => {
+    if (!isAdminAuthenticated) return;
+
+    const supabase = createClient();
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const scheduleCountRefresh = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        debounceTimer = null;
+        void refreshTotalScannedUrls(supabase);
+      }, 150);
+    };
+
+    const channel = supabase
+      .channel("admin-urls-total-count")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "extension_activity" },
+        () => {
+          scheduleCountRefresh();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      supabase.removeChannel(channel);
+    };
+  }, [isAdminAuthenticated]);
 
   if (loading) {
     return (
@@ -161,6 +211,9 @@ export default function AdminUrlsClient() {
             >
               {exporting ? "Exporting..." : "Export CSV"}
             </button>
+            <div className="text-xs text-gray-400">
+              Total scanned URLs: <span className="text-white font-medium">{totalScannedUrls.toLocaleString()}</span>
+            </div>
           </div>
         </div>
 
