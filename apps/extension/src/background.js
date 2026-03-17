@@ -229,7 +229,8 @@ function processScanResult(rootDomain, data) {
 
     // Check for critical indicators
     const criticalIndicators = indicators.filter(
-      (i) => typeof i === "string" && (i.includes("CRITICAL") || i.includes("🚨"))
+      (i) =>
+        typeof i === "string" && (i.includes("CRITICAL") || i.includes("🚨")),
     );
 
     if (criticalIndicators.length > 0) {
@@ -251,7 +252,7 @@ function processScanResult(rootDomain, data) {
       (i) =>
         typeof i === "string" &&
         i.includes("WHOIS Information Unavailable") &&
-        !i.includes("CRITICAL")
+        !i.includes("CRITICAL"),
     );
     if (hasWhoisWarning && riskScore < 45) {
       riskScore = 45;
@@ -308,11 +309,16 @@ async function fetchDomainDetails(rootDomain) {
     if (!response.ok) throw new Error(`API ${response.status}`);
     const domainData = await response.json();
 
+    // Validate response is a proper object before accessing properties
+    if (!domainData || typeof domainData !== "object") {
+      throw new Error("API returned invalid response format");
+    }
+
     const details = {
-      whois: domainData.whois,
-      dns: domainData.dns,
-      ssl: domainData.ssl,
-      riskAdjustment: domainData.risk_adjustment,
+      whois: domainData.whois || {},
+      dns: domainData.dns || {},
+      ssl: domainData.ssl || {},
+      riskAdjustment: domainData.risk_adjustment || 0,
       registrar: domainData.whois?.registrar || "Unknown",
       creationDate: domainData.whois?.creation_date || "Unknown",
       expirationDate: domainData.whois?.expiration_date || "Unknown",
