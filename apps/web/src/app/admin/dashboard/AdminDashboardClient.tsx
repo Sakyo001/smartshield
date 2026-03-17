@@ -804,6 +804,29 @@ export default function AdminDashboardClient() {
                 const phishingPercent = total > 0 ? (stats.phishing / total) * 100 : 0;
                 const suspiciousPercent = total > 0 ? (stats.suspicious / total) * 100 : 0;
                 const legitimatePercent = total > 0 ? (stats.legitimate / total) * 100 : 0;
+                const breakdown = [
+                  {
+                    label: "Phishing",
+                    count: stats.phishing,
+                    percent: phishingPercent,
+                    dot: "bg-red-500",
+                    text: "text-red-300",
+                  },
+                  {
+                    label: "Suspicious",
+                    count: stats.suspicious,
+                    percent: suspiciousPercent,
+                    dot: "bg-orange-500",
+                    text: "text-orange-300",
+                  },
+                  {
+                    label: "Legitimate",
+                    count: stats.legitimate,
+                    percent: legitimatePercent,
+                    dot: "bg-green-500",
+                    text: "text-green-300",
+                  },
+                ];
 
                 return (
                   <>
@@ -814,13 +837,28 @@ export default function AdminDashboardClient() {
                       }}
                     >
                       <div className="w-32 h-32 rounded-full bg-gray-900 flex items-center justify-center z-10">
-                        <span className="text-xl font-bold text-white">{total > 0 ? ((stats.phishing / total) * 100).toFixed(1) : 0}%</span>
+                        <div className="text-center leading-tight">
+                          <div className="text-[11px] uppercase tracking-wide text-gray-400">Total</div>
+                          <div className="text-xl font-bold text-white">{total.toLocaleString()}</div>
+                        </div>
                       </div>
                     </div>
-                    <div className="text-sm text-gray-400 text-center space-y-1">
-                      <div className="hover:text-white transition-colors">🔴 Phishing: {stats.phishing}</div>
-                      <div className="hover:text-white transition-colors">🟠 Suspicious: {stats.suspicious}</div>
-                      <div className="hover:text-white transition-colors">🟢 Legitimate: {stats.legitimate}</div>
+                    <div className="w-full max-w-xs space-y-2">
+                      {breakdown.map((item) => (
+                        <div
+                          key={item.label}
+                          className="flex items-center justify-between rounded-md border border-gray-800/70 bg-gray-900/40 px-3 py-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className={`h-2.5 w-2.5 rounded-full ${item.dot}`} />
+                            <span className={`text-sm ${item.text}`}>{item.label}</span>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-semibold text-white">{item.percent.toFixed(1)}%</div>
+                            <div className="text-[11px] text-gray-400">{item.count.toLocaleString()} scans</div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </>
                 );

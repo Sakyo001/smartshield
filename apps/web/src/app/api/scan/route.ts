@@ -7,12 +7,21 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 let cachedGuestUserId: string | null = null;
 let guestUserLookupPromise: Promise<string | null> | null = null;
 
+function getServiceRoleKey(): string | null {
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.SUPABASE_SERVICE_KEY ??
+    process.env.SUPABASE_SERVICE_ROLE ??
+    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+  return typeof key === "string" && key.trim().length > 0 ? key.trim() : null;
+}
+
 async function getOrCreateGuestUserId(adminSupabase: any): Promise<string | null> {
   if (cachedGuestUserId) return cachedGuestUserId;
   if (guestUserLookupPromise) return guestUserLookupPromise;
 
   guestUserLookupPromise = (async () => {
-    const guestEmail = process.env.SMARTSHIELD_GUEST_EMAIL ?? "guest-scanner@smartshield.local";
+    const guestEmail = process.env.SMARTSHIELD_GUEST_EMAIL ?? "guest-scanner@smartshield.app";
 
     // Try to find an existing guest account first.
     const listResult = await adminSupabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
@@ -265,7 +274,7 @@ export async function POST(req: NextRequest) {
 
         const normalizedDecision = riskScore >= 70 ? "dangerous" : riskScore >= 40 ? "warning" : "safe";
 
-        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const serviceRoleKey = getServiceRoleKey();
 
         // Prefer service-role writes when available so guest scans are not blocked
         // by client/session RLS constraints. Fall back to the session client.
@@ -310,7 +319,7 @@ export async function POST(req: NextRequest) {
         } else {
           if (!user?.id) {
             console.warn(
-              "[SmartShield] Cannot log guest scan: SUPABASE_SERVICE_ROLE_KEY is missing and extension_activity.user_id is required."
+              "[SmartShield] Cannot log guest scan: service-role key env is missing and extension_activity.user_id is required."
             );
             return response;
           }
