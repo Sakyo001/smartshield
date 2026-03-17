@@ -4,6 +4,64 @@ import { Redis } from "@upstash/redis";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
+let cachedGuestUserId: string | null = null;
+let guestUserLookupPromise: Promise<string | null> | null = null;
+
+async function getOrCreateGuestUserId(adminSupabase: any): Promise<string | null> {
+  if (cachedGuestUserId) return cachedGuestUserId;
+  if (guestUserLookupPromise) return guestUserLookupPromise;
+
+  guestUserLookupPromise = (async () => {
+    const guestEmail = process.env.SMARTSHIELD_GUEST_EMAIL ?? "guest-scanner@smartshield.local";
+
+    // Try to find an existing guest account first.
+    const listResult = await adminSupabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    if (!listResult.error) {
+      const existing = listResult.data.users.find((u: any) => u.email?.toLowerCase() === guestEmail.toLowerCase());
+      if (existing?.id) {
+        cachedGuestUserId = existing.id;
+        return cachedGuestUserId;
+      }
+    }
+
+    const password =
+      process.env.SMARTSHIELD_GUEST_PASSWORD ?? `Guest#${Math.random().toString(36).slice(2)}Aa1!`;
+
+    const created = await adminSupabase.auth.admin.createUser({
+      email: guestEmail,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        guest_account: true,
+        system_generated: true,
+      },
+    });
+
+    if (created.error) {
+      // Account may have been created concurrently; retry lookup once.
+      const retry = await adminSupabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      if (!retry.error) {
+        const existing = retry.data.users.find((u: any) => u.email?.toLowerCase() === guestEmail.toLowerCase());
+        if (existing?.id) {
+          cachedGuestUserId = existing.id;
+          return cachedGuestUserId;
+        }
+      }
+      console.warn("[SmartShield] Failed to resolve guest auth user:", created.error);
+      return null;
+    }
+
+    cachedGuestUserId = created.data.user?.id ?? null;
+    return cachedGuestUserId;
+  })();
+
+  try {
+    return await guestUserLookupPromise;
+  } finally {
+    guestUserLookupPromise = null;
+  }
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -207,42 +265,74 @@ export async function POST(req: NextRequest) {
 
         const normalizedDecision = riskScore >= 70 ? "dangerous" : riskScore >= 40 ? "warning" : "safe";
 
-        const activityPayload = {
-          user_id: user?.id ?? null,
-          url: scannedUrl,
-          domain,
-          confidence,
-          decision: normalizedDecision,
-          // The dashboard expects `prediction.risk_adjustment.indicators`, so
-          // store the full upstream payload when a nested `prediction` isn't present.
-          prediction: isRecord(data) && data["prediction"] !== undefined ? data["prediction"] : data,
-        };
+        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-        const { error: insertError } = await supabase.from("extension_activity").insert(activityPayload);
+        // Prefer service-role writes when available so guest scans are not blocked
+        // by client/session RLS constraints. Fall back to the session client.
+        if (serviceRoleKey) {
+          const adminSupabase = createSupabaseClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            serviceRoleKey,
+            {
+              auth: { persistSession: false, autoRefreshToken: false },
+            }
+          );
 
-        if (insertError) {
-          const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-          if (!serviceRoleKey) {
-            console.warn(
-              "[SmartShield] Failed to log scan activity with anon/session client and no SUPABASE_SERVICE_ROLE_KEY is configured:",
-              insertError
-            );
+          const resolvedUserId = user?.id ?? (await getOrCreateGuestUserId(adminSupabase));
+          if (!resolvedUserId) {
+            console.warn("[SmartShield] Skipping activity log: could not resolve a user_id for guest scan.");
           } else {
-            const adminSupabase = createSupabaseClient(
-              process.env.NEXT_PUBLIC_SUPABASE_URL!,
-              serviceRoleKey,
-              {
-                auth: { persistSession: false, autoRefreshToken: false },
-              }
-            );
+            const activityPayload = {
+              user_id: resolvedUserId,
+              url: scannedUrl,
+              domain,
+              confidence,
+              decision: normalizedDecision,
+              // The dashboard expects `prediction.risk_adjustment.indicators`, so
+              // store the full upstream payload when a nested `prediction` isn't present.
+              prediction: isRecord(data) && data["prediction"] !== undefined ? data["prediction"] : data,
+            };
 
             const { error: adminInsertError } = await adminSupabase
               .from("extension_activity")
               .insert(activityPayload);
 
             if (adminInsertError) {
-              console.warn("[SmartShield] Failed to log scan activity with service role fallback:", adminInsertError);
+              console.warn("[SmartShield] Service-role activity logging failed, trying session client:", adminInsertError);
+              const { error: sessionInsertError } = await supabase
+                .from("extension_activity")
+                .insert(activityPayload);
+              if (sessionInsertError) {
+                console.warn("[SmartShield] Failed to log scan activity after fallback:", sessionInsertError);
+              }
             }
+          }
+        } else {
+          if (!user?.id) {
+            console.warn(
+              "[SmartShield] Cannot log guest scan: SUPABASE_SERVICE_ROLE_KEY is missing and extension_activity.user_id is required."
+            );
+            return response;
+          }
+
+          const activityPayload = {
+            user_id: user.id,
+            url: scannedUrl,
+            domain,
+            confidence,
+            decision: normalizedDecision,
+            prediction: isRecord(data) && data["prediction"] !== undefined ? data["prediction"] : data,
+          };
+
+          const { error: sessionInsertError } = await supabase
+            .from("extension_activity")
+            .insert(activityPayload);
+
+          if (sessionInsertError) {
+            console.warn(
+              "[SmartShield] Failed to log scan activity with session client and no SUPABASE_SERVICE_ROLE_KEY is configured:",
+              sessionInsertError
+            );
           }
         }
       } catch (err) {

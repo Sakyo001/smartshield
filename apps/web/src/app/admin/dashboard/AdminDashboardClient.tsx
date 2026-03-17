@@ -58,6 +58,7 @@ function formatActivityRow(report: any) {
 export default function AdminDashboardClient() {
   const router = useRouter();
   const activeUserIdsRef = useRef<Set<string>>(new Set());
+  const processedRealtimeScanIdsRef = useRef<Set<string>>(new Set());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminEmail, setAdminEmail] = useState("");
   const [loading, setLoading] = useState(true);
@@ -119,33 +120,34 @@ export default function AdminDashboardClient() {
   }, [router]);
 
   // Fetch reports from Supabase
+  const fetchRecentScanActivity = async (supabase: any) => {
+    const { data: reports, error } = await supabase
+      .from("extension_activity")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (error) {
+      console.error("Error fetching recent scan activity:", error.message || JSON.stringify(error));
+      return;
+    }
+
+    if (reports && reports.length > 0) {
+      const formattedData = reports.map((report: any) => formatActivityRow(report));
+      formattedData.sort(
+        (a: any, b: any) =>
+          (Date.parse(b.createdAt ?? "") || 0) - (Date.parse(a.createdAt ?? "") || 0)
+      );
+      setScanData(formattedData);
+      return;
+    }
+
+    setScanData([]);
+  };
+
   const fetchReports = async (supabase: any) => {
     try {
-      // Fetch recent scan activity without join (limit 10 for table display)
-      const { data: reports, error } = await supabase
-        .from("extension_activity")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      if (error) {
-        console.error("Error fetching reports:", error.message || JSON.stringify(error));
-        return;
-      }
-
-      if (reports && reports.length > 0) {
-        // Format data for display
-        const formattedData = reports.map((report: any) => formatActivityRow(report));
-
-        formattedData.sort(
-          (a: any, b: any) =>
-            (Date.parse(b.createdAt ?? "") || 0) - (Date.parse(a.createdAt ?? "") || 0)
-        );
-
-        setScanData(formattedData);
-      } else {
-        setScanData([]);
-      }
+      await fetchRecentScanActivity(supabase);
 
       // Fetch all reports for stats calculation
       const { data: allReports, error: reportsError } = await supabase
@@ -233,6 +235,7 @@ export default function AdminDashboardClient() {
     let syncing = false;
     let needsResync = false;
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    let recentDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
     const runSync = async () => {
       if (syncing) {
@@ -263,24 +266,74 @@ export default function AdminDashboardClient() {
       }, 250);
     };
 
+    const scheduleRecentSync = () => {
+      if (recentDebounceTimer) {
+        clearTimeout(recentDebounceTimer);
+      }
+      recentDebounceTimer = setTimeout(() => {
+        recentDebounceTimer = null;
+        void fetchRecentScanActivity(supabase);
+      }, 120);
+    };
+
     const channel = supabase
       .channel("admin-extension-activity")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "extension_activity" },
+        { event: "INSERT", schema: "public", table: "extension_activity" },
         async (payload: any) => {
           try {
             setRealtimeEvents((n) => n + 1);
 
             // Optimistically append INSERT rows so activity appears instantly.
             if (payload?.eventType === "INSERT" && payload?.new?.id) {
+              const insertedId = String(payload.new.id);
+              if (processedRealtimeScanIdsRef.current.has(insertedId)) {
+                scheduleSync();
+                return;
+              }
+
+              processedRealtimeScanIdsRef.current.add(insertedId);
+              if (processedRealtimeScanIdsRef.current.size > 5000) {
+                processedRealtimeScanIdsRef.current.clear();
+                processedRealtimeScanIdsRef.current.add(insertedId);
+              }
+
               const row = formatActivityRow(payload.new);
               setScanData((prev) => {
                 if (prev.some((r: any) => r?.id === row.id)) return prev;
                 return [row, ...prev].slice(0, 10);
               });
+
+              const decision = normalizeDecision(payload?.new?.decision);
+              setStats((prev) => ({
+                phishing: prev.phishing + (decision === "dangerous" ? 1 : 0),
+                suspicious: prev.suspicious + (decision === "warning" ? 1 : 0),
+                legitimate: prev.legitimate + (decision === "safe" ? 1 : 0),
+              }));
+              setTotalScans((prev) => prev + 1);
+
+              const createdAtValue =
+                typeof payload?.new?.created_at === "string" && payload.new.created_at.length > 0
+                  ? payload.new.created_at
+                  : new Date();
+              const dateKey = getDayKey(createdAtValue);
+              setDailyScanData((prev) => {
+                const next = Object.keys(prev).length > 0 ? { ...prev } : createLast7DaysTemplate();
+                if (dateKey && Object.prototype.hasOwnProperty.call(next, dateKey)) {
+                  next[dateKey] = (next[dateKey] ?? 0) + 1;
+                }
+                return next;
+              });
+
+              const userId = payload?.new?.user_id;
+              if (typeof userId === "string" && userId.length > 0 && !activeUserIdsRef.current.has(userId)) {
+                activeUserIdsRef.current.add(userId);
+                setActiveUsers(activeUserIdsRef.current.size);
+              }
             }
 
+            scheduleRecentSync();
             scheduleSync();
           } catch (err) {
             console.error("Realtime extension_activity insert handling failed:", err);
@@ -307,8 +360,77 @@ export default function AdminDashboardClient() {
       if (debounceTimer) {
         clearTimeout(debounceTimer);
       }
+      if (recentDebounceTimer) {
+        clearTimeout(recentDebounceTimer);
+      }
       setRealtimeConnected(false);
       supabase.removeChannel(channel);
+    };
+  }, [isAuthenticated, loading]);
+
+  // AJAX-style polling fallback so dashboard stays fresh even if a realtime
+  // event is missed due to intermittent network/mobile conditions.
+  useEffect(() => {
+    if (!isAuthenticated || loading) return;
+
+    const supabase = createClient();
+    let polling = false;
+
+    const poll = async () => {
+      if (polling) return;
+      polling = true;
+      try {
+        await fetchReports(supabase);
+      } finally {
+        polling = false;
+      }
+    };
+
+    // Prime immediately after auth/load.
+    void poll();
+
+    const interval = setInterval(() => {
+      void poll();
+    }, 4000);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void poll();
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [isAuthenticated, loading]);
+
+  // Fast polling path for Recent Scan Activity only.
+  useEffect(() => {
+    if (!isAuthenticated || loading) return;
+
+    const supabase = createClient();
+    let polling = false;
+
+    const pollRecent = async () => {
+      if (polling) return;
+      polling = true;
+      try {
+        await fetchRecentScanActivity(supabase);
+      } finally {
+        polling = false;
+      }
+    };
+
+    void pollRecent();
+    const interval = setInterval(() => {
+      void pollRecent();
+    }, 2000);
+
+    return () => {
+      clearInterval(interval);
     };
   }, [isAuthenticated, loading]);
 

@@ -29,10 +29,17 @@ function hasNonEmptyUrl(
 
 export default function AdminUrlsClient() {
   const router = useRouter();
+  const pageSize = 10;
   const [loading, setLoading] = useState(true);
   const [adminEmail, setAdminEmail] = useState("");
   const [rows, setRows] = useState<UrlRow[]>([]);
   const [exporting, setExporting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const pageRows = rows.slice(startIndex, endIndex);
 
   const onExportCsv = async () => {
     if (exporting) return;
@@ -117,6 +124,7 @@ export default function AdminUrlsClient() {
           }));
 
         setRows(formatted);
+        setCurrentPage(1);
       } finally {
         setLoading(false);
       }
@@ -170,7 +178,7 @@ export default function AdminUrlsClient() {
           </div>
 
           <div className="divide-y divide-gray-800">
-            {rows.map((r) => (
+            {pageRows.map((r) => (
               <div key={r.id} className="grid grid-cols-12 gap-3 px-4 py-3 text-sm">
                 <div className="col-span-3 text-gray-300">
                   {new Date(r.createdAt).toLocaleString()}
@@ -193,6 +201,35 @@ export default function AdminUrlsClient() {
             )}
           </div>
         </div>
+
+        {rows.length > 0 && (
+          <div className="mt-4 flex items-center justify-between text-sm text-gray-400">
+            <div>
+              Showing {startIndex + 1}-{Math.min(endIndex, rows.length)} of {rows.length.toLocaleString()}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage <= 1}
+                className="inline-flex items-center justify-center rounded-md border border-gray-800 bg-black/30 px-3 py-1.5 text-xs font-medium text-gray-200 hover:text-white hover:border-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Previous
+              </button>
+              <span className="min-w-20 text-center text-gray-300">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages}
+                className="inline-flex items-center justify-center rounded-md border border-gray-800 bg-black/30 px-3 py-1.5 text-xs font-medium text-gray-200 hover:text-white hover:border-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
