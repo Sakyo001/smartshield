@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion, useInView, AnimatePresence, useMotionValue, useSpring, useTransform } from "motion/react";
 import DotGridCanvas from "../ui/DotGridCanvas";
+import { createClient as createSupabaseClient } from "@lib/supabase";
 
 /* ─────────────────────────────────────────────
    Types
@@ -750,6 +751,7 @@ function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
 ───────────────────────────────────────────── */
 function GuestScanner({ inView, lowPerformanceMode }: { inView: boolean; lowPerformanceMode: boolean }) {
   const WHOIS_API_URL = process.env.NEXT_PUBLIC_WHOIS_API_URL;
+  const supabase = createSupabaseClient();
 
   const [urlInput, setUrlInput] = useState("");
   const [urlError, setUrlError] = useState<string | null>(null);
@@ -760,6 +762,8 @@ function GuestScanner({ inView, lowPerformanceMode }: { inView: boolean; lowPerf
   const [retryCountdown, setRetryCountdown] = useState(0);
   const [apiStatus, setApiStatus] = useState<"checking" | "online" | "offline">("checking");
   const [activeTab, setActiveTab] = useState<"detection" | "explanation" | "details" | "relations" | "community">("detection");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [hasCompletedScan, setHasCompletedScan] = useState(false);
 
   // XAI explanation
   const [xaiExplanation, setXaiExplanation] = useState<any>(null);
@@ -772,6 +776,11 @@ function GuestScanner({ inView, lowPerformanceMode }: { inView: boolean; lowPerf
   // Community (read-only for guests)
   const [communityComments, setCommunityComments] = useState<any[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [commentFlag, setCommentFlag] = useState<"phishing" | "legitimate" | "neutral">("neutral");
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
+  const [commentSuccess, setCommentSuccess] = useState<string | null>(null);
 
   // Scroll targets
   const riskScoreRef = useRef<HTMLDivElement>(null);
@@ -841,6 +850,32 @@ function GuestScanner({ inView, lowPerformanceMode }: { inView: boolean; lowPerf
     })();
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+
+    const syncAuthState = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!mounted) return;
+      setIsAuthenticated(Boolean(user));
+    };
+
+    void syncAuthState();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+      setIsAuthenticated(Boolean(session?.user));
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [supabase.auth]);
+
   /* Fetch XAI explanation whenever currentScan changes */
   useEffect(() => {
     if (!currentScan) return;
@@ -877,7 +912,7 @@ function GuestScanner({ inView, lowPerformanceMode }: { inView: boolean; lowPerf
 
   /* Fetch community comments when tab active */
   useEffect(() => {
-    if (activeTab !== "community" || !currentScan) return;
+    if (activeTab !== "community" || !currentScan || !isAuthenticated || !hasCompletedScan) return;
     setLoadingComments(true);
     (async () => {
       try {
@@ -894,7 +929,7 @@ function GuestScanner({ inView, lowPerformanceMode }: { inView: boolean; lowPerf
         setLoadingComments(false);
       }
     })();
-  }, [activeTab, currentScan]);
+  }, [activeTab, currentScan, isAuthenticated, hasCompletedScan]);
 
   /* Fetch relations / history when tab active */
   useEffect(() => {
@@ -1039,6 +1074,10 @@ function GuestScanner({ inView, lowPerformanceMode }: { inView: boolean; lowPerf
         },
       });
 
+      setHasCompletedScan(true);
+      setCommentError(null);
+      setCommentSuccess(null);
+
       setActiveTab("detection");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred while scanning");
@@ -1065,6 +1104,69 @@ function GuestScanner({ inView, lowPerformanceMode }: { inView: boolean; lowPerf
   const handleReanalyze = () => {
     if (!currentScan) return;
     doScan(currentScan.url);
+  };
+
+  const refreshCommunityComments = useCallback(async () => {
+    if (!currentScan) return;
+    setLoadingComments(true);
+    try {
+      const res = await fetch(`${WHOIS_API_URL}/api/reports?url=${encodeURIComponent(currentScan.url)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setCommunityComments(data.reports || []);
+      } else {
+        setCommunityComments([]);
+      }
+    } catch {
+      setCommunityComments([]);
+    } finally {
+      setLoadingComments(false);
+    }
+  }, [WHOIS_API_URL, currentScan]);
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCommentError(null);
+    setCommentSuccess(null);
+
+    if (!isAuthenticated || !hasCompletedScan || !currentScan) {
+      setCommentError("Please log in and complete a scan before commenting.");
+      return;
+    }
+
+    const description = commentText.trim();
+    if (description.length < 3) {
+      setCommentError("Comment must be at least 3 characters.");
+      return;
+    }
+
+    setSubmittingComment(true);
+    try {
+      const res = await fetch("/api/community", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: currentScan.url,
+          description,
+          flag: commentFlag,
+        }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setCommentError(body.error || "Unable to submit comment.");
+        return;
+      }
+
+      setCommentText("");
+      setCommentFlag("neutral");
+      setCommentSuccess("Comment submitted successfully.");
+      await refreshCommunityComments();
+    } catch {
+      setCommentError("Unable to submit comment.");
+    } finally {
+      setSubmittingComment(false);
+    }
   };
 
   return (
@@ -2054,61 +2156,118 @@ function GuestScanner({ inView, lowPerformanceMode }: { inView: boolean; lowPerf
                     )}
                   </div>
 
-                  {loadingComments ? (
-                    <div className="flex flex-col items-center py-12">
-                      <div className="relative w-10 h-10 mb-4">
-                        <div className="absolute inset-0 border-t-2 border-[#545BFF] rounded-full animate-spin" />
-                      </div>
-                      <p className="text-faded text-xs font-mono animate-pulse">Loading community feedback...</p>
-                    </div>
-                  ) : communityComments.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-[#545BFF]/10 flex items-center justify-center">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#545BFF]"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                      </div>
-                      <p className="text-heading font-medium text-sm">No community feedback yet</p>
-                      <p className="text-faded text-xs mt-1">Be the first to report this URL</p>
+                  {!isAuthenticated || !hasCompletedScan ? (
+                    <div className="rounded-xl border border-[#545BFF]/20 bg-[#545BFF]/8 p-4 sm:p-5 text-center">
+                      <p className="text-sm font-semibold text-[#545BFF] dark:text-[#a89de8]">Community Feedback Locked</p>
+                      <p className="text-xs text-faded mt-1">Please log in and complete a scan before commenting.</p>
                     </div>
                   ) : (
-                    <ul className="space-y-3">
-                      {communityComments.map((cmt, idx) => (
-                        <li key={idx} className="dark:bg-white/[0.02] bg-white/60 backdrop-blur-sm border border-divider/40 rounded-xl p-4 sm:p-5 hover:border-[#545BFF]/25 transition-all">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#545BFF] to-[#b19eef] p-[2px]">
-                                <div className="w-full h-full rounded-[10px] dark:bg-[#080814] bg-white flex items-center justify-center">
-                                  <span className="text-[10px] font-bold text-[#545BFF] dark:text-[#a89de8]">{cmt.user_id ? cmt.user_id.substring(0, 2).toUpperCase() : "AN"}</span>
+                    <div className="mb-5 rounded-xl border border-green-500/20 bg-green-500/8 p-4 sm:p-5">
+                      <p className="text-sm font-semibold text-green-600 dark:text-green-300">You can now comment</p>
+                      <p className="text-xs text-faded mt-1">Share what you observed on this scanned URL.</p>
+
+                      <form onSubmit={handleSubmitComment} className="mt-3 space-y-3">
+                        <div>
+                          <label htmlFor="community-flag" className="block text-[11px] font-medium text-faded mb-1.5">
+                            Flag this URL as
+                          </label>
+                          <select
+                            id="community-flag"
+                            value={commentFlag}
+                            onChange={(e) => setCommentFlag(e.target.value as "phishing" | "legitimate" | "neutral")}
+                            className="w-full rounded-lg border border-divider/60 bg-white/70 dark:bg-white/[0.03] px-3 py-2 text-xs sm:text-sm text-copy focus:outline-none focus:ring-2 focus:ring-[#545BFF]/50"
+                          >
+                            <option value="phishing">Phishing</option>
+                            <option value="legitimate">Legit</option>
+                            <option value="neutral">Neutral</option>
+                          </select>
+                        </div>
+                        <textarea
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          placeholder="Write your feedback here..."
+                          rows={4}
+                          className="w-full rounded-lg border border-divider/60 bg-white/70 dark:bg-white/[0.03] px-3 py-2 text-xs sm:text-sm text-copy focus:outline-none focus:ring-2 focus:ring-[#545BFF]/50"
+                        />
+                        {commentError && <p className="text-xs text-red-500 dark:text-red-400">{commentError}</p>}
+                        {commentSuccess && <p className="text-xs text-green-600 dark:text-green-400">{commentSuccess}</p>}
+                        <button
+                          type="submit"
+                          disabled={submittingComment}
+                          className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-[#545BFF] to-[#6B73FF] px-4 py-2 text-xs sm:text-sm font-semibold text-white disabled:opacity-60"
+                        >
+                          {submittingComment ? "Submitting..." : "Submit"}
+                        </button>
+                      </form>
+                    </div>
+                  )}
+
+                  {isAuthenticated && hasCompletedScan && (
+                    loadingComments ? (
+                      <div className="flex flex-col items-center py-12">
+                        <div className="relative w-10 h-10 mb-4">
+                          <div className="absolute inset-0 border-t-2 border-[#545BFF] rounded-full animate-spin" />
+                        </div>
+                        <p className="text-faded text-xs font-mono animate-pulse">Loading community feedback...</p>
+                      </div>
+                    ) : communityComments.length === 0 ? (
+                      <div className="text-center py-12">
+                        <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-[#545BFF]/10 flex items-center justify-center">
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#545BFF]"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        </div>
+                        <p className="text-heading font-medium text-sm">No community feedback yet</p>
+                        <p className="text-faded text-xs mt-1">Be the first to report this URL</p>
+                      </div>
+                    ) : (
+                      <ul className="space-y-3">
+                        {communityComments.map((cmt, idx) => (
+                          <li key={idx} className="dark:bg-white/[0.02] bg-white/60 backdrop-blur-sm border border-divider/40 rounded-xl p-4 sm:p-5 hover:border-[#545BFF]/25 transition-all">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#545BFF] to-[#b19eef] p-[2px]">
+                                  <div className="w-full h-full rounded-[10px] dark:bg-[#080814] bg-white flex items-center justify-center">
+                                    <span className="text-[10px] font-bold text-[#545BFF] dark:text-[#a89de8]">{cmt.user_id ? cmt.user_id.substring(0, 2).toUpperCase() : "AN"}</span>
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="text-xs text-heading font-medium">{cmt.user_id ? `User ${cmt.user_id.substring(0, 8)}...` : "Anonymous"}</div>
+                                  <div className="text-[10px] text-faded font-mono">{cmt.created_at ? new Date(cmt.created_at).toLocaleString() : ""}</div>
                                 </div>
                               </div>
-                              <div>
-                                <div className="text-xs text-heading font-medium">{cmt.user_id ? `User ${cmt.user_id.substring(0, 8)}...` : "Anonymous"}</div>
-                                <div className="text-[10px] text-faded font-mono">{cmt.created_at ? new Date(cmt.created_at).toLocaleString() : ""}</div>
-                              </div>
+                              {cmt.flag && (
+                                <div
+                                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${
+                                    cmt.flag === "legitimate"
+                                      ? "bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400"
+                                      : cmt.flag === "phishing"
+                                      ? "bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400"
+                                      : "bg-yellow-500/10 border-yellow-500/20 text-yellow-700 dark:text-yellow-300"
+                                  }`}
+                                >
+                                  {cmt.flag === "legitimate" ? (
+                                    <>
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                                      <span className="text-[9px] font-bold uppercase tracking-wider">Legitimate</span>
+                                    </>
+                                  ) : cmt.flag === "phishing" ? (
+                                    <>
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                                      <span className="text-[9px] font-bold uppercase tracking-wider">Phishing</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><line x1="8" y1="12" x2="16" y2="12" /></svg>
+                                      <span className="text-[9px] font-bold uppercase tracking-wider">Neutral</span>
+                                    </>
+                                  )}
+                                </div>
+                              )}
                             </div>
-                            {cmt.flag && cmt.flag !== "neutral" && (
-                              <div
-                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${
-                                  cmt.flag === "legitimate" ? "bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400" : "bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400"
-                                }`}
-                              >
-                                {cmt.flag === "legitimate" ? (
-                                  <>
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
-                                    <span className="text-[9px] font-bold uppercase tracking-wider">Legitimate</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                                    <span className="text-[9px] font-bold uppercase tracking-wider">Phishing</span>
-                                  </>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                          <div className="text-xs sm:text-[13px] text-copy leading-relaxed pl-12">{cmt.description}</div>
-                        </li>
-                      ))}
-                    </ul>
+                            <div className="text-xs sm:text-[13px] text-copy leading-relaxed pl-12">{cmt.description}</div>
+                          </li>
+                        ))}
+                      </ul>
+                    )
                   )}
                 </div>
               )}
