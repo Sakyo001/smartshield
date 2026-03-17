@@ -10,7 +10,7 @@
  * - AbortController for proper request cancellation/timeout
  */
 
-const WHOIS_API_URL = "https://web-production-568aa.up.railway.app";
+const WHOIS_API_URL = "https://railway-whois-production.up.railway.app";
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 const SCAN_TIMEOUT = 30000;
 const DETAIL_TIMEOUT = 30000;
