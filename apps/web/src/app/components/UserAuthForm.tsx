@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { createClient, syncUserToDatabase } from "@lib/supabase";
 
 export function UserAuthForm() {
@@ -27,6 +28,18 @@ export function UserAuthForm() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
+	const [rememberMe, setRememberMe] = useState(false);
+
+	// Load saved email and preference on mount
+	useEffect(() => {
+		const savedEmail = localStorage.getItem("lastEmail");
+		const savedRememberMe = localStorage.getItem("staySignedIn") === "true";
+
+		if (savedEmail) {
+			setEmail(savedEmail);
+			setRememberMe(savedRememberMe);
+		}
+	}, []);
 	const [isEmailLoading, setIsEmailLoading] = useState(false);
 	const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 	const [error, setError] = useState("");
@@ -45,6 +58,15 @@ export function UserAuthForm() {
 			if (authError) {
 				setError(authError.message || "Unable to sign in. Check your credentials.");
 				return;
+			}
+
+			// Store stay signed in preference
+			if (rememberMe) {
+				localStorage.setItem("staySignedIn", "true");
+				localStorage.setItem("lastEmail", email);
+			} else {
+				localStorage.removeItem("staySignedIn");
+				localStorage.removeItem("lastEmail");
 			}
 
 			if (data.user?.id && data.user.email) {
@@ -92,6 +114,15 @@ export function UserAuthForm() {
 	return (
 		<div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-900 to-black flex items-center justify-center px-4 py-10">
 			<div className="w-full max-w-md rounded-2xl border border-slate-700/70 bg-slate-800/55 backdrop-blur-xl shadow-2xl p-6 sm:p-8">
+				<button
+					type="button"
+					onClick={() => router.push("/")}
+					className="mb-4 flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200 transition"
+					aria-label="Back to home"
+				>
+					<ArrowLeft size={18} />
+					<span>Back</span>
+				</button>
 				<div className="mb-7 text-center">
 					<div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center">
 						<Image
@@ -145,9 +176,24 @@ export function UserAuthForm() {
 								className="absolute inset-y-0 right-0 px-3 text-slate-400 hover:text-slate-200"
 								aria-label={showPassword ? "Hide password" : "Show password"}
 							>
-								{showPassword ? "Hide" : "Show"}
+								{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
 							</button>
 						</div>
+					</div>
+
+					<div className="flex items-center justify-between gap-3">
+						<label className="flex items-center cursor-pointer">
+							<input
+								type="checkbox"
+								checked={rememberMe}
+								onChange={(e) => setRememberMe(e.target.checked)}
+								className="w-4 h-4 rounded border-slate-600 bg-slate-900/70 text-[#6B73FF] accent-[#6B73FF] cursor-pointer"
+							/>
+							<span className="ml-2 text-sm text-slate-300">Stay signed in</span>
+						</label>
+						<Link href="/forgot-password" className="text-xs text-[#8d93ff] hover:text-[#b2b6ff]">
+							Forgot password?
+						</Link>
 					</div>
 
 					{error && (
