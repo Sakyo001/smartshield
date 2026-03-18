@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const nextParam = requestUrl.searchParams.get("next");
-  const nextPath = nextParam && nextParam.startsWith("/") ? nextParam : "/dashboard";
+  const nextPath = nextParam && nextParam.startsWith("/") ? nextParam : "/";
 
   const redirectTarget = new URL(nextPath, requestUrl.origin);
   const response = NextResponse.redirect(redirectTarget);
