@@ -749,7 +749,7 @@ function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
 /* ─────────────────────────────────────────────
    Guest Scanner (no auth required)
 ───────────────────────────────────────────── */
-function GuestScanner({ inView, lowPerformanceMode }: { inView: boolean; lowPerformanceMode: boolean }) {
+function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: boolean; lowPerformanceMode: boolean; hideGuestMode: boolean }) {
   const WHOIS_API_URL = process.env.NEXT_PUBLIC_WHOIS_API_URL;
   const supabase = createSupabaseClient();
 
@@ -1251,7 +1251,7 @@ function GuestScanner({ inView, lowPerformanceMode }: { inView: boolean; lowPerf
             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#545BFF]" />
           </span>
           <span className="text-[#545BFF] dark:text-[#a89de8] text-[10px] sm:text-[11px] font-semibold tracking-widest uppercase">
-            Guest Mode
+            {hideGuestMode ? "Scan URLs Instantly" : "Guest Mode"}
           </span>
         </motion.div>
 
@@ -1273,7 +1273,7 @@ function GuestScanner({ inView, lowPerformanceMode }: { inView: boolean; lowPerf
           transition={{ duration: 0.5, delay: 0.8 }}
           className="text-copy/80 text-[13px] sm:text-sm md:text-base max-w-2xl mx-auto leading-relaxed"
         >
-          Scan any URL with no account needed.
+          {hideGuestMode ? "Protect yourself from phishing attacks instantly." : "Scan any URL with no account needed."}
         </motion.p>
       </div>
 
@@ -2285,7 +2285,7 @@ function GuestScanner({ inView, lowPerformanceMode }: { inView: boolean; lowPerf
    mouse-reactive rings & glow, HUD corners,
    security ticker, scan-beam sweeps.
 ───────────────────────────────────────────── */
-export default function ScanTab() {
+export default function ScanTab({ hideGuestMode = false }: { hideGuestMode?: boolean }) {
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
   const [lowPerformanceMode, setLowPerformanceMode] = useState(false);
@@ -2479,7 +2479,7 @@ export default function ScanTab() {
 
       {/* ── Content ── */}
       <div className="relative z-[10] w-full pt-[calc(4rem+1px)] pb-16 sm:pt-[calc(5rem+1px)] sm:pb-20 md:pt-[calc(7rem+1px)] md:pb-28 lg:pt-[calc(8rem+1px)] lg:pb-32">
-        <GuestScanner inView={inView} lowPerformanceMode={lowPerformanceMode} />
+        <GuestScanner inView={inView} lowPerformanceMode={lowPerformanceMode} hideGuestMode={hideGuestMode} />
       </div>
     </section>
   );

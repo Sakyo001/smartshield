@@ -3,7 +3,7 @@
 import { Poppins } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTheme } from "@lib/theme-context";
@@ -20,6 +20,12 @@ const NAV_LINKS = [
   { label: "Scan", href: "#scan" },
   { label: "About", href: "#about" },
   { label: "FAQ", href: "#faq" },
+] as const;
+
+const DASHBOARD_NAV_LINKS = [
+  { label: "Dashboard", href: "/dashboard" },
+  { label: "About", href: "/dashboard/about" },
+  { label: "FAQ", href: "/dashboard/faq" },
 ] as const;
 
 // ─── Small icon components ────────────────────────────────────────────────────
@@ -60,15 +66,17 @@ function ArrowIcon() {
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClient();
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { theme, toggleTheme } = useTheme();
-  // mounted prevents theme-sensitive elements from diverging between SSR and client.
-  // Before mount both sides agree: logo = dark-theme logo, icon = sun.
   const [mounted, setMounted] = useState(false);
+
+  const isDashboardRoute = pathname?.startsWith("/dashboard");
+  const currentNavLinks = isDashboardRoute ? DASHBOARD_NAV_LINKS : NAV_LINKS;
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -145,6 +153,15 @@ export default function Navbar() {
     e: React.MouseEvent<HTMLAnchorElement>,
     href: string
   ) => {
+    if (isDashboardRoute) {
+      // On dashboard routes, use regular navigation
+      e.preventDefault();
+      setMobileOpen(false);
+      router.push(href);
+      return;
+    }
+
+    // On landing page, use hash-based scroll navigation
     e.preventDefault();
     setMobileOpen(false);
     const targetId = href.replace("#", "");
@@ -289,8 +306,13 @@ export default function Navbar() {
 
           {/* ── Desktop nav links — centered ──────────────────────────────── */}
           <div className={`hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-0.5 ${poppins.className}`}>
-            {NAV_LINKS.map(({ label, href }) => {
-              const isActive = activeSection === label.toLowerCase();
+            {currentNavLinks.map(({ label, href }) => {
+              let isActive = false;
+              if (isDashboardRoute) {
+                isActive = pathname === href;
+              } else {
+                isActive = activeSection === label.toLowerCase();
+              }
               return (
                 <a
                   key={label}
@@ -494,8 +516,13 @@ export default function Navbar() {
 
               {/* Nav links */}
               <nav className="flex flex-col gap-1 px-3 py-5 flex-1">
-                {NAV_LINKS.map(({ label, href }, i) => {
-                  const isActive = activeSection === label.toLowerCase();
+                {currentNavLinks.map(({ label, href }, i) => {
+                  let isActive = false;
+                  if (isDashboardRoute) {
+                    isActive = pathname === href;
+                  } else {
+                    isActive = activeSection === label.toLowerCase();
+                  }
                   return (
                     <motion.a
                       key={label}
