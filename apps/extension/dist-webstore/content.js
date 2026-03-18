@@ -49,6 +49,29 @@
     init();
   });
 
+  function checkAuthStatus() {
+    try {
+      // Check if any Supabase auth token exists in localStorage
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.includes("auth-token")) {
+          const tokenData = localStorage.getItem(key);
+          if (tokenData) {
+            try {
+              const parsed = JSON.parse(tokenData);
+              if (parsed.access_token) return true;
+            } catch {
+              // Invalid JSON, continue checking
+            }
+          }
+        }
+      }
+    } catch {
+      // localStorage access error
+    }
+    return false;
+  }
+
   function init() {
     const rootDomain = getRootDomain();
 
@@ -104,6 +127,12 @@
           );
         });
         sendResponse({ ok: true });
+      }
+
+      // Check authentication status for community feature
+      if (message.action === "checkAuth") {
+        const authenticated = checkAuthStatus();
+        sendResponse({ authenticated });
       }
     });
 

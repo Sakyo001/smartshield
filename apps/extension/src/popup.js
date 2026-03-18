@@ -115,6 +115,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const alertLeaveBtn = document.getElementById("alert-leave");
     const alertDismissBtn = document.getElementById("alert-dismiss");
 
+    // ── Community Feedback Section ──
+    const communitySection = document.getElementById("community-section");
+    const communityLoginPrompt = document.getElementById(
+      "community-login-prompt",
+    );
+    const communityContentSection = document.getElementById(
+      "community-content-section",
+    );
+    const communityLoginBtn = document.getElementById("community-login-btn");
+    const communityViewFeedbackBtn = document.getElementById(
+      "community-view-feedback-btn",
+    );
+
     // ── Theme toggle ──
     const themeToggleBtn = document.getElementById("theme-toggle");
 
@@ -190,6 +203,63 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    // ── Community Helpers ──
+    async function checkCommunityAuth() {
+      // First, try to ask content script for auth status
+      try {
+        const tabs = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
+        if (tabs[0]) {
+          const response = await chrome.tabs
+            .sendMessage(tabs[0].id, { action: "checkAuth" })
+            .catch(() => null);
+          if (response && response.authenticated !== undefined) {
+            return response.authenticated;
+          }
+        }
+      } catch {
+        // Content script error, fall back to localStorage check
+      }
+
+      // Fallback: Check localStorage for Supabase auth tokens
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.includes("auth-token")) {
+            const tokenData = localStorage.getItem(key);
+            if (tokenData) {
+              try {
+                const parsed = JSON.parse(tokenData);
+                if (parsed.access_token) return true;
+              } catch {
+                // Invalid JSON, continue checking
+              }
+            }
+          }
+        }
+      } catch {
+        // localStorage access error
+      }
+      return false;
+    }
+
+    async function initializeCommunitySection() {
+      if (!communitySection) return;
+
+      const isAuthenticated = await checkCommunityAuth();
+      communitySection.classList.remove("hidden");
+
+      if (isAuthenticated) {
+        communityLoginPrompt.classList.add("hidden");
+        communityContentSection.classList.remove("hidden");
+      } else {
+        communityLoginPrompt.classList.remove("hidden");
+        communityContentSection.classList.add("hidden");
+      }
+    }
+
     // ── Safe Mode toggle init ──
     chrome.storage.local.get(["safeModeEnabled"], (r) => {
       const enabled =
@@ -261,6 +331,27 @@ document.addEventListener("DOMContentLoaded", () => {
           locateBadgeBtn.classList.remove("done");
           locateBadgeBtn.innerHTML = origHTML;
         }, 2000);
+      });
+    }
+
+    // ── Community Feedback Section Init ──
+    if (communityLoginBtn) {
+      communityLoginBtn.addEventListener("click", () => {
+        // Open main app login page in new tab
+        chrome.tabs.create({
+          url: "https://smartshield-ai.vercel.app/login",
+        });
+      });
+    }
+
+    if (communityViewFeedbackBtn) {
+      communityViewFeedbackBtn.addEventListener("click", () => {
+        if (!currentRootDomain) return;
+        // Open dashboard with current URL as parameter
+        const encodedUrl = encodeURIComponent(currentRootDomain);
+        chrome.tabs.create({
+          url: `https://smartshield-ai.vercel.app/dashboard?url=${encodedUrl}`,
+        });
       });
     }
 
@@ -497,6 +588,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       // Show nudge + badge to let user know report is ready
       showReportIndicator();
+      // Initialize community feedback section
+      initializeCommunitySection();
     }
 
     // ── Helper: Format relative date ──

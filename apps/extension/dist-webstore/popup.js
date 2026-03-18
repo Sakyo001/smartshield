@@ -115,6 +115,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const alertLeaveBtn = document.getElementById("alert-leave");
     const alertDismissBtn = document.getElementById("alert-dismiss");
 
+    // ── Community Feedback Section ──
+    const communitySection = document.getElementById("community-section");
+    const communityLoginPrompt = document.getElementById("community-login-prompt");
+    const communityContentSection = document.getElementById("community-content-section");
+    const communityLoginBtn = document.getElementById("community-login-btn");
+    const communityViewFeedbackBtn = document.getElementById("community-view-feedback-btn");
+
+    // ── Theme toggle ──
+    const themeToggleBtn = document.getElementById("theme-toggle");
+
     // ── Tab refs ──
     const tabOverview = document.getElementById("tab-overview");
     const tabReport = document.getElementById("tab-report");
@@ -187,6 +197,63 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    // ── Community Helpers ──
+    async function checkCommunityAuth() {
+      // First, try to ask content script for auth status
+      try {
+        const tabs = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
+        if (tabs[0]) {
+          const response = await chrome.tabs
+            .sendMessage(tabs[0].id, { action: "checkAuth" })
+            .catch(() => null);
+          if (response && response.authenticated !== undefined) {
+            return response.authenticated;
+          }
+        }
+      } catch {
+        // Content script error, fall back to localStorage check
+      }
+
+      // Fallback: Check localStorage for Supabase auth tokens
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.includes("auth-token")) {
+            const tokenData = localStorage.getItem(key);
+            if (tokenData) {
+              try {
+                const parsed = JSON.parse(tokenData);
+                if (parsed.access_token) return true;
+              } catch {
+                // Invalid JSON, continue checking
+              }
+            }
+          }
+        }
+      } catch {
+        // localStorage access error
+      }
+      return false;
+    }
+
+    async function initializeCommunitySection() {
+      if (!communitySection) return;
+
+      const isAuthenticated = await checkCommunityAuth();
+      communitySection.classList.remove("hidden");
+
+      if (isAuthenticated) {
+        communityLoginPrompt.classList.add("hidden");
+        communityContentSection.classList.remove("hidden");
+      } else {
+        communityLoginPrompt.classList.remove("hidden");
+        communityContentSection.classList.add("hidden");
+      }
+    }
+
     // ── Safe Mode toggle init ──
     chrome.storage.local.get(["safeModeEnabled"], (r) => {
       const enabled =
@@ -201,6 +268,25 @@ document.addEventListener("DOMContentLoaded", () => {
           action: "safeModeChanged",
           enabled: isEnabled,
         });
+      });
+    }
+
+    // ── Theme toggle init ──
+    function initTheme() {
+      chrome.storage.local.get(["theme"], (r) => {
+        const theme = r.theme || "dark";
+        document.body.className = theme;
+      });
+    }
+    initTheme();
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener("click", () => {
+        const currentTheme = document.body.classList.contains("light")
+          ? "light"
+          : "dark";
+        const newTheme = currentTheme === "light" ? "dark" : "light";
+        document.body.className = newTheme;
+        chrome.storage.local.set({ theme: newTheme });
       });
     }
 
@@ -239,6 +325,27 @@ document.addEventListener("DOMContentLoaded", () => {
           locateBadgeBtn.classList.remove("done");
           locateBadgeBtn.innerHTML = origHTML;
         }, 2000);
+      });
+    }
+
+    // ── Community Feedback Section Init ──
+    if (communityLoginBtn) {
+      communityLoginBtn.addEventListener("click", () => {
+        // Open main app login page in new tab
+        chrome.tabs.create({
+          url: "https://smartshield-ai.vercel.app/login",
+        });
+      });
+    }
+
+    if (communityViewFeedbackBtn) {
+      communityViewFeedbackBtn.addEventListener("click", () => {
+        if (!currentRootDomain) return;
+        // Open dashboard with current URL as parameter
+        const encodedUrl = encodeURIComponent(currentRootDomain);
+        chrome.tabs.create({
+          url: `https://smartshield-ai.vercel.app/dashboard?url=${encodedUrl}`,
+        });
       });
     }
 
@@ -475,6 +582,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       // Show nudge + badge to let user know report is ready
       showReportIndicator();
+      // Initialize community feedback section
+      initializeCommunitySection();
     }
 
     // ── Helper: Format relative date ──
@@ -760,16 +869,9 @@ document.addEventListener("DOMContentLoaded", () => {
             ? "Some warning signs. Proceed with caution."
             : "No major threats detected. Safe to browse.";
 
-      const summaryAction =
-        status === "Dangerous"
-          ? "Avoid this site"
-          : status === "Warning"
-            ? "Be cautious"
-            : "Looks good";
-
       msgs.push({
         id: "summary",
-        text: `**${summaryTitle}** (${s}/100)\n${summaryDesc}\n_${summaryAction}_`,
+        text: `**${summaryTitle}** (${s}/100)\n${summaryDesc}`,
         accent:
           status === "Dangerous"
             ? "red"
@@ -807,10 +909,10 @@ document.addEventListener("DOMContentLoaded", () => {
             : `Score of **${s}** — Green light zone`;
       const scoreMeaningFull =
         s >= 67
-          ? `Red light zone — score of **${s}**. Our AI model and multiple security layers detected serious threats. This is likely a scam or phishing site designed to steal your information.`
+          ? `Red light zone — score of **${s}**. Multiple security layers detected serious threats. This is likely a scam or phishing site designed to steal your information.`
           : s >= 34
-            ? `Yellow light zone — score of **${s}**. We spotted some warning signs. Proceed with caution and verify legitimacy before entering any personal information.`
-            : `Green light zone — score of **${s}**. The site passed our security checks. You can browse it normally.`;
+            ? `Yellow light zone — score of **${s}**. Several warning signs detected. Exercise caution and verify legitimacy before entering any personal information.`
+            : `Green light zone — score of **${s}**. The site passed security checks. You can browse it normally.`;
       msgs.push({
         id: "score-meaning",
         text: scoreMeaningPreview,
@@ -840,8 +942,8 @@ document.addEventListener("DOMContentLoaded", () => {
           if (reg) whoisPreview = `Registered through **${reg}**`;
 
           // Build full explanation
-          let whoisFull = "Here's what I found about who owns this website: ";
-          if (reg) whoisFull += `It's registered through **${reg}**. `;
+          let whoisFull = "Domain ownership information: ";
+          if (reg) whoisFull += `Registered through **${reg}**. `;
           if (created) {
             const d = new Date(created);
             const now = new Date();
@@ -882,15 +984,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const sslPreview = issuer
           ? `SSL verified by **${issuer}**`
           : `SSL certificate verified`;
-        let sslFull = `Connection is encrypted (good), but SSL doesn't guarantee legitimacy. `;
+        let sslFull = `Connection is encrypted, but SSL certification alone doesn't guarantee legitimacy. `;
         if (issuer) {
           sslFull += `SSL certificate verified by **${issuer}**. `;
         }
-        sslFull += `An encrypted connection prevents eavesdropping, but scammers can also get SSL certificates. `;
+        sslFull += `An encrypted connection prevents eavesdropping, but scammers can also obtain SSL certificates. `;
         if (status === "Dangerous") {
-          sslFull += `However, given this site's risk profile, I still recommend avoiding it.`;
+          sslFull += `Given this site's risk profile, it should be avoided.`;
         } else if (status === "Warning") {
-          sslFull += `Combined with the other warning signs we found, proceed with caution.`;
+          sslFull += `Consider this alongside the other warning indicators detected.`;
         } else {
           sslFull += `This is a positive security indicator along with the other checks.`;
         }

@@ -3967,6 +3967,163 @@
         box-shadow: 0 4px 12px rgba(84, 91, 255, 0.4);
         transform: translateY(-1px);
       }
+
+      /* ── Community Feedback Section in Report Tab ── */
+      .community-section {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+        animation: slideDown 0.3s ease;
+      }
+
+      .community-prompt-inner {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: linear-gradient(
+          135deg,
+          rgba(84, 91, 255, 0.1) 0%,
+          rgba(84, 91, 255, 0.05) 100%
+        );
+        border: 1px solid rgba(84, 91, 255, 0.2);
+        border-radius: 12px;
+        padding: 14px 16px;
+      }
+      body.light .community-prompt-inner {
+        background: linear-gradient(
+          135deg,
+          rgba(84, 91, 255, 0.08) 0%,
+          rgba(84, 91, 255, 0.03) 100%
+        );
+        border-color: rgba(84, 91, 255, 0.15);
+      }
+
+      .community-prompt-icon {
+        flex-shrink: 0;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .community-prompt-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .community-prompt-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text);
+        margin: 0;
+        padding: 0;
+      }
+
+      .community-prompt-desc {
+        font-size: 11px;
+        color: var(--muted);
+        margin: 2px 0 0 0;
+        padding: 0;
+      }
+      body.light .community-prompt-desc {
+        color: #6b7280;
+      }
+
+      .community-login-btn {
+        flex-shrink: 0;
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        font-family: var(--font);
+        font-size: 10px;
+        font-weight: 600;
+        padding: 6px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+      }
+      .community-login-btn:hover {
+        background: var(--primary-d);
+        box-shadow: 0 4px 12px rgba(84, 91, 255, 0.4);
+        transform: translateY(-1px);
+      }
+      .community-login-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(84, 91, 255, 0.3);
+      }
+
+      .community-view-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .community-section-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text);
+        margin: 0 0 8px 0;
+        padding: 0;
+      }
+
+      .community-view-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        background: linear-gradient(
+          135deg,
+          rgba(84, 91, 255, 0.15) 0%,
+          rgba(107, 115, 255, 0.1) 100%
+        );
+        border: 1px solid rgba(84, 91, 255, 0.25);
+        color: var(--primary);
+        font-family: var(--font);
+        font-size: 11px;
+        font-weight: 600;
+        padding: 8px 14px;
+        border-radius: 10px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+      }
+      body.light .community-view-btn {
+        background: linear-gradient(
+          135deg,
+          rgba(84, 91, 255, 0.1) 0%,
+          rgba(107, 115, 255, 0.05) 100%
+        );
+        border-color: rgba(84, 91, 255, 0.2);
+      }
+
+      .community-view-btn:hover {
+        background: linear-gradient(
+          135deg,
+          rgba(84, 91, 255, 0.25) 0%,
+          rgba(107, 115, 255, 0.15) 100%
+        );
+        border-color: rgba(84, 91, 255, 0.35);
+        box-shadow: 0 4px 12px rgba(84, 91, 255, 0.2);
+        transform: translateY(-1px);
+      }
+      body.light .community-view-btn:hover {
+        background: linear-gradient(
+          135deg,
+          rgba(84, 91, 255, 0.15) 0%,
+          rgba(107, 115, 255, 0.1) 100%
+        );
+      }
+
+      .community-view-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(84, 91, 255, 0.15);
+      }
+
+      .community-view-btn svg {
+        display: block;
+        flex-shrink: 0;
+      }
     </style>
   </head>
   <body>
@@ -4362,6 +4519,62 @@
               <div class="detail-placeholder">
                 Scan details will appear here…
               </div>
+            </div>
+          </div>
+          <!-- Community Feedback Section -->
+          <div class="community-section hidden" id="community-section">
+            <!-- Login Prompt (for unauthenticated users) -->
+            <div id="community-login-prompt" class="community-prompt-inner">
+              <div class="community-prompt-icon">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              <div class="community-prompt-content">
+                <p class="community-prompt-title">Community Feedback</p>
+                <p class="community-prompt-desc">
+                  Log in to view and share feedback about this site
+                </p>
+              </div>
+              <button id="community-login-btn" class="community-login-btn">
+                Log In
+              </button>
+            </div>
+            <!-- Community View Button (for authenticated users) -->
+            <div
+              id="community-content-section"
+              class="community-view-section hidden"
+            >
+              <p class="community-section-title">Community Feedback</p>
+              <button
+                id="community-view-feedback-btn"
+                class="community-view-btn"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                View Feedback →
+              </button>
             </div>
           </div>
         </div>
