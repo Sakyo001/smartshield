@@ -1,4 +1,5 @@
 import React from 'react';
+import PrivacyBackButton from '@components/ui/PrivacyBackButton';
 
 export const metadata = {
   title: 'Privacy Policy - SmartShield',
@@ -10,6 +11,7 @@ export default function PrivacyPolicy() {
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black">
       <div className="max-w-4xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
         <div className="prose prose-invert max-w-none">
+          <PrivacyBackButton />
           <h1 className="text-4xl font-bold mb-2 text-white">Privacy Policy</h1>
           <p className="text-gray-400 mb-8">Last updated: February 23, 2026</p>
 

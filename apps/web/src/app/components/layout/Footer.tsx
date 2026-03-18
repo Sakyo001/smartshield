@@ -1,7 +1,13 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Footer() {
+  const pathname = usePathname();
+  const isDashboardRoute = pathname?.startsWith("/dashboard");
+
   return (
     <footer className="relative bg-page/85 backdrop-blur-xl border-t border-[#545BFF]/15 shadow-[0_-1px_32px_rgba(84,91,255,0.08)] pt-10 pb-8 px-6 overflow-hidden">
       {/* Gradient glow line at top edge */}
@@ -55,12 +61,14 @@ export default function Footer() {
 
           {/* Center / Right: Links */}
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
-            <Link
-              href="/"
-              className="text-faded hover:text-[#545BFF] transition-colors duration-200"
-            >
-              Home
-            </Link>
+            {!isDashboardRoute && (
+              <Link
+                href="/"
+                className="text-faded hover:text-[#545BFF] transition-colors duration-200"
+              >
+                Home
+              </Link>
+            )}
             <Link
               href="/#scan"
               className="text-faded hover:text-[#545BFF] transition-colors duration-200"
