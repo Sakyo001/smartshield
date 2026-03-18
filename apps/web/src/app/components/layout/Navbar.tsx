@@ -192,6 +192,11 @@ export default function Navbar() {
     router.refresh();
   };
 
+  const handleGoToDashboard = () => {
+    setMobileOpen(false);
+    router.push("/dashboard");
+  };
+
   return (
     <>
       {/* ── Main navbar bar ─────────────────────────────────────────────── */}
@@ -382,6 +387,7 @@ export default function Navbar() {
 
             {/* CTA button — desktop */}
             {isAuthenticated ? (
+              isDashboardRoute ? (
               <button
                 type="button"
                 onClick={handleLogout}
@@ -398,6 +404,23 @@ export default function Navbar() {
                 {/* Shimmer sweep */}
                 <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
               </button>
+              ) : (
+              <button
+                type="button"
+                onClick={handleGoToDashboard}
+                className={`group relative hidden md:inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-full overflow-hidden
+                  bg-gradient-to-r from-[#545BFF] to-[#6B73FF] hover:from-[#4349dd] hover:to-[#545BFF]
+                  text-white
+                  shadow-[0_0_20px_rgba(84,91,255,0.38)] hover:shadow-[0_0_36px_rgba(84,91,255,0.62)]
+                  hover:-translate-y-0.5 transition-all duration-300 ${poppins.className}`}
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  Dashboard
+                  <ArrowIcon />
+                </span>
+                <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+              </button>
+              )
             ) : (
               <a
                 href="/login"
@@ -554,6 +577,7 @@ export default function Navbar() {
               {/* Drawer footer — CTA */}
               <div className="px-5 py-5 border-t border-[#545BFF]/12 space-y-2.5">
                 {isAuthenticated ? (
+                  isDashboardRoute ? (
                   <button
                     type="button"
                     onClick={handleLogout}
@@ -568,6 +592,22 @@ export default function Navbar() {
                     </span>
                     <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
                   </button>
+                  ) : (
+                  <button
+                    type="button"
+                    onClick={handleGoToDashboard}
+                    className={`group relative flex items-center justify-center gap-2 w-full py-3 rounded-full text-sm font-semibold overflow-hidden
+                      bg-gradient-to-r from-[#545BFF] to-[#6B73FF] text-white
+                      shadow-[0_0_20px_rgba(84,91,255,0.38)] hover:shadow-[0_0_34px_rgba(84,91,255,0.58)]
+                      hover:-translate-y-0.5 transition-all duration-300 ${poppins.className}`}
+                  >
+                    <span className="relative z-10 flex items-center gap-2">
+                      Dashboard
+                      <ArrowIcon />
+                    </span>
+                    <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+                  </button>
+                  )
                 ) : (
                   <a
                     href="/login"
