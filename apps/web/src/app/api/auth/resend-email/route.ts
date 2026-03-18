@@ -32,9 +32,22 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    // Get the callback redirect URL for the email link
-    const { protocol, host } = new URL(request.url);
-    const redirectTo = `${protocol}//${host}/auth/callback?next=/`;
+    // Build callback redirect URL from env override or current forwarded host/proto.
+    const requestUrl = new URL(request.url);
+    const forwardedProto = request.headers.get("x-forwarded-proto");
+    const forwardedHost = request.headers.get("x-forwarded-host");
+    const envSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+    const envOrigin =
+      envSiteUrl && /^https?:\/\//i.test(envSiteUrl)
+        ? envSiteUrl.replace(/\/+$/, "")
+        : null;
+
+    const protocol = forwardedProto ?? requestUrl.protocol.replace(":", "");
+    const host = forwardedHost ?? requestUrl.host;
+    const requestOrigin = `${protocol}://${host}`;
+    const origin = envOrigin ?? requestOrigin;
+
+    const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent("/dashboard")}`;
 
     // Resend the confirmation email
     const { error } = await supabase.auth.resend({

@@ -17,17 +17,17 @@ export function UserSignupForm() {
   const [resendError, setResendError] = useState("");
 
   const getCallbackRedirectUrl = () => {
-    if (typeof window === "undefined") {
-      return "http://localhost:3001/auth/callback?next=/";
-    }
+    const envSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+    const envOrigin =
+      envSiteUrl && /^https?:\/\//i.test(envSiteUrl)
+        ? envSiteUrl.replace(/\/+$/, "")
+        : null;
 
-    const { protocol, hostname } = window.location;
-    const canonicalOrigin =
-      hostname === "www.smartshield.it.com"
-        ? "https://smartshield.it.com"
-        : `${protocol}//${hostname}${window.location.port ? `:${window.location.port}` : ""}`;
+    const origin =
+      envOrigin ??
+      (typeof window !== "undefined" ? window.location.origin : "http://localhost:3001");
 
-    return `${canonicalOrigin}/auth/callback?next=/`;
+    return `${origin}/auth/callback?next=${encodeURIComponent("/dashboard")}`;
   };
 
   const [email, setEmail] = useState("");
