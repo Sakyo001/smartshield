@@ -1,6 +1,7 @@
 "use client";
 
 import Aurora from "@components/ui/Aurora";
+import ThemeToggle from "@components/ui/ThemeToggle";
 import { createClient } from "@lib/supabase";
 import { motion } from "motion/react";
 import Image from "next/image";
@@ -973,7 +974,7 @@ export default function AdminDashboardClient() {
   };
 
   return (
-    <div className="dark min-h-screen bg-page text-heading">
+    <div className="min-h-screen bg-page text-heading transition-colors duration-300">
       <style>{`
         @keyframes slideIn {
           from {
@@ -1227,6 +1228,7 @@ export default function AdminDashboardClient() {
             <div className="text-sm text-faded hidden sm:block">
               Admin: <span className="text-copy font-medium">{adminEmail}</span>
             </div>
+            <ThemeToggle />
             <button
               onClick={handleLogout}
               disabled={logoutLoading}

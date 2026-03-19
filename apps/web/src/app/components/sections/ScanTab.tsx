@@ -1,10 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
-import { motion, useInView, AnimatePresence, useMotionValue, useSpring, useTransform } from "motion/react";
-import DotGridCanvas from "../ui/DotGridCanvas";
 import { createClient as createSupabaseClient } from "@lib/supabase";
+import {
+  AnimatePresence,
+  motion,
+  useInView,
+  useMotionValue,
+  useSpring,
+  useTransform,
+} from "motion/react";
+import Image from "next/image";
+import { useCallback, useEffect, useRef, useState } from "react";
+import DotGridCanvas from "../ui/DotGridCanvas";
 
 /* ─────────────────────────────────────────────
    Types
@@ -37,12 +44,16 @@ async function fetchWithTimeout(resource: RequestInfo, options: any = {}) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
   try {
-    const response = await fetch(resource, { ...options, signal: controller.signal });
+    const response = await fetch(resource, {
+      ...options,
+      signal: controller.signal,
+    });
     clearTimeout(id);
     return response;
   } catch (error: any) {
     clearTimeout(id);
-    if (error.name === "AbortError") throw new Error("Request timeout: API is taking too long to respond");
+    if (error.name === "AbortError")
+      throw new Error("Request timeout: API is taking too long to respond");
     throw error;
   }
 }
@@ -97,13 +108,12 @@ function useTypingPlaceholder(enabled: boolean) {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    if (!enabled) { setText(""); return; }
+    if (!enabled) {
+      setText("");
+      return;
+    }
     const url = EXAMPLE_URLS[urlIdx];
-    const delay = deleting
-      ? 22
-      : charIdx >= url.length
-      ? 1600
-      : 48;
+    const delay = deleting ? 22 : charIdx >= url.length ? 1600 : 48;
     const t = setTimeout(() => {
       if (!deleting && charIdx < url.length) {
         // advance 2 chars at a time to halve setState frequency
@@ -143,7 +153,11 @@ function ScanProgress({ scanning }: { scanning: boolean }) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    if (!scanning) { setStageIdx(0); setProgress(0); return; }
+    if (!scanning) {
+      setStageIdx(0);
+      setProgress(0);
+      return;
+    }
     let stage = 0;
     const durations = [650, 1050, 650, 1250, 850];
     const step = () => {
@@ -189,7 +203,9 @@ function ScanProgress({ scanning }: { scanning: boolean }) {
                   </span>
                 </motion.div>
               </AnimatePresence>
-              <span className="text-[11px] font-mono text-faded tabular-nums">{Math.round(progress)}%</span>
+              <span className="text-[11px] font-mono text-faded tabular-nums">
+                {Math.round(progress)}%
+              </span>
             </div>
             {/* Progress bar */}
             <div className="h-[3px] rounded-full dark:bg-[#545BFF]/10 bg-[#545BFF]/8 overflow-hidden mb-3">
@@ -212,8 +228,8 @@ function ScanProgress({ scanning }: { scanning: boolean }) {
                     i < stageIdx
                       ? "bg-[#545BFF]"
                       : i === stageIdx
-                      ? "bg-[#545BFF] shadow-[0_0_6px_rgba(84,91,255,0.8)] animate-pulse"
-                      : "dark:bg-[#545BFF]/12 bg-[#545BFF]/8"
+                        ? "bg-[#545BFF] shadow-[0_0_6px_rgba(84,91,255,0.8)] animate-pulse"
+                        : "dark:bg-[#545BFF]/12 bg-[#545BFF]/8"
                   }`}
                 />
               ))}
@@ -231,7 +247,10 @@ function ScanProgress({ scanning }: { scanning: boolean }) {
 function useCountUp(target: number, active: boolean, duration = 950) {
   const [count, setCount] = useState(0);
   useEffect(() => {
-    if (!active) { setCount(0); return; }
+    if (!active) {
+      setCount(0);
+      return;
+    }
     let startTs: number | null = null;
     const tick = (ts: number) => {
       if (!startTs) startTs = ts;
@@ -260,21 +279,23 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
   const msgs: BotMessage[] = [];
   const s = scan.riskScore;
   const status = scan.status;
-  const flags: string[] = scan.details?.riskAdjustment?.deterministic_flags || [];
+  const flags: string[] =
+    scan.details?.riskAdjustment?.deterministic_flags || [];
   const indicators: string[] = scan.details?.riskAdjustment?.indicators || [];
   const whois = scan.details?.whoisInfo;
   const ssl = scan.details?.sslCertificates;
   const isHTTP = scan.url.toLowerCase().startsWith("http://");
 
-  const verdictColor = status === "Dangerous" ? "red" : status === "Warning" ? "yellow" : "green";
+  const verdictColor =
+    status === "Dangerous" ? "red" : status === "Warning" ? "yellow" : "green";
 
   // 1 — Greeting + overall verdict
   const verdictPhrase =
     status === "Dangerous"
       ? `**Bottom line:** This site is **highly dangerous**. I strongly recommend you **do not visit** it.`
       : status === "Warning"
-      ? `**Bottom line:** This site looks **suspicious**. You should be careful before interacting with it.`
-      : `**Bottom line:** This site looks **safe**. You can browse it normally, but always stay alert.`;
+        ? `**Bottom line:** This site looks **suspicious**. You should be careful before interacting with it.`
+        : `**Bottom line:** This site looks **safe**. You can browse it normally, but always stay alert.`;
   msgs.push({ id: "verdict", text: verdictPhrase, accent: verdictColor });
 
   // 2 — Score meaning (contextual - unified traffic light metaphor)
@@ -282,14 +303,16 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
     s >= 67
       ? `**Bottom line:** Red light zone — score of **${s}**. Our AI model and multiple security layers detected serious threats. This is likely a scam or phishing site designed to steal your information.`
       : s >= 34
-      ? `**Bottom line:** Yellow light zone — score of **${s}**. We spotted some warning signs. Proceed with caution and verify legitimacy before entering any personal information.`
-      : `**Bottom line:** Green light zone — score of **${s}**. The site passed our security checks. You can browse it normally.`;
+        ? `**Bottom line:** Yellow light zone — score of **${s}**. We spotted some warning signs. Proceed with caution and verify legitimacy before entering any personal information.`
+        : `**Bottom line:** Green light zone — score of **${s}**. The site passed our security checks. You can browse it normally.`;
   msgs.push({ id: "score-meaning", text: scoreMeaning, accent: "blue" });
 
   // 3 — Specific threat flags
   if (flags.length > 0) {
     const flagLines = flags.map((f) => {
-      const clean = f.replace(/^\u{1F6A8}\s*/u, "").replace(/\s*\(legitimate site: [^)]+\)/, "");
+      const clean = f
+        .replace(/^\u{1F6A8}\s*/u, "")
+        .replace(/\s*\(legitimate site: [^)]+\)/, "");
       if (f.includes("Brand Impersonation") || f.includes("Impersonating")) {
         const m = f.match(/\(legitimate site: ([^)]+)\)/);
         return `• **Brand Impersonation** — This site is pretending to be **${m ? m[1] : "a well-known brand"}**. Scammers create look-alike websites to trick you into entering your passwords, credit card numbers, or personal information.`;
@@ -298,8 +321,7 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
         return "• **Suspicious Domain Ending** — The website uses an unusual domain extension (like .xyz, .tk, .cc) that's commonly used by scam sites because they're cheap and easy to register anonymously.";
       if (f.includes("VERY NEW DOMAIN") || f.includes("New Domain"))
         return "• **Brand New Website** — This domain was registered very recently. Most scam sites are created, used for a few days to steal data, then abandoned. Legitimate businesses usually have domains that are months or years old.";
-      if (f.includes("CRITICAL"))
-        return `• **Critical Threat** — ${clean}`;
+      if (f.includes("CRITICAL")) return `• **Critical Threat** — ${clean}`;
       return `• ${clean}`;
     });
     msgs.push({
@@ -311,9 +333,9 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
 
   // 4 — XAI risk factors (from the AI explanation engine)
   if (xai?.risk_factors?.length > 0) {
-    const factorLines = xai.risk_factors.slice(0, 4).map((f: any) =>
-      `• **${f.title}** — ${f.description}`
-    );
+    const factorLines = xai.risk_factors
+      .slice(0, 4)
+      .map((f: any) => `• **${f.title}** — ${f.description}`);
     msgs.push({
       id: "xai-risks",
       text: `Our AI analysis engine also identified these concerns:\n\n${factorLines.join("\n\n")}`,
@@ -340,7 +362,9 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
       if (created) {
         const d = new Date(created);
         const now = new Date();
-        const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+        const diffDays = Math.floor(
+          (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24),
+        );
         if (diffDays < 30)
           whoisText += `Domain age: **very new** (${diffDays} day${diffDays !== 1 ? "s" : ""} old), so ownership history is limited.`;
         else if (diffDays < 365)
@@ -348,16 +372,28 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
         else
           whoisText += `Domain age: **well-established** (${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) !== 1 ? "s" : ""} old), indicating longevity.`;
       }
-      msgs.push({ id: "whois", text: whoisText.trim(), accent: status === "Dangerous" && whois.creation_date ? "yellow" : "blue" });
+      msgs.push({
+        id: "whois",
+        text: whoisText.trim(),
+        accent:
+          status === "Dangerous" && whois.creation_date ? "yellow" : "blue",
+      });
     }
   }
 
   // 7 — SSL (unified message with status-specific caveat)
   if (ssl && !ssl.error) {
     const rawIssuer = ssl.issuer || ssl.issuer_organization || null;
-    const issuer = rawIssuer && typeof rawIssuer === "object"
-      ? (rawIssuer.O || rawIssuer.CN || rawIssuer.organizationName || Object.values(rawIssuer).find((v: unknown) => typeof v === "string") || null) as string | null
-      : rawIssuer;
+    const issuer =
+      rawIssuer && typeof rawIssuer === "object"
+        ? ((rawIssuer.O ||
+            rawIssuer.CN ||
+            rawIssuer.organizationName ||
+            Object.values(rawIssuer).find(
+              (v: unknown) => typeof v === "string",
+            ) ||
+            null) as string | null)
+        : rawIssuer;
 
     let sslText = `**Bottom line:** Connection is encrypted (good), but SSL doesn't guarantee legitimacy. `;
     if (issuer) {
@@ -373,7 +409,12 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
       sslText += `This is a positive security indicator along with the other checks.`;
     }
 
-    const sslAccent = status === "Dangerous" ? "yellow" : status === "Warning" ? "yellow" : "green";
+    const sslAccent =
+      status === "Dangerous"
+        ? "yellow"
+        : status === "Warning"
+          ? "yellow"
+          : "green";
     msgs.push({
       id: "ssl",
       text: sslText,
@@ -389,7 +430,11 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
 
   // 8 — Trust signals (only for non-dangerous sites, and be honest about them)
   const positive = indicators.filter(
-    (i) => !i.includes("CRITICAL") && !i.includes("\u{1F6A8}") && !i.includes("VERY NEW") && !i.includes("New Domain (Risk Factor)")
+    (i) =>
+      !i.includes("CRITICAL") &&
+      !i.includes("\u{1F6A8}") &&
+      !i.includes("VERY NEW") &&
+      !i.includes("New Domain (Risk Factor)"),
   );
   if (status === "Dangerous" && positive.length > 0) {
     msgs.push({
@@ -410,8 +455,8 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
     status === "Dangerous"
       ? "**Bottom line:** Do not enter any personal information on this site. Do not download anything from it. If you received this link via email or text message, it's very likely a phishing attempt — let the sender know their account may be compromised."
       : status === "Warning"
-      ? "**Bottom line:** Be cautious. Don't enter sensitive info like passwords or payment details unless you're absolutely sure this is a legitimate site you trust. When in doubt, visit the official website directly by typing the URL yourself."
-      : "**Bottom line:** This site appears to be legitimate based on our analysis. You can browse it normally, but always stay alert for unusual requests for personal information.";
+        ? "**Bottom line:** Be cautious. Don't enter sensitive info like passwords or payment details unless you're absolutely sure this is a legitimate site you trust. When in doubt, visit the official website directly by typing the URL yourself."
+        : "**Bottom line:** This site appears to be legitimate based on our analysis. You can browse it normally, but always stay alert for unusual requests for personal information.";
   msgs.push({ id: "final", text: finalAdvice, accent: verdictColor });
 
   return msgs;
@@ -429,7 +474,7 @@ function BotMarkdown({ text }: { text: string }) {
           </strong>
         ) : (
           <span key={i}>{part}</span>
-        )
+        ),
       )}
     </>
   );
@@ -454,59 +499,169 @@ function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
       return;
     }
     setIsTyping(true);
-    const delay = visibleCount === 0 ? 600 : 900 + Math.min(messages[visibleCount - 1]?.text.length ?? 0, 150) * 2.5;
+    const delay =
+      visibleCount === 0
+        ? 600
+        : 900 +
+          Math.min(messages[visibleCount - 1]?.text.length ?? 0, 150) * 2.5;
     const t = setTimeout(() => setVisibleCount((c) => c + 1), delay);
     return () => clearTimeout(t);
   }, [visibleCount, messages.length]);
 
   useEffect(() => {
     if (containerRef.current) {
-      containerRef.current.scrollTo({ top: containerRef.current.scrollHeight, behavior: "smooth" });
+      containerRef.current.scrollTo({
+        top: containerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
     }
   }, [visibleCount]);
 
-  const statusColor = scan.status === "Dangerous" ? "red" : scan.status === "Warning" ? "yellow" : "green";
-  const progress = messages.length > 0 ? (visibleCount / messages.length) * 100 : 0;
+  const statusColor =
+    scan.status === "Dangerous"
+      ? "red"
+      : scan.status === "Warning"
+        ? "yellow"
+        : "green";
+  const progress =
+    messages.length > 0 ? (visibleCount / messages.length) * 100 : 0;
 
   const getCategory = (id: string): { label: string; iconPath: string } => {
     switch (id) {
-      case "verdict": return { label: "Verdict", iconPath: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" };
-      case "score-meaning": return { label: "Risk Score", iconPath: "M3 3v18h18M7 16l4-7 4 4 5-9" };
-      case "flags": return { label: "Threats Detected", iconPath: "M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01" };
-      case "xai-risks": return { label: "AI Analysis", iconPath: "M12 2a4 4 0 014 4c0 1.95-2 4-2 6h-4c0-2-2-4.05-2-6a4 4 0 014-4zM10 16v1a2 2 0 004 0v-1" };
-      case "http": return { label: "Connection", iconPath: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM12 8v4M12 16h.01" };
-      case "whois": return { label: "Domain Info", iconPath: "M12 2a10 10 0 100 20 10 10 0 000-20zM2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" };
-      case "ssl": return { label: "SSL Certificate", iconPath: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4" };
-      case "ssl-err": return { label: "SSL Warning", iconPath: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM15 9l-6 6M9 9l6 6" };
-      case "trust": return { label: "Trust Signals", iconPath: "M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3" };
-      case "trust-warning": return { label: "Trust Advisory", iconPath: "M12 2a10 10 0 100 20 10 10 0 000-20zM12 8v4M12 16h.01" };
-      case "final": return { label: "Recommendation", iconPath: "M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" };
-      default: return { label: "Info", iconPath: "M12 2a10 10 0 100 20 10 10 0 000-20zM12 16v-4M12 8h.01" };
+      case "verdict":
+        return {
+          label: "Verdict",
+          iconPath: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
+        };
+      case "score-meaning":
+        return { label: "Risk Score", iconPath: "M3 3v18h18M7 16l4-7 4 4 5-9" };
+      case "flags":
+        return {
+          label: "Threats Detected",
+          iconPath:
+            "M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01",
+        };
+      case "xai-risks":
+        return {
+          label: "AI Analysis",
+          iconPath:
+            "M12 2a4 4 0 014 4c0 1.95-2 4-2 6h-4c0-2-2-4.05-2-6a4 4 0 014-4zM10 16v1a2 2 0 004 0v-1",
+        };
+      case "http":
+        return {
+          label: "Connection",
+          iconPath:
+            "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM12 8v4M12 16h.01",
+        };
+      case "whois":
+        return {
+          label: "Domain Info",
+          iconPath:
+            "M12 2a10 10 0 100 20 10 10 0 000-20zM2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z",
+        };
+      case "ssl":
+        return {
+          label: "SSL Certificate",
+          iconPath: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4",
+        };
+      case "ssl-err":
+        return {
+          label: "SSL Warning",
+          iconPath:
+            "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM15 9l-6 6M9 9l6 6",
+        };
+      case "trust":
+        return {
+          label: "Trust Signals",
+          iconPath: "M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3",
+        };
+      case "trust-warning":
+        return {
+          label: "Trust Advisory",
+          iconPath: "M12 2a10 10 0 100 20 10 10 0 000-20zM12 8v4M12 16h.01",
+        };
+      case "final":
+        return {
+          label: "Recommendation",
+          iconPath:
+            "M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11",
+        };
+      default:
+        return {
+          label: "Info",
+          iconPath: "M12 2a10 10 0 100 20 10 10 0 000-20zM12 16v-4M12 8h.01",
+        };
     }
   };
 
-  const accentMap: Record<string, { bg: string; text: string; border: string; glow: string; dot: string }> = {
-    red: { bg: "bg-red-500/8 dark:bg-red-500/10", text: "text-red-600 dark:text-red-400", border: "border-red-500/25 dark:border-red-500/30", glow: "shadow-red-500/8", dot: "bg-red-500" },
-    yellow: { bg: "bg-yellow-500/8 dark:bg-yellow-500/10", text: "text-yellow-600 dark:text-yellow-400", border: "border-yellow-500/25 dark:border-yellow-500/30", glow: "shadow-yellow-500/8", dot: "bg-yellow-500" },
-    green: { bg: "bg-green-500/8 dark:bg-green-500/10", text: "text-green-600 dark:text-green-400", border: "border-green-500/25 dark:border-green-500/30", glow: "shadow-green-500/8", dot: "bg-green-500" },
-    blue: { bg: "bg-[#545BFF]/8 dark:bg-[#545BFF]/10", text: "text-[#545BFF] dark:text-[#a89de8]", border: "border-[#545BFF]/25 dark:border-[#545BFF]/30", glow: "shadow-[#545BFF]/8", dot: "bg-[#545BFF]" },
+  const accentMap: Record<
+    string,
+    { bg: string; text: string; border: string; glow: string; dot: string }
+  > = {
+    red: {
+      bg: "bg-red-500/8 dark:bg-red-500/10",
+      text: "text-red-600 dark:text-red-400",
+      border: "border-red-500/25 dark:border-red-500/30",
+      glow: "shadow-red-500/8",
+      dot: "bg-red-500",
+    },
+    yellow: {
+      bg: "bg-yellow-500/8 dark:bg-yellow-500/10",
+      text: "text-yellow-600 dark:text-yellow-400",
+      border: "border-yellow-500/25 dark:border-yellow-500/30",
+      glow: "shadow-yellow-500/8",
+      dot: "bg-yellow-500",
+    },
+    green: {
+      bg: "bg-green-500/8 dark:bg-green-500/10",
+      text: "text-green-600 dark:text-green-400",
+      border: "border-green-500/25 dark:border-green-500/30",
+      glow: "shadow-green-500/8",
+      dot: "bg-green-500",
+    },
+    blue: {
+      bg: "bg-[#545BFF]/8 dark:bg-[#545BFF]/10",
+      text: "text-[#545BFF] dark:text-[#a89de8]",
+      border: "border-[#545BFF]/25 dark:border-[#545BFF]/30",
+      glow: "shadow-[#545BFF]/8",
+      dot: "bg-[#545BFF]",
+    },
   };
 
-  const statusBorderCls = statusColor === "red" ? "border-red-500/25" : statusColor === "yellow" ? "border-yellow-500/20" : "border-green-500/15";
-  const statusGradient = scan.status === "Dangerous" ? "from-red-500 to-red-600" : scan.status === "Warning" ? "from-yellow-500 to-yellow-600" : "from-green-500 to-green-600";
+  const statusBorderCls =
+    statusColor === "red"
+      ? "border-red-500/25"
+      : statusColor === "yellow"
+        ? "border-yellow-500/20"
+        : "border-green-500/15";
+  const statusGradient =
+    scan.status === "Dangerous"
+      ? "from-red-500 to-red-600"
+      : scan.status === "Warning"
+        ? "from-yellow-500 to-yellow-600"
+        : "from-green-500 to-green-600";
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 24, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.55, type: "spring", stiffness: 110, damping: 20 }}
+      transition={{
+        duration: 0.55,
+        type: "spring",
+        stiffness: 110,
+        damping: 20,
+      }}
       className={`mb-8 rounded-2xl border ${statusBorderCls} dark:bg-[#080814]/95 bg-white/95 backdrop-blur-2xl overflow-hidden shadow-2xl relative`}
     >
       {/* Futuristic grid overlay */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.015] dark:opacity-[0.03]" style={{
-        backgroundImage: "linear-gradient(rgba(84,91,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(84,91,255,0.3) 1px, transparent 1px)",
-        backgroundSize: "32px 32px",
-      }} />
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.015] dark:opacity-[0.03]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(84,91,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(84,91,255,0.3) 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
+        }}
+      />
 
       {/* Scan-line animation */}
       {isTyping && (
@@ -528,7 +683,9 @@ function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
             style={{ width: "100%" }}
           />
         ) : (
-          <div className={`absolute inset-0 ${scan.status === "Dangerous" ? "bg-gradient-to-r from-red-500/20 via-red-500/60 to-red-500/20" : scan.status === "Warning" ? "bg-gradient-to-r from-yellow-500/20 via-yellow-500/60 to-yellow-500/20" : "bg-gradient-to-r from-green-500/20 via-green-500/60 to-green-500/20"}`} />
+          <div
+            className={`absolute inset-0 ${scan.status === "Dangerous" ? "bg-gradient-to-r from-red-500/20 via-red-500/60 to-red-500/20" : scan.status === "Warning" ? "bg-gradient-to-r from-yellow-500/20 via-yellow-500/60 to-yellow-500/20" : "bg-gradient-to-r from-green-500/20 via-green-500/60 to-green-500/20"}`}
+          />
         )}
       </div>
 
@@ -543,22 +700,44 @@ function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             />
             <div className="relative w-12 h-12 sm:w-[52px] sm:h-[52px] rounded-2xl bg-gradient-to-br from-[#545BFF] via-[#6B73FF] to-[#8B5CF6] flex items-center justify-center shadow-xl shadow-[#545BFF]/30 ring-1 ring-white/10">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="sm:w-[24px] sm:h-[24px] drop-shadow-lg">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="sm:w-[24px] sm:h-[24px] drop-shadow-lg"
+              >
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
             </div>
             <motion.span
               className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[2px] dark:border-[#080814] border-white shadow-md ${
-                isTyping ? "bg-yellow-400" : scan.status === "Dangerous" ? "bg-red-500" : scan.status === "Warning" ? "bg-yellow-500" : "bg-green-500"
+                isTyping
+                  ? "bg-yellow-400"
+                  : scan.status === "Dangerous"
+                    ? "bg-red-500"
+                    : scan.status === "Warning"
+                      ? "bg-yellow-500"
+                      : "bg-green-500"
               }`}
-              animate={isTyping ? { scale: [1, 1.3, 1], opacity: [1, 0.7, 1] } : {}}
+              animate={
+                isTyping ? { scale: [1, 1.3, 1], opacity: [1, 0.7, 1] } : {}
+              }
               transition={{ duration: 1.5, repeat: Infinity }}
             />
           </div>
           <div>
             <div className="flex items-center gap-2.5">
-              <span className="text-heading font-bold text-base sm:text-[17px] tracking-tight">SmartShield AI</span>
-              <span className="px-2 py-0.5 text-[8px] sm:text-[9px] font-bold tracking-[0.16em] uppercase bg-gradient-to-r from-[#545BFF]/15 to-[#8B5CF6]/15 text-[#545BFF] dark:text-[#b19eef] rounded-md border border-[#545BFF]/20 shadow-inner">AI BOT</span>
+              <span className="text-heading font-bold text-base sm:text-[17px] tracking-tight">
+                SmartShield AI
+              </span>
+              <span className="px-2 py-0.5 text-[8px] sm:text-[9px] font-bold tracking-[0.16em] uppercase bg-gradient-to-r from-[#545BFF]/15 to-[#8B5CF6]/15 text-[#545BFF] dark:text-[#b19eef] rounded-md border border-[#545BFF]/20 shadow-inner">
+                AI BOT
+              </span>
             </div>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-faded text-[10px] sm:text-[11px] font-medium">
@@ -570,7 +749,11 @@ function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
                     <motion.span
                       key={i}
                       animate={{ opacity: [0.2, 1, 0.2] }}
-                      transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.2 }}
+                      transition={{
+                        duration: 1.4,
+                        repeat: Infinity,
+                        delay: i * 0.2,
+                      }}
                       className="w-1 h-1 rounded-full bg-[#545BFF]"
                     />
                   ))}
@@ -581,12 +764,16 @@ function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   className={`inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase rounded-md ${
-                    scan.status === "Dangerous" ? "bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20" :
-                    scan.status === "Warning" ? "bg-yellow-500/10 text-yellow-500 dark:text-yellow-400 border border-yellow-500/20" :
-                    "bg-green-500/10 text-green-500 dark:text-green-400 border border-green-500/20"
+                    scan.status === "Dangerous"
+                      ? "bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20"
+                      : scan.status === "Warning"
+                        ? "bg-yellow-500/10 text-yellow-500 dark:text-yellow-400 border border-yellow-500/20"
+                        : "bg-green-500/10 text-green-500 dark:text-green-400 border border-green-500/20"
                   }`}
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full ${scan.status === "Dangerous" ? "bg-red-500" : scan.status === "Warning" ? "bg-yellow-500" : "bg-green-500"}`} />
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${scan.status === "Dangerous" ? "bg-red-500" : scan.status === "Warning" ? "bg-yellow-500" : "bg-green-500"}`}
+                  />
                   {scan.status}
                 </motion.span>
               )}
@@ -601,7 +788,14 @@ function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
           <motion.svg
             animate={{ rotate: collapsed ? 180 : 0 }}
             transition={{ duration: 0.3 }}
-            width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
             <polyline points="18 15 12 9 6 15" />
           </motion.svg>
@@ -620,7 +814,10 @@ function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
             <div
               ref={containerRef}
               className="px-5 sm:px-6 py-5 sm:py-6 space-y-4 max-h-[520px] overflow-y-auto"
-              style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(84,91,255,0.15) transparent" }}
+              style={{
+                scrollbarWidth: "thin",
+                scrollbarColor: "rgba(84,91,255,0.15) transparent",
+              }}
             >
               {messages.slice(0, visibleCount).map((msg) => {
                 const cat = getCategory(msg.id);
@@ -633,19 +830,40 @@ function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
                     key={msg.id}
                     initial={{ opacity: 0, y: 16, scale: 0.96 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ duration: 0.45, type: "spring", stiffness: 140, damping: 18 }}
+                    transition={{
+                      duration: 0.45,
+                      type: "spring",
+                      stiffness: 140,
+                      damping: 18,
+                    }}
                   >
                     {/* Category label row */}
                     <div className="flex items-center gap-2 mb-2">
-                      <div className={`w-5 h-5 rounded-md ${colors.bg} ${colors.border} border flex items-center justify-center flex-shrink-0`}>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={colors.text}>
+                      <div
+                        className={`w-5 h-5 rounded-md ${colors.bg} ${colors.border} border flex items-center justify-center flex-shrink-0`}
+                      >
+                        <svg
+                          width="10"
+                          height="10"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className={colors.text}
+                        >
                           <path d={cat.iconPath} />
                         </svg>
                       </div>
-                      <span className={`text-[9px] sm:text-[10px] font-bold tracking-[0.12em] uppercase ${colors.text}`}>
+                      <span
+                        className={`text-[9px] sm:text-[10px] font-bold tracking-[0.12em] uppercase ${colors.text}`}
+                      >
                         {cat.label}
                       </span>
-                      <div className={`flex-1 h-px ${colors.border} border-t border-dashed`} />
+                      <div
+                        className={`flex-1 h-px ${colors.border} border-t border-dashed`}
+                      />
                     </div>
 
                     {/* Message card */}
@@ -657,8 +875,12 @@ function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
                       } backdrop-blur-sm hover:dark:bg-white/[0.04] hover:bg-white/80 transition-all duration-200`}
                     >
                       {/* Left accent bar */}
-                      <div className={`absolute left-0 top-3 bottom-3 w-[3px] rounded-full ${colors.dot}`} />
-                      <p className={`text-copy ${isVerdict ? "text-[13.5px] sm:text-[14.5px]" : "text-[12.5px] sm:text-[13.5px]"} leading-[1.75] whitespace-pre-line pl-2`}>
+                      <div
+                        className={`absolute left-0 top-3 bottom-3 w-[3px] rounded-full ${colors.dot}`}
+                      />
+                      <p
+                        className={`text-copy ${isVerdict ? "text-[13.5px] sm:text-[14.5px]" : "text-[12.5px] sm:text-[13.5px]"} leading-[1.75] whitespace-pre-line pl-2`}
+                      >
                         <BotMarkdown text={msg.text} />
                       </p>
                     </div>
@@ -679,18 +901,29 @@ function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
                     <div className="w-5 h-5 rounded-md bg-[#545BFF]/10 border border-[#545BFF]/20 flex items-center justify-center flex-shrink-0">
                       <motion.div
                         animate={{ rotate: 360 }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
                         className="w-2.5 h-2.5 border border-[#545BFF]/60 border-t-[#545BFF] rounded-full"
                       />
                     </div>
                     <div className="dark:bg-white/[0.025] bg-white/60 rounded-xl px-4 py-3 border dark:border-divider/30 border-divider/50 inline-flex items-center gap-2">
-                      <span className="text-faded text-[11px]">Processing insight {visibleCount + 1}</span>
+                      <span className="text-faded text-[11px]">
+                        Processing insight {visibleCount + 1}
+                      </span>
                       <span className="flex items-center gap-[3px]">
                         {[0, 1, 2].map((i) => (
                           <motion.span
                             key={i}
                             animate={{ y: [0, -4, 0], opacity: [0.3, 1, 0.3] }}
-                            transition={{ duration: 0.65, repeat: Infinity, delay: i * 0.1, ease: "easeInOut" }}
+                            transition={{
+                              duration: 0.65,
+                              repeat: Infinity,
+                              delay: i * 0.1,
+                              ease: "easeInOut",
+                            }}
                             className="w-[5px] h-[5px] rounded-full bg-[#545BFF]"
                           />
                         ))}
@@ -706,7 +939,9 @@ function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
               <div className="h-[3px] w-full rounded-full dark:bg-white/[0.04] bg-slate-200/60 overflow-hidden mb-3">
                 <motion.div
                   className={`h-full rounded-full ${
-                    !isTyping ? `bg-gradient-to-r ${statusGradient}` : "bg-gradient-to-r from-[#545BFF] to-[#8B5CF6]"
+                    !isTyping
+                      ? `bg-gradient-to-r ${statusGradient}`
+                      : "bg-gradient-to-r from-[#545BFF] to-[#8B5CF6]"
                   }`}
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
@@ -725,7 +960,11 @@ function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
                             : "dark:bg-white/10 bg-slate-300/50 w-1.5"
                         }`}
                         initial={false}
-                        animate={i === visibleCount - 1 && i >= 0 ? { scale: [1, 1.4, 1] } : {}}
+                        animate={
+                          i === visibleCount - 1 && i >= 0
+                            ? { scale: [1, 1.4, 1] }
+                            : {}
+                        }
                         transition={{ duration: 0.3 }}
                       />
                     ))}
@@ -749,7 +988,15 @@ function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
 /* ─────────────────────────────────────────────
    Guest Scanner (no auth required)
 ───────────────────────────────────────────── */
-function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: boolean; lowPerformanceMode: boolean; hideGuestMode: boolean }) {
+function GuestScanner({
+  inView,
+  lowPerformanceMode,
+  hideGuestMode,
+}: {
+  inView: boolean;
+  lowPerformanceMode: boolean;
+  hideGuestMode: boolean;
+}) {
   const WHOIS_API_URL = process.env.NEXT_PUBLIC_WHOIS_API_URL;
   const supabase = createSupabaseClient();
 
@@ -758,11 +1005,23 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
   const [scanning, setScanning] = useState(false);
   const [currentScan, setCurrentScan] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [rateLimited, setRateLimited] = useState<{ retryAfter: number } | null>(null);
+  const [rateLimited, setRateLimited] = useState<{ retryAfter: number } | null>(
+    null,
+  );
   const [retryCountdown, setRetryCountdown] = useState(0);
-  const [apiStatus, setApiStatus] = useState<"checking" | "online" | "offline">("checking");
-  const [activeTab, setActiveTab] = useState<"detection" | "explanation" | "details" | "relations" | "feedback">("detection");
+  const [apiStatus, setApiStatus] = useState<"checking" | "online" | "offline">(
+    "checking",
+  );
+  const [activeTab, setActiveTab] = useState<
+    | "detection"
+    | "explanation"
+    | "details"
+    | "relations"
+    | "community"
+    | "history"
+  >("detection");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [hasCompletedScan, setHasCompletedScan] = useState(false);
 
   // XAI explanation
@@ -773,14 +1032,21 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
   const [historicalData, setHistoricalData] = useState<any>(null);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
-  // Feedback (read-only for guests)
-  const [feedbackComments, setFeedbackComments] = useState<any[]>([]);
+  // Community (read-only for guests)
+  const [communityComments, setCommunityComments] = useState<any[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentText, setCommentText] = useState("");
-  const [commentFlag, setCommentFlag] = useState<"phishing" | "legitimate" | "neutral">("neutral");
+  const [commentFlag, setCommentFlag] = useState<
+    "phishing" | "legitimate" | "neutral"
+  >("neutral");
   const [submittingComment, setSubmittingComment] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
   const [commentSuccess, setCommentSuccess] = useState<string | null>(null);
+
+  // User scan history (authenticated only)
+  const [scanHistory, setScanHistory] = useState<ScanResult[]>([]);
+  const [loadingScanHistory, setLoadingScanHistory] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
 
   // Scroll targets
   const riskScoreRef = useRef<HTMLDivElement>(null);
@@ -790,23 +1056,37 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
   const contentRef = useRef<HTMLDivElement>(null);
   const mxRaw = useMotionValue(0);
   const myRaw = useMotionValue(0);
-  const smx = useSpring(mxRaw, { stiffness: 55, damping: 18, restDelta: 0.001 });
-  const smy = useSpring(myRaw, { stiffness: 55, damping: 18, restDelta: 0.001 });
+  const smx = useSpring(mxRaw, {
+    stiffness: 55,
+    damping: 18,
+    restDelta: 0.001,
+  });
+  const smy = useSpring(myRaw, {
+    stiffness: 55,
+    damping: 18,
+    restDelta: 0.001,
+  });
   const shieldX = useTransform(smx, [-0.5, 0.5], [-14, 14]);
   const shieldY = useTransform(smy, [-0.5, 0.5], [-9, 9]);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (lowPerformanceMode) return;
-    const rect = contentRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    mxRaw.set((e.clientX - rect.left) / rect.width - 0.5);
-    myRaw.set((e.clientY - rect.top) / rect.height - 0.5);
-  }, [lowPerformanceMode, mxRaw, myRaw]);
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (lowPerformanceMode) return;
+      const rect = contentRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      mxRaw.set((e.clientX - rect.left) / rect.width - 0.5);
+      myRaw.set((e.clientY - rect.top) / rect.height - 0.5);
+    },
+    [lowPerformanceMode, mxRaw, myRaw],
+  );
 
   // Countdown for rate-limit banner
   useEffect(() => {
     if (!rateLimited) return;
-    if (retryCountdown <= 0) { setRateLimited(null); return; }
+    if (retryCountdown <= 0) {
+      setRateLimited(null);
+      return;
+    }
     const t = setTimeout(() => setRetryCountdown((c) => c - 1), 1000);
     return () => clearTimeout(t);
   }, [rateLimited, retryCountdown]);
@@ -827,17 +1107,28 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
     if (!currentScan) return;
     // Step 1 — scroll to risk score card quickly after results appear
     const t1 = setTimeout(() => {
-      riskScoreRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      riskScoreRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }, 400);
     // Step 2 — after user has seen the risk score, scroll to bot explainer
     const t2 = setTimeout(() => {
-      botExplainerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      botExplainerRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }, 2600);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, [currentScan?.url, currentScan?.riskScore]);
 
   // Typewriter placeholder (active when input is empty + not scanning)
-  const typingPlaceholder = useTypingPlaceholder(!lowPerformanceMode && !urlInput && !scanning && inView);
+  const typingPlaceholder = useTypingPlaceholder(
+    !lowPerformanceMode && !urlInput && !scanning && inView,
+  );
   const displayScore = useCountUp(currentScan?.riskScore ?? 0, scoreActive);
   useEffect(() => {
     (async () => {
@@ -859,6 +1150,7 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
       } = await supabase.auth.getUser();
       if (!mounted) return;
       setIsAuthenticated(Boolean(user));
+      setCurrentUserEmail(user?.email || null);
     };
 
     void syncAuthState();
@@ -868,6 +1160,7 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return;
       setIsAuthenticated(Boolean(session?.user));
+      setCurrentUserEmail(session?.user?.email || null);
     });
 
     return () => {
@@ -898,7 +1191,8 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
             whois_info: currentScan.details?.whoisInfo || {},
             dns_info: currentScan.details?.dnsRecords || {},
             ssl_info: currentScan.details?.sslCertificates || {},
-            deterministic_flags: currentScan.details?.riskAdjustment?.deterministic_flags || [],
+            deterministic_flags:
+              currentScan.details?.riskAdjustment?.deterministic_flags || [],
           }),
         });
         if (res.ok) setXaiExplanation(await res.json());
@@ -912,19 +1206,27 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
 
   /* Fetch feedback when tab active */
   useEffect(() => {
-    if (activeTab !== "feedback" || !currentScan || !isAuthenticated || !hasCompletedScan) return;
+    if (
+      activeTab !== "community" ||
+      !currentScan ||
+      !isAuthenticated ||
+      !hasCompletedScan
+    )
+      return;
     setLoadingComments(true);
     (async () => {
       try {
-        const res = await fetch(`${WHOIS_API_URL}/api/reports?url=${encodeURIComponent(currentScan.url)}`);
+        const res = await fetch(
+          `${WHOIS_API_URL}/api/reports?url=${encodeURIComponent(currentScan.url)}`,
+        );
         if (res.ok) {
           const data = await res.json();
-          setFeedbackComments(data.reports || []);
+          setCommunityComments(data.reports || []);
         } else {
-          setFeedbackComments([]);
+          setCommunityComments([]);
         }
       } catch {
-        setFeedbackComments([]);
+        setCommunityComments([]);
       } finally {
         setLoadingComments(false);
       }
@@ -933,16 +1235,25 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
 
   /* Fetch relations / history when tab active */
   useEffect(() => {
-    if (activeTab !== "relations" || !currentScan || historicalData || loadingHistory) return;
+    if (
+      activeTab !== "relations" ||
+      !currentScan ||
+      historicalData ||
+      loadingHistory
+    )
+      return;
     setLoadingHistory(true);
     (async () => {
       try {
-        const res = await fetchWithTimeout(`${WHOIS_API_URL}/api/domain-history`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: currentScan.url }),
-          timeout: 15000,
-        });
+        const res = await fetchWithTimeout(
+          `${WHOIS_API_URL}/api/domain-history`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: currentScan.url }),
+            timeout: 15000,
+          },
+        );
         if (res.ok) setHistoricalData(await res.json());
       } catch {
         /* ignore */
@@ -951,6 +1262,55 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
       }
     })();
   }, [activeTab, currentScan]);
+
+  const refreshCommunityComments = useCallback(async () => {
+    if (!currentScan) return;
+    setLoadingComments(true);
+    try {
+      const res = await fetch(
+        `${WHOIS_API_URL}/api/reports?url=${encodeURIComponent(currentScan.url)}`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setCommunityComments(data.reports || []);
+      } else {
+        setCommunityComments([]);
+      }
+    } catch {
+      setCommunityComments([]);
+    } finally {
+      setLoadingComments(false);
+    }
+  }, [WHOIS_API_URL, currentScan]);
+
+  /* Fetch user's scan history from extension_activity */
+  const fetchUserScanHistory = useCallback(async () => {
+    if (!isAuthenticated) return;
+    setLoadingScanHistory(true);
+    setHistoryError(null);
+
+    try {
+      const res = await fetch("/api/community/scan-history");
+      if (res.ok) {
+        const data = await res.json();
+        setScanHistory(data.history || []);
+      } else {
+        setHistoryError("Unable to fetch history");
+        setScanHistory([]);
+      }
+    } catch (err) {
+      setHistoryError("Error loading history");
+      setScanHistory([]);
+    } finally {
+      setLoadingScanHistory(false);
+    }
+  }, [isAuthenticated]);
+
+  /* Fetch user scan history when history tab active */
+  useEffect(() => {
+    if (activeTab !== "history" || !isAuthenticated) return;
+    fetchUserScanHistory();
+  }, [activeTab, isAuthenticated, fetchUserScanHistory]);
 
   /* Persistent per-device ID so every browser gets its own rate-limit bucket */
   const getDeviceId = (): string => {
@@ -1028,12 +1388,15 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
       }
 
       if (riskAdjustment) {
-        const deterministicIncrease = riskAdjustment.deterministic_increase || 0;
+        const deterministicIncrease =
+          riskAdjustment.deterministic_increase || 0;
         const contextualReduction = riskAdjustment.reduction_percentage || 0;
         const indicators = riskAdjustment.indicators || [];
 
         const criticalIndicators = indicators.filter(
-          (i: string) => typeof i === "string" && (i.includes("CRITICAL") || i.includes("\u{1F6A8}"))
+          (i: string) =>
+            typeof i === "string" &&
+            (i.includes("CRITICAL") || i.includes("\u{1F6A8}")),
         );
 
         if (criticalIndicators.length > 0) {
@@ -1044,7 +1407,10 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
           riskScore = Math.round(Math.max(0, Math.min(100, riskScore)));
 
           const hasWhoisWarning = indicators.some(
-            (i: string) => typeof i === "string" && i.includes("WHOIS Information Unavailable") && !i.includes("CRITICAL")
+            (i: string) =>
+              typeof i === "string" &&
+              i.includes("WHOIS Information Unavailable") &&
+              !i.includes("CRITICAL"),
           );
           if (hasWhoisWarning && riskScore < 45) riskScore = 45;
 
@@ -1054,7 +1420,7 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
         }
       }
 
-      setCurrentScan({
+      const scanResult: ScanResult = {
         url,
         expandedUrl: data.expanded_url || undefined,
         riskScore,
@@ -1072,15 +1438,20 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
           riskAdjustment,
           screenshot,
         },
-      });
+      };
 
+      setCurrentScan(scanResult);
+
+      // Scan is automatically saved to extension_activity by the /api/scan endpoint
       setHasCompletedScan(true);
       setCommentError(null);
       setCommentSuccess(null);
 
       setActiveTab("detection");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred while scanning");
+      setError(
+        err instanceof Error ? err.message : "An error occurred while scanning",
+      );
     } finally {
       setScanning(false);
     }
@@ -1094,7 +1465,9 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
       return;
     }
     if (!/^https?:\/\//i.test(urlInput.trim())) {
-      setUrlError("Please include the full URL starting with http:// or https://");
+      setUrlError(
+        "Please include the full URL starting with http:// or https://",
+      );
       return;
     }
     setUrlError(null);
@@ -1105,24 +1478,6 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
     if (!currentScan) return;
     doScan(currentScan.url);
   };
-
-  const refreshFeedbackComments = useCallback(async () => {
-    if (!currentScan) return;
-    setLoadingComments(true);
-    try {
-      const res = await fetch(`${WHOIS_API_URL}/api/reports?url=${encodeURIComponent(currentScan.url)}`);
-      if (res.ok) {
-        const data = await res.json();
-        setFeedbackComments(data.reports || []);
-      } else {
-        setFeedbackComments([]);
-      }
-    } catch {
-      setFeedbackComments([]);
-    } finally {
-      setLoadingComments(false);
-    }
-  }, [WHOIS_API_URL, currentScan]);
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1161,7 +1516,7 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
       setCommentText("");
       setCommentFlag("neutral");
       setCommentSuccess("Comment submitted successfully.");
-      await refreshFeedbackComments();
+      await refreshCommunityComments();
     } catch {
       setCommentError("Unable to submit comment.");
     } finally {
@@ -1170,14 +1525,20 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
   };
 
   return (
-    <div ref={contentRef} onMouseMove={lowPerformanceMode ? undefined : handleMouseMove} className="max-w-4xl mx-auto px-4 sm:px-6">
-
+    <div
+      ref={contentRef}
+      onMouseMove={lowPerformanceMode ? undefined : handleMouseMove}
+      className="max-w-4xl mx-auto px-4 sm:px-6"
+    >
       {/* ─── Shield Logo (mouse-parallax + rotating HUD rings) ─── */}
       <motion.div
         initial={{ y: -100, opacity: 0, scale: 1.4 }}
         animate={inView ? { y: 0, opacity: 1, scale: 1 } : {}}
         transition={{ type: "spring", stiffness: 58, damping: 14, delay: 0.05 }}
-        style={{ x: lowPerformanceMode ? 0 : shieldX, y: lowPerformanceMode ? 0 : shieldY }}
+        style={{
+          x: lowPerformanceMode ? 0 : shieldX,
+          y: lowPerformanceMode ? 0 : shieldY,
+        }}
         className="relative flex justify-center mb-6 sm:mb-8 will-change-transform"
       >
         <div className="relative w-20 h-20 sm:w-28 sm:h-28 md:w-36 md:h-36">
@@ -1212,7 +1573,11 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                 key={i}
                 initial={{ scale: 0.6, opacity: 0 }}
                 animate={inView ? { scale: 3.4 + i * 1.5, opacity: 0 } : {}}
-                transition={{ duration: 1.9, delay: 0.48 + i * 0.2, ease: "easeOut" }}
+                transition={{
+                  duration: 1.9,
+                  delay: 0.48 + i * 0.2,
+                  ease: "easeOut",
+                }}
                 className="absolute inset-0 rounded-full border-2 border-[#545BFF]/30 pointer-events-none"
               />
             ))}
@@ -1226,12 +1591,21 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
             />
           )}
           {/* HUD corner accent dots */}
-          {["top-0 left-0", "top-0 right-0", "bottom-0 left-0", "bottom-0 right-0"].map((pos, i) => (
+          {[
+            "top-0 left-0",
+            "top-0 right-0",
+            "bottom-0 left-0",
+            "bottom-0 right-0",
+          ].map((pos, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, scale: 0 }}
               animate={inView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ delay: 0.88 + i * 0.06, type: "spring", stiffness: 280 }}
+              transition={{
+                delay: 0.88 + i * 0.06,
+                type: "spring",
+                stiffness: 280,
+              }}
               className={`absolute ${pos} w-1.5 h-1.5 rounded-full bg-[#545BFF] shadow-[0_0_7px_rgba(84,91,255,0.9)] z-20`}
             />
           ))}
@@ -1273,7 +1647,9 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
           transition={{ duration: 0.5, delay: 0.8 }}
           className="text-copy/80 text-[13px] sm:text-sm md:text-base max-w-2xl mx-auto leading-relaxed"
         >
-          {hideGuestMode ? "Protect yourself from phishing attacks instantly." : "Scan any URL with no account needed."}
+          {hideGuestMode
+            ? "Protect yourself from phishing attacks instantly."
+            : "Scan any URL with no account needed."}
         </motion.p>
       </div>
 
@@ -1292,15 +1668,33 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
         />
         <div className="relative flex flex-col sm:flex-row items-center gap-2 p-1.5 dark:bg-panel bg-white/90 backdrop-blur-md rounded-xl border border-divider dark:border-[#545BFF]/15 shadow-[0_1px_10px_rgba(84,91,255,0.06)] dark:shadow-none">
           <div className="flex-1 flex items-center gap-3 px-4 w-full">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="dark:text-slate-500 text-slate-400 flex-shrink-0">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="dark:text-slate-500 text-slate-400 flex-shrink-0"
+            >
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
               type="text"
               value={urlInput}
-              onChange={(e) => { if (e.target.value.length <= 100) { setUrlInput(e.target.value); setUrlError(null); } }}
-              placeholder={urlInput ? "Paste a URL to scan..." : (typingPlaceholder || "Paste a URL to scan (e.g. https://example.com)...")}
+              onChange={(e) => {
+                if (e.target.value.length <= 100) {
+                  setUrlInput(e.target.value);
+                  setUrlError(null);
+                }
+              }}
+              placeholder={
+                urlInput
+                  ? "Paste a URL to scan..."
+                  : typingPlaceholder ||
+                    "Paste a URL to scan (e.g. https://example.com)..."
+              }
               className="w-full bg-transparent border-none text-heading placeholder:text-faded focus:outline-none focus:ring-0 py-3 text-sm sm:text-base"
               maxLength={100}
               required
@@ -1318,16 +1712,41 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
           >
             {scanning ? (
               <>
-                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                <svg
+                  className="animate-spin h-4 w-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
                 <span>Scanning...</span>
               </>
             ) : (
               <>
                 <span>Scan Now</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <circle cx="11" cy="11" r="8" />
                   <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
@@ -1339,7 +1758,9 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
 
       {/* character counter — only visible once the user starts typing */}
       {urlInput.length > 0 && (
-        <p className={`text-xs mt-1.5 px-1 text-right tabular-nums ${urlInput.length >= 100 ? "text-red-500 dark:text-red-400 font-semibold" : urlInput.length >= 80 ? "text-amber-500 dark:text-amber-400" : "text-faded"}`}>
+        <p
+          className={`text-xs mt-1.5 px-1 text-right tabular-nums ${urlInput.length >= 100 ? "text-red-500 dark:text-red-400 font-semibold" : urlInput.length >= 80 ? "text-amber-500 dark:text-amber-400" : "text-faded"}`}
+        >
           {urlInput.length}/100
         </p>
       )}
@@ -1348,8 +1769,20 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
 
       {urlError && (
         <p className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 text-xs mt-2 px-1">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="shrink-0"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           {urlError}
         </p>
@@ -1373,8 +1806,15 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
             )}
           </div>
-          <span className={`text-xs font-medium tracking-wide ${apiStatus === "online" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-            SYSTEM STATUS: {apiStatus === "online" ? "OPERATIONAL" : apiStatus === "checking" ? "CHECKING..." : "OFFLINE"}
+          <span
+            className={`text-xs font-medium tracking-wide ${apiStatus === "online" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+          >
+            SYSTEM STATUS:{" "}
+            {apiStatus === "online"
+              ? "OPERATIONAL"
+              : apiStatus === "checking"
+                ? "CHECKING..."
+                : "OFFLINE"}
           </span>
         </div>
       </motion.div>
@@ -1392,25 +1832,62 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
           >
             {/* flame / clock icon */}
             <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-400/20">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500">
-                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-amber-500"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-amber-700 dark:text-amber-300 text-sm">Scan limit reached</p>
+              <p className="font-semibold text-amber-700 dark:text-amber-300 text-sm">
+                Scan limit reached
+              </p>
               <p className="text-amber-600/90 dark:text-amber-400/80 text-xs mt-0.5">
-                You&apos;ve used all <span className="font-semibold">3 scans</span> allowed per minute.
+                You&apos;ve used all{" "}
+                <span className="font-semibold">3 scans</span> allowed per
+                minute.
                 {retryCountdown > 0 && (
-                  <> Try again in&nbsp;<span className="font-semibold tabular-nums">{retryCountdown}s</span>.</>
+                  <>
+                    {" "}
+                    Try again in&nbsp;
+                    <span className="font-semibold tabular-nums">
+                      {retryCountdown}s
+                    </span>
+                    .
+                  </>
                 )}
               </p>
             </div>
             {/* circular countdown ring */}
             <div className="relative shrink-0 flex items-center justify-center">
-              <svg width="40" height="40" className="-rotate-90" viewBox="0 0 40 40">
-                <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" strokeWidth="3" className="text-amber-400/20" />
+              <svg
+                width="40"
+                height="40"
+                className="-rotate-90"
+                viewBox="0 0 40 40"
+              >
                 <circle
-                  cx="20" cy="20" r="16"
+                  cx="20"
+                  cy="20"
+                  r="16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  className="text-amber-400/20"
+                />
+                <circle
+                  cx="20"
+                  cy="20"
+                  r="16"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="3"
@@ -1431,7 +1908,18 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
       {/* ─── Error ─── */}
       {error && (
         <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-700 dark:text-red-200 text-sm">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
           {error}
         </div>
       )}
@@ -1442,7 +1930,12 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
           ref={riskScoreRef}
           initial={{ opacity: 0, y: 28, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.5, type: "spring", stiffness: 110, damping: 20 }}
+          transition={{
+            duration: 0.5,
+            type: "spring",
+            stiffness: 110,
+            damping: 20,
+          }}
           className="mt-4 scroll-mt-20"
         >
           {/* Risk Score Card */}
@@ -1451,37 +1944,75 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
               currentScan.status === "Dangerous"
                 ? "border-red-500/25 dark:bg-[#0c0810]/80 bg-white/90"
                 : currentScan.status === "Warning"
-                ? "border-yellow-500/25 dark:bg-[#0c0c10]/80 bg-white/90"
-                : "border-green-500/25 dark:bg-[#080c10]/80 bg-white/90"
+                  ? "border-yellow-500/25 dark:bg-[#0c0c10]/80 bg-white/90"
+                  : "border-green-500/25 dark:bg-[#080c10]/80 bg-white/90"
             } p-5 sm:p-6 md:p-8 mb-8 backdrop-blur-xl shadow-2xl`}
           >
             {/* Top accent bar */}
-            <div className={`absolute top-0 inset-x-0 h-[2px] ${currentScan.status === "Dangerous" ? "bg-gradient-to-r from-transparent via-red-500 to-transparent" : currentScan.status === "Warning" ? "bg-gradient-to-r from-transparent via-yellow-500 to-transparent" : "bg-gradient-to-r from-transparent via-green-500 to-transparent"}`} />
+            <div
+              className={`absolute top-0 inset-x-0 h-[2px] ${currentScan.status === "Dangerous" ? "bg-gradient-to-r from-transparent via-red-500 to-transparent" : currentScan.status === "Warning" ? "bg-gradient-to-r from-transparent via-yellow-500 to-transparent" : "bg-gradient-to-r from-transparent via-green-500 to-transparent"}`}
+            />
 
             {/* Glow */}
             <div
               className={`absolute top-0 right-0 -mr-24 -mt-24 w-[28rem] h-[28rem] rounded-full blur-[100px] opacity-[0.12] pointer-events-none ${
-                currentScan.status === "Dangerous" ? "bg-red-500" : currentScan.status === "Warning" ? "bg-yellow-500" : "bg-green-500"
+                currentScan.status === "Dangerous"
+                  ? "bg-red-500"
+                  : currentScan.status === "Warning"
+                    ? "bg-yellow-500"
+                    : "bg-green-500"
               }`}
             />
-            <div className={`absolute bottom-0 left-0 -ml-20 -mb-20 w-72 h-72 rounded-full blur-[80px] opacity-[0.05] pointer-events-none bg-[#545BFF]`} />
+            <div
+              className={`absolute bottom-0 left-0 -ml-20 -mb-20 w-72 h-72 rounded-full blur-[80px] opacity-[0.05] pointer-events-none bg-[#545BFF]`}
+            />
 
             <div className="relative z-10 flex flex-col lg:flex-row items-center lg:items-start gap-6 sm:gap-8 md:gap-12">
               {/* Risk Circle */}
               <div className="flex-shrink-0 flex flex-col items-center">
                 <div className="relative w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52">
                   {/* Outer ambient ring */}
-                  <div className={`absolute inset-[-6px] rounded-full border ${
-                    currentScan.status === "Dangerous" ? "border-red-500/10" : currentScan.status === "Warning" ? "border-yellow-500/10" : "border-green-500/10"
-                  }`} />
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="6" className="text-divider/40" />
+                  <div
+                    className={`absolute inset-[-6px] rounded-full border ${
+                      currentScan.status === "Dangerous"
+                        ? "border-red-500/10"
+                        : currentScan.status === "Warning"
+                          ? "border-yellow-500/10"
+                          : "border-green-500/10"
+                    }`}
+                  />
+                  <svg
+                    className="w-full h-full transform -rotate-90"
+                    viewBox="0 0 100 100"
+                  >
                     <circle
-                      cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="6"
-                      className={currentScan.status === "Dangerous" ? "text-red-500" : currentScan.status === "Warning" ? "text-yellow-500" : "text-green-500"}
+                      cx="50"
+                      cy="50"
+                      r="45"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="6"
+                      className="text-divider/40"
+                    />
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="45"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="6"
+                      className={
+                        currentScan.status === "Dangerous"
+                          ? "text-red-500"
+                          : currentScan.status === "Warning"
+                            ? "text-yellow-500"
+                            : "text-green-500"
+                      }
                       strokeDasharray={`${(currentScan.riskScore / 100) * 283} 283`}
                       strokeLinecap="round"
-                      style={{ filter: `drop-shadow(0 0 8px ${currentScan.status === "Dangerous" ? "rgba(239,68,68,0.4)" : currentScan.status === "Warning" ? "rgba(234,179,8,0.3)" : "rgba(34,197,94,0.3)"})` }}
+                      style={{
+                        filter: `drop-shadow(0 0 8px ${currentScan.status === "Dangerous" ? "rgba(239,68,68,0.4)" : currentScan.status === "Warning" ? "rgba(234,179,8,0.3)" : "rgba(34,197,94,0.3)"})`,
+                      }}
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -1489,29 +2020,47 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                       key={currentScan.riskScore}
                       initial={{ scale: 0.7, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      transition={{ type: "spring", stiffness: 180, damping: 16, delay: 0.2 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 180,
+                        damping: 16,
+                        delay: 0.2,
+                      }}
                       className="text-4xl sm:text-5xl md:text-6xl font-bold text-heading tracking-tighter tabular-nums"
                     >
                       {displayScore}
                     </motion.span>
-                    <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-faded mt-1 font-mono">Risk Score</span>
+                    <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-faded mt-1 font-mono">
+                      Risk Score
+                    </span>
                   </div>
                 </div>
                 <motion.div
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.4, type: "spring", stiffness: 150, damping: 14 }}
+                  transition={{
+                    delay: 0.4,
+                    type: "spring",
+                    stiffness: 150,
+                    damping: 14,
+                  }}
                   className={`mt-3 sm:mt-4 px-5 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold tracking-wider uppercase flex items-center gap-2 ${
                     currentScan.status === "Dangerous"
                       ? "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30 shadow-lg shadow-red-500/10"
                       : currentScan.status === "Warning"
-                      ? "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30 shadow-lg shadow-yellow-500/10"
-                      : "bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30 shadow-lg shadow-green-500/10"
+                        ? "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30 shadow-lg shadow-yellow-500/10"
+                        : "bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30 shadow-lg shadow-green-500/10"
                   }`}
                 >
-                  <span className={`w-2 h-2 rounded-full ${
-                    currentScan.status === "Dangerous" ? "bg-red-500 animate-pulse" : currentScan.status === "Warning" ? "bg-yellow-500" : "bg-green-500"
-                  }`} />
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      currentScan.status === "Dangerous"
+                        ? "bg-red-500 animate-pulse"
+                        : currentScan.status === "Warning"
+                          ? "bg-yellow-500"
+                          : "bg-green-500"
+                    }`}
+                  />
                   {currentScan.status}
                 </motion.div>
               </div>
@@ -1519,26 +2068,58 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
               {/* Info */}
               <div className="flex-1 w-full text-center lg:text-left">
                 <div className="flex items-center gap-2.5 mb-3 justify-center lg:justify-start">
-                  <div className={`p-1.5 rounded-lg ${
-                    currentScan.status === "Dangerous" ? "bg-red-500/10 text-red-500" : currentScan.status === "Warning" ? "bg-yellow-500/10 text-yellow-500" : "bg-green-500/10 text-green-500"
-                  }`}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
+                  <div
+                    className={`p-1.5 rounded-lg ${
+                      currentScan.status === "Dangerous"
+                        ? "bg-red-500/10 text-red-500"
+                        : currentScan.status === "Warning"
+                          ? "bg-yellow-500/10 text-yellow-500"
+                          : "bg-green-500/10 text-green-500"
+                    }`}
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="2" y1="12" x2="22" y2="12" />
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                    </svg>
                   </div>
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-heading break-all font-mono">{currentScan.url}</h2>
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-heading break-all font-mono">
+                    {currentScan.url}
+                  </h2>
                 </div>
 
                 {/* Expanded URL banner — shown when a shortened URL was resolved */}
                 {currentScan.expandedUrl && (
                   <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-[#545BFF]/8 dark:bg-[#545BFF]/10 border border-[#545BFF]/20 rounded-xl flex items-start gap-3 text-left backdrop-blur-sm">
                     <div className="p-1.5 bg-[#545BFF]/15 rounded-lg text-[#545BFF] shrink-0 mt-0.5">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
                       </svg>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[#545BFF] dark:text-[#7c83ff] font-semibold text-xs sm:text-sm mb-0.5">Shortened URL — Real Destination Revealed</p>
-                      <p className="text-copy/70 text-[11px] sm:text-xs mb-1">This link redirected to:</p>
+                      <p className="text-[#545BFF] dark:text-[#7c83ff] font-semibold text-xs sm:text-sm mb-0.5">
+                        Shortened URL — Real Destination Revealed
+                      </p>
+                      <p className="text-copy/70 text-[11px] sm:text-xs mb-1">
+                        This link redirected to:
+                      </p>
                       <a
                         href={currentScan.expandedUrl}
                         target="_blank"
@@ -1547,29 +2128,68 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                       >
                         {currentScan.expandedUrl}
                       </a>
-                      <p className="text-faded text-[10px] sm:text-xs mt-1.5">Risk analysis was performed on the destination URL above.</p>
+                      <p className="text-faded text-[10px] sm:text-xs mt-1.5">
+                        Risk analysis was performed on the destination URL
+                        above.
+                      </p>
                     </div>
                   </div>
                 )}
 
                 <div
                   className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border mb-5 sm:mb-6 ${
-                    currentScan.status === "Dangerous" ? "bg-red-500/8 border-red-500/15 text-red-700 dark:text-red-300" : currentScan.status === "Warning" ? "bg-yellow-500/8 border-yellow-500/15 text-yellow-700 dark:text-yellow-300" : "bg-green-500/8 border-green-500/15 text-green-700 dark:text-green-300"
+                    currentScan.status === "Dangerous"
+                      ? "bg-red-500/8 border-red-500/15 text-red-700 dark:text-red-300"
+                      : currentScan.status === "Warning"
+                        ? "bg-yellow-500/8 border-yellow-500/15 text-yellow-700 dark:text-yellow-300"
+                        : "bg-green-500/8 border-green-500/15 text-green-700 dark:text-green-300"
                   }`}
                 >
                   {currentScan.status === "Dangerous" ? (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6" /><path d="M9 9l6 6" /></svg>
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M15 9l-6 6" />
+                      <path d="M9 9l6 6" />
+                    </svg>
                   ) : currentScan.status === "Warning" ? (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                      <path d="M12 9v4" />
+                      <path d="M12 17h.01" />
+                    </svg>
                   ) : (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
                   )}
                   <span className="text-xs sm:text-sm font-medium">
                     {currentScan.status === "Dangerous"
                       ? "High threat level detected. Avoid this site."
                       : currentScan.status === "Warning"
-                      ? "Potential risks detected. Proceed with caution."
-                      : "No major threats detected. Safe to browse."}
+                        ? "Potential risks detected. Proceed with caution."
+                        : "No major threats detected. Safe to browse."}
                   </span>
                 </div>
 
@@ -1577,11 +2197,27 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                 {currentScan.url.toLowerCase().startsWith("http://") && (
                   <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-yellow-500/8 border border-yellow-500/20 rounded-xl flex items-start gap-3 text-left">
                     <div className="p-1.5 bg-yellow-500/15 rounded-lg text-yellow-500 shrink-0">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        <path d="M12 8v4" />
+                        <path d="M12 16h.01" />
+                      </svg>
                     </div>
                     <div>
-                      <h4 className="text-yellow-600 dark:text-yellow-400 font-bold text-xs sm:text-sm">Insecure Connection (HTTP)</h4>
-                      <p className="text-yellow-700/80 dark:text-yellow-200/70 text-[11px] sm:text-xs mt-0.5">Data sent to this website is not encrypted and could be intercepted.</p>
+                      <h4 className="text-yellow-600 dark:text-yellow-400 font-bold text-xs sm:text-sm">
+                        Insecure Connection (HTTP)
+                      </h4>
+                      <p className="text-yellow-700/80 dark:text-yellow-200/70 text-[11px] sm:text-xs mt-0.5">
+                        Data sent to this website is not encrypted and could be
+                        intercepted.
+                      </p>
                     </div>
                   </div>
                 )}
@@ -1589,16 +2225,76 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                 {/* Quick Stats Grid */}
                 <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
                   {[
-                    { label: "Registrar", value: currentScan.details?.registrar || "Unknown", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#545BFF]"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
-                    { label: "Created", value: currentScan.details?.creationDate || "Unknown", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#b19eef]"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg> },
-                    { label: "Last Analysis", value: currentScan.details?.lastAnalysisDate || "N/A", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-500"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg> },
+                    {
+                      label: "Registrar",
+                      value: currentScan.details?.registrar || "Unknown",
+                      icon: (
+                        <svg
+                          width="13"
+                          height="13"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="text-[#545BFF]"
+                        >
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                      ),
+                    },
+                    {
+                      label: "Created",
+                      value: currentScan.details?.creationDate || "Unknown",
+                      icon: (
+                        <svg
+                          width="13"
+                          height="13"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="text-[#b19eef]"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                      ),
+                    },
+                    {
+                      label: "Last Analysis",
+                      value: currentScan.details?.lastAnalysisDate || "N/A",
+                      icon: (
+                        <svg
+                          width="13"
+                          height="13"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="text-green-500"
+                        >
+                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                          <polyline points="22 4 12 14.01 9 11.01" />
+                        </svg>
+                      ),
+                    },
                   ].map(({ label, value, icon }) => (
-                    <div key={label} className="dark:bg-white/[0.025] bg-white/60 p-3 sm:p-4 rounded-xl border border-divider/50 backdrop-blur-sm hover:border-divider transition-colors group">
+                    <div
+                      key={label}
+                      className="dark:bg-white/[0.025] bg-white/60 p-3 sm:p-4 rounded-xl border border-divider/50 backdrop-blur-sm hover:border-divider transition-colors group"
+                    >
                       <div className="flex items-center gap-1.5 mb-1.5">
-                        <div className="opacity-60 group-hover:opacity-100 transition-opacity">{icon}</div>
-                        <div className="text-faded text-[9px] sm:text-[10px] uppercase tracking-[0.15em] font-mono">{label}</div>
+                        <div className="opacity-60 group-hover:opacity-100 transition-opacity">
+                          {icon}
+                        </div>
+                        <div className="text-faded text-[9px] sm:text-[10px] uppercase tracking-[0.15em] font-mono">
+                          {label}
+                        </div>
                       </div>
-                      <div className="text-heading font-semibold text-[11px] sm:text-xs truncate">{value}</div>
+                      <div className="text-heading font-semibold text-[11px] sm:text-xs truncate">
+                        {value}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1608,15 +2304,38 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
             {/* Reanalyze + signup nudge */}
             <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 mt-6 sm:mt-8 pt-4 sm:pt-5 border-t border-divider/30">
               <div className="flex items-center gap-2 text-[11px] sm:text-xs text-faded flex-wrap justify-center sm:justify-start">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#545BFF]/60 shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
-                <span className="font-mono tracking-wider">Results are not saved.</span>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="text-[#545BFF]/60 shrink-0"
+                >
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                <span className="font-mono tracking-wider">
+                  Results are not saved.
+                </span>
               </div>
               <button
                 onClick={handleReanalyze}
                 disabled={scanning}
                 className="group px-5 sm:px-6 py-2 sm:py-2.5 rounded-xl dark:bg-white/[0.04] bg-white/80 hover:bg-white dark:hover:bg-white/[0.08] disabled:opacity-50 disabled:cursor-not-allowed text-heading transition-all text-xs sm:text-sm font-semibold border border-divider/60 hover:border-[#545BFF]/30 backdrop-blur-sm flex items-center gap-2"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#545BFF] group-hover:rotate-180 transition-transform duration-500"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="text-[#545BFF] group-hover:rotate-180 transition-transform duration-500"
+                >
+                  <polyline points="23 4 23 10 17 10" />
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                </svg>
                 {scanning ? "Scanning..." : "Reanalyze"}
               </button>
             </div>
@@ -1631,13 +2350,116 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
           <div className="dark:bg-[#080814]/80 bg-white/90 backdrop-blur-xl border border-divider/40 dark:border-[#545BFF]/10 rounded-2xl overflow-hidden shadow-2xl dark:shadow-[0_8px_48px_rgba(84,91,255,0.06)]">
             {/* Tab bar with responsive design */}
             <div className="flex overflow-x-auto p-1 sm:p-2 gap-1 border-b border-divider/20 dark:bg-white/[0.01] bg-slate-50/50 scrollbar-hide">
-              {([
-                { key: "detection" as const, icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>, label: "Detection" },
-                { key: "explanation" as const, icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, label: "Explanation" },
-                { key: "details" as const, icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>, label: "Details" },
-                { key: "relations" as const, icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, label: "Relations" },
-                { key: "feedback" as const, icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>, label: "Feedback" },
-              ]).map(({ key, icon, label }) => (
+              {[
+                {
+                  key: "detection" as const,
+                  icon: (
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                  ),
+                  label: "Detection",
+                },
+                {
+                  key: "explanation" as const,
+                  icon: (
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                  ),
+                  label: "Explanation",
+                },
+                {
+                  key: "details" as const,
+                  icon: (
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                  ),
+                  label: "Details",
+                },
+                {
+                  key: "relations" as const,
+                  icon: (
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                  ),
+                  label: "Relations",
+                },
+                {
+                  key: "community" as const,
+                  icon: (
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                  ),
+                  label: "Community",
+                },
+                ...(isAuthenticated
+                  ? [
+                      {
+                        key: "history" as const,
+                        icon: (
+                          <svg
+                            width="13"
+                            height="13"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                          </svg>
+                        ),
+                        label: "History",
+                      },
+                    ]
+                  : []),
+              ].map(({ key, icon, label }) => (
                 <button
                   key={key}
                   onClick={() => setActiveTab(key)}
@@ -1648,183 +2470,401 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                       : "text-faded hover:text-heading dark:hover:bg-white/[0.04] hover:bg-slate-100/80"
                   }`}
                 >
-                  <span className={`flex-shrink-0 ${activeTab === key ? "text-white" : "text-faded"}`}>{icon}</span>
-                  <span className="hidden sm:inline text-[10px] xs:text-[11px] sm:text-sm font-medium">{label}</span>
+                  <span
+                    className={`flex-shrink-0 ${activeTab === key ? "text-white" : "text-faded"}`}
+                  >
+                    {icon}
+                  </span>
+                  <span className="hidden sm:inline text-[10px] xs:text-[11px] sm:text-sm font-medium">
+                    {label}
+                  </span>
                 </button>
               ))}
             </div>
 
             <div className="p-3 xs:p-4 sm:p-6 md:p-8">
-
               {/* ── Detection ── */}
-              {activeTab === "detection" && (() => {
-                const detFlags: string[] = currentScan.details?.riskAdjustment?.deterministic_flags || [];
-                const allIndicators: string[] = currentScan.details?.riskAdjustment?.indicators || [];
-                const screenshot = currentScan.details?.screenshot || null;
-                const isBrandImpersonation = (f: string) => f.includes("Brand Impersonation") || f.includes("Impersonating");
-                const isSuspiciousTLD = (f: string) => f.includes("Untrusted TLD") || f.includes("Suspicious TLD");
-                const isCritical = (f: string) =>
-                  f.includes("\u{1F6A8}") || f.includes("CRITICAL") ||
-                  f.includes("VERY NEW DOMAIN") || f.includes("New Domain (Risk Factor)");
-                const positiveIndicators = allIndicators.filter((i) => !isCritical(i));
-                const negativeIndicators = allIndicators.filter((i) => isCritical(i));
+              {activeTab === "detection" &&
+                (() => {
+                  const detFlags: string[] =
+                    currentScan.details?.riskAdjustment?.deterministic_flags ||
+                    [];
+                  const allIndicators: string[] =
+                    currentScan.details?.riskAdjustment?.indicators || [];
+                  const screenshot = currentScan.details?.screenshot || null;
+                  const isBrandImpersonation = (f: string) =>
+                    f.includes("Brand Impersonation") ||
+                    f.includes("Impersonating");
+                  const isSuspiciousTLD = (f: string) =>
+                    f.includes("Untrusted TLD") || f.includes("Suspicious TLD");
+                  const isCritical = (f: string) =>
+                    f.includes("\u{1F6A8}") ||
+                    f.includes("CRITICAL") ||
+                    f.includes("VERY NEW DOMAIN") ||
+                    f.includes("New Domain (Risk Factor)");
+                  const positiveIndicators = allIndicators.filter(
+                    (i) => !isCritical(i),
+                  );
+                  const negativeIndicators = allIndicators.filter((i) =>
+                    isCritical(i),
+                  );
 
-                return (
-                  <div className="space-y-6 sm:space-y-7">
-                    {/* URL + Status row */}
-                    <div className={`dark:bg-white/[0.02] bg-white/70 border rounded-xl p-3.5 md:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 backdrop-blur-sm ${
-                      currentScan.riskScore >= 70 ? "border-red-500/20" : currentScan.riskScore >= 40 ? "border-yellow-500/20" : "border-green-500/20"
-                    }`}>
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${currentScan.riskScore >= 70 ? "bg-red-500" : currentScan.riskScore >= 40 ? "bg-yellow-500" : "bg-green-500"}`} />
-                        <span className="text-heading text-xs md:text-sm break-all font-mono">{currentScan.url}</span>
-                      </div>
-                      <span className={`text-[10px] sm:text-xs px-3 py-1 rounded-full font-bold tracking-wide whitespace-nowrap uppercase border ${
-                        currentScan.riskScore >= 70 ? "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/25" : currentScan.riskScore >= 40 ? "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/25" : "bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/25"
-                      }`}>
-                        {currentScan.riskScore >= 70 ? "Phishing Detected" : currentScan.riskScore >= 40 ? "Suspicious" : "Safe"}
-                      </span>
-                    </div>
-
-                    {/* Page Screenshot (Warning / Dangerous only) */}
-                    {screenshot && (
-                      <div>
-                        <div className="flex items-center gap-2.5 mb-3 sm:mb-3.5 flex-wrap">
-                          <div className={`w-1 h-6 rounded-full ${currentScan.riskScore >= 70 ? "bg-red-500" : "bg-yellow-500"}`} />
-                          <h4 className="text-heading font-bold text-xs sm:text-sm md:text-[15px]">Page Screenshot</h4>
-                          <span className={`text-[9px] sm:text-[10px] font-mono px-2 py-0.5 rounded-md border ${
-                            currentScan.riskScore >= 70
-                              ? "text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/20"
-                              : "text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 border-yellow-500/20"
-                          }`}>
-                            {currentScan.riskScore >= 70 ? "PHISHING" : "SUSPICIOUS"}
+                  return (
+                    <div className="space-y-6 sm:space-y-7">
+                      {/* URL + Status row */}
+                      <div
+                        className={`dark:bg-white/[0.02] bg-white/70 border rounded-xl p-3.5 md:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 backdrop-blur-sm ${
+                          currentScan.riskScore >= 70
+                            ? "border-red-500/20"
+                            : currentScan.riskScore >= 40
+                              ? "border-yellow-500/20"
+                              : "border-green-500/20"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div
+                            className={`w-2 h-2 rounded-full flex-shrink-0 ${currentScan.riskScore >= 70 ? "bg-red-500" : currentScan.riskScore >= 40 ? "bg-yellow-500" : "bg-green-500"}`}
+                          />
+                          <span className="text-heading text-xs md:text-sm break-all font-mono">
+                            {currentScan.url}
                           </span>
                         </div>
-                        <div className={`rounded-xl border overflow-hidden shadow-lg ${currentScan.riskScore >= 70 ? "border-red-500/30" : "border-yellow-500/30"}`}>
-                          <div className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[9px] sm:text-[10px] font-mono flex items-center gap-2 ${currentScan.riskScore >= 70 ? "bg-red-500/8 text-red-600 dark:text-red-400" : "bg-yellow-500/8 text-yellow-600 dark:text-yellow-400"}`}>
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
-                            Live capture at time of scan
-                          </div>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={`data:image/png;base64,${screenshot}`}
-                            alt="Screenshot of scanned page"
-                            className="w-full object-cover"
-                            style={{ maxHeight: "400px", objectPosition: "top" }}
-                          />
-                        </div>
+                        <span
+                          className={`text-[10px] sm:text-xs px-3 py-1 rounded-full font-bold tracking-wide whitespace-nowrap uppercase border ${
+                            currentScan.riskScore >= 70
+                              ? "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/25"
+                              : currentScan.riskScore >= 40
+                                ? "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/25"
+                                : "bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/25"
+                          }`}
+                        >
+                          {currentScan.riskScore >= 70
+                            ? "Phishing Detected"
+                            : currentScan.riskScore >= 40
+                              ? "Suspicious"
+                              : "Safe"}
+                        </span>
                       </div>
-                    )}
 
-                    {/* Threat Flags */}
-                    {detFlags.length > 0 && (
-                      <div>
-                        <div className="flex items-center gap-2.5 mb-3 sm:mb-3.5">
-                          <div className="w-1 h-6 bg-red-500 rounded-full" />
-                          <h4 className="text-heading font-bold text-xs sm:text-sm md:text-[15px]">Threat Indicators</h4>
-                          <span className="text-[9px] sm:text-[10px] font-mono text-red-600 dark:text-red-400 bg-red-500/10 px-2 py-0.5 rounded-md border border-red-500/20">{detFlags.length} FLAG{detFlags.length !== 1 ? "S" : ""}</span>
-                        </div>
-                        <div className="space-y-2 sm:space-y-2.5">
-                          {detFlags.map((flag, i) => {
-                            const isBrand = isBrandImpersonation(flag);
-                            const isTLD = isSuspiciousTLD(flag);
-                            const isRed = isCritical(flag) || isBrand;
-                            return (
-                              <div key={i} className={`flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3.5 rounded-xl border transition-all hover:shadow-md ${
-                                isBrand ? "bg-red-500/8 border-red-500/25 hover:border-red-500/40" :
-                                isTLD   ? "bg-orange-500/8 border-orange-500/25 hover:border-orange-500/40" :
-                                isRed   ? "bg-red-500/8 border-red-500/20 hover:border-red-500/35" :
-                                          "bg-yellow-500/8 border-yellow-500/20 hover:border-yellow-500/35"
-                              }`}>
-                                {isBrand ? (
-                                  <div className="shrink-0 mt-0.5 p-1.5 rounded-lg bg-red-500/15">
-                                    <svg className="text-red-500 dark:text-red-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
-                                  </div>
-                                ) : isTLD ? (
-                                  <div className="shrink-0 mt-0.5 p-1.5 rounded-lg bg-orange-500/15">
-                                    <svg className="text-orange-500 dark:text-orange-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
-                                  </div>
-                                ) : (
-                                  <div className={`shrink-0 mt-0.5 p-1.5 rounded-lg ${isRed ? "bg-red-500/15" : "bg-yellow-500/15"}`}>
-                                    <svg className={`${isRed ? "text-red-500 dark:text-red-400" : "text-yellow-500 dark:text-yellow-400"}`} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
-                                  </div>
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  {isBrand && <span className="inline-block text-[9px] sm:text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wider mb-1.5 bg-red-500/15 px-2 py-0.5 rounded-md">Brand Impersonation</span>}
-                                  {isTLD  && <span className="inline-block text-[9px] sm:text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider mb-1.5 bg-orange-500/15 px-2 py-0.5 rounded-md">Suspicious TLD</span>}
-                                  <p className={`text-xs sm:text-sm leading-relaxed ${
-                                    isBrand ? "text-red-700 dark:text-red-200" : isTLD ? "text-orange-700 dark:text-orange-200" : isRed ? "text-red-700 dark:text-red-200" : "text-yellow-700 dark:text-yellow-200"
-                                  }`}>{flag.replace(/^\u{1F6A8}\s*/u, "").replace(/\s*\(legitimate site: [^)]+\)/, "")}</p>
-                                  {isBrand && (() => {
-                                    const m = flag.match(/\(legitimate site: ([^)]+)\)/);
-                                    return m ? (
-                                      <div className="mt-2 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/8 border border-blue-500/15 w-fit">
-                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-blue-500 shrink-0"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                                        <span className="text-[10px] text-faded">Real site:</span>
-                                        <a href={`https://${m[1]}`} target="_blank" rel="noopener noreferrer" className="text-[10px] sm:text-xs text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 underline underline-offset-2 font-medium">{m[1]}</a>
-                                      </div>
-                                    ) : null;
-                                  })()}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Critical indicators from contextual layer */}
-                    {negativeIndicators.length > 0 && (
-                      <div>
-                        <div className="flex items-center gap-2.5 mb-3 sm:mb-3.5">
-                          <div className="w-1 h-6 bg-red-600 rounded-full" />
-                          <h4 className="text-heading font-bold text-xs sm:text-sm md:text-[15px]">Critical Signals</h4>
-                          <span className="text-[9px] sm:text-[10px] font-mono text-red-600 dark:text-red-400 bg-red-500/10 px-2 py-0.5 rounded-md border border-red-500/20">{negativeIndicators.length}</span>
-                        </div>
-                        <div className="space-y-2">
-                          {negativeIndicators.map((ind, i) => (
-                            <div key={i} className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-red-500/8 border border-red-500/20 rounded-xl hover:border-red-500/35 transition-colors">
-                              <div className="shrink-0 p-1 rounded-lg bg-red-500/15">
-                                <svg className="text-red-500 dark:text-red-400" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6" /><path d="M9 9l6 6" /></svg>
-                              </div>
-                              <span className="text-red-700 dark:text-red-200 text-xs sm:text-sm">{ind.replace(/^\u{1F6A8}\s*/u, "")}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Trust signals */}
-                    {positiveIndicators.length > 0 && (
-                      <div>
-                        <div className="flex items-center gap-2.5 mb-3 sm:mb-3.5">
-                          <div className="w-1 h-6 bg-green-500 rounded-full" />
-                          <h4 className="text-heading font-bold text-xs sm:text-sm md:text-[15px]">Trust Signals</h4>
-                          <span className="text-[9px] sm:text-[10px] font-mono text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-0.5 rounded-md border border-green-500/20">{positiveIndicators.length} FOUND</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {positiveIndicators.map((ind, i) => (
-                            <span key={i} className="inline-flex items-center gap-1.5 px-3 py-2 bg-green-500/8 border border-green-500/15 rounded-xl text-green-700 dark:text-green-300 text-xs sm:text-[13px] hover:border-green-500/30 transition-colors">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0"><polyline points="20 6 9 17 4 12" /></svg>
-                              {ind}
+                      {/* Page Screenshot (Warning / Dangerous only) */}
+                      {screenshot && (
+                        <div>
+                          <div className="flex items-center gap-2.5 mb-3 sm:mb-3.5 flex-wrap">
+                            <div
+                              className={`w-1 h-6 rounded-full ${currentScan.riskScore >= 70 ? "bg-red-500" : "bg-yellow-500"}`}
+                            />
+                            <h4 className="text-heading font-bold text-xs sm:text-sm md:text-[15px]">
+                              Page Screenshot
+                            </h4>
+                            <span
+                              className={`text-[9px] sm:text-[10px] font-mono px-2 py-0.5 rounded-md border ${
+                                currentScan.riskScore >= 70
+                                  ? "text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/20"
+                                  : "text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 border-yellow-500/20"
+                              }`}
+                            >
+                              {currentScan.riskScore >= 70
+                                ? "PHISHING"
+                                : "SUSPICIOUS"}
                             </span>
-                          ))}
+                          </div>
+                          <div
+                            className={`rounded-xl border overflow-hidden shadow-lg ${currentScan.riskScore >= 70 ? "border-red-500/30" : "border-yellow-500/30"}`}
+                          >
+                            <div
+                              className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[9px] sm:text-[10px] font-mono flex items-center gap-2 ${currentScan.riskScore >= 70 ? "bg-red-500/8 text-red-600 dark:text-red-400" : "bg-yellow-500/8 text-yellow-600 dark:text-yellow-400"}`}
+                            >
+                              <svg
+                                width="11"
+                                height="11"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <rect
+                                  x="3"
+                                  y="3"
+                                  width="18"
+                                  height="18"
+                                  rx="2"
+                                />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <path d="M21 15l-5-5L5 21" />
+                              </svg>
+                              Live capture at time of scan
+                            </div>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={`data:image/png;base64,${screenshot}`}
+                              alt="Screenshot of scanned page"
+                              className="w-full object-cover"
+                              style={{
+                                maxHeight: "400px",
+                                objectPosition: "top",
+                              }}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {detFlags.length === 0 && allIndicators.length === 0 && (
-                      <div className="text-center py-10">
-                        <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-green-500/10 flex items-center justify-center">
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-green-500"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" /></svg>
+                      {/* Threat Flags */}
+                      {detFlags.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2.5 mb-3 sm:mb-3.5">
+                            <div className="w-1 h-6 bg-red-500 rounded-full" />
+                            <h4 className="text-heading font-bold text-xs sm:text-sm md:text-[15px]">
+                              Threat Indicators
+                            </h4>
+                            <span className="text-[9px] sm:text-[10px] font-mono text-red-600 dark:text-red-400 bg-red-500/10 px-2 py-0.5 rounded-md border border-red-500/20">
+                              {detFlags.length} FLAG
+                              {detFlags.length !== 1 ? "S" : ""}
+                            </span>
+                          </div>
+                          <div className="space-y-2 sm:space-y-2.5">
+                            {detFlags.map((flag, i) => {
+                              const isBrand = isBrandImpersonation(flag);
+                              const isTLD = isSuspiciousTLD(flag);
+                              const isRed = isCritical(flag) || isBrand;
+                              return (
+                                <div
+                                  key={i}
+                                  className={`flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3.5 rounded-xl border transition-all hover:shadow-md ${
+                                    isBrand
+                                      ? "bg-red-500/8 border-red-500/25 hover:border-red-500/40"
+                                      : isTLD
+                                        ? "bg-orange-500/8 border-orange-500/25 hover:border-orange-500/40"
+                                        : isRed
+                                          ? "bg-red-500/8 border-red-500/20 hover:border-red-500/35"
+                                          : "bg-yellow-500/8 border-yellow-500/20 hover:border-yellow-500/35"
+                                  }`}
+                                >
+                                  {isBrand ? (
+                                    <div className="shrink-0 mt-0.5 p-1.5 rounded-lg bg-red-500/15">
+                                      <svg
+                                        className="text-red-500 dark:text-red-400"
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                      >
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                        <path d="M12 8v4" />
+                                        <path d="M12 16h.01" />
+                                      </svg>
+                                    </div>
+                                  ) : isTLD ? (
+                                    <div className="shrink-0 mt-0.5 p-1.5 rounded-lg bg-orange-500/15">
+                                      <svg
+                                        className="text-orange-500 dark:text-orange-400"
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                      >
+                                        <circle cx="12" cy="12" r="10" />
+                                        <path d="M12 8v4" />
+                                        <path d="M12 16h.01" />
+                                      </svg>
+                                    </div>
+                                  ) : (
+                                    <div
+                                      className={`shrink-0 mt-0.5 p-1.5 rounded-lg ${isRed ? "bg-red-500/15" : "bg-yellow-500/15"}`}
+                                    >
+                                      <svg
+                                        className={`${isRed ? "text-red-500 dark:text-red-400" : "text-yellow-500 dark:text-yellow-400"}`}
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                      >
+                                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                        <path d="M12 9v4" />
+                                        <path d="M12 17h.01" />
+                                      </svg>
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    {isBrand && (
+                                      <span className="inline-block text-[9px] sm:text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wider mb-1.5 bg-red-500/15 px-2 py-0.5 rounded-md">
+                                        Brand Impersonation
+                                      </span>
+                                    )}
+                                    {isTLD && (
+                                      <span className="inline-block text-[9px] sm:text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider mb-1.5 bg-orange-500/15 px-2 py-0.5 rounded-md">
+                                        Suspicious TLD
+                                      </span>
+                                    )}
+                                    <p
+                                      className={`text-xs sm:text-sm leading-relaxed ${
+                                        isBrand
+                                          ? "text-red-700 dark:text-red-200"
+                                          : isTLD
+                                            ? "text-orange-700 dark:text-orange-200"
+                                            : isRed
+                                              ? "text-red-700 dark:text-red-200"
+                                              : "text-yellow-700 dark:text-yellow-200"
+                                      }`}
+                                    >
+                                      {flag
+                                        .replace(/^\u{1F6A8}\s*/u, "")
+                                        .replace(
+                                          /\s*\(legitimate site: [^)]+\)/,
+                                          "",
+                                        )}
+                                    </p>
+                                    {isBrand &&
+                                      (() => {
+                                        const m = flag.match(
+                                          /\(legitimate site: ([^)]+)\)/,
+                                        );
+                                        return m ? (
+                                          <div className="mt-2 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/8 border border-blue-500/15 w-fit">
+                                            <svg
+                                              width="11"
+                                              height="11"
+                                              viewBox="0 0 24 24"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              strokeWidth="2"
+                                              className="text-blue-500 shrink-0"
+                                            >
+                                              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                                              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                                            </svg>
+                                            <span className="text-[10px] text-faded">
+                                              Real site:
+                                            </span>
+                                            <a
+                                              href={`https://${m[1]}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-[10px] sm:text-xs text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 underline underline-offset-2 font-medium"
+                                            >
+                                              {m[1]}
+                                            </a>
+                                          </div>
+                                        ) : null;
+                                      })()}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                        <p className="text-heading font-medium text-sm">No threat indicators detected</p>
-                        <p className="text-faded text-xs mt-1">This URL passed all security checks</p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
+                      )}
+
+                      {/* Critical indicators from contextual layer */}
+                      {negativeIndicators.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2.5 mb-3 sm:mb-3.5">
+                            <div className="w-1 h-6 bg-red-600 rounded-full" />
+                            <h4 className="text-heading font-bold text-xs sm:text-sm md:text-[15px]">
+                              Critical Signals
+                            </h4>
+                            <span className="text-[9px] sm:text-[10px] font-mono text-red-600 dark:text-red-400 bg-red-500/10 px-2 py-0.5 rounded-md border border-red-500/20">
+                              {negativeIndicators.length}
+                            </span>
+                          </div>
+                          <div className="space-y-2">
+                            {negativeIndicators.map((ind, i) => (
+                              <div
+                                key={i}
+                                className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-red-500/8 border border-red-500/20 rounded-xl hover:border-red-500/35 transition-colors"
+                              >
+                                <div className="shrink-0 p-1 rounded-lg bg-red-500/15">
+                                  <svg
+                                    className="text-red-500 dark:text-red-400"
+                                    width="12"
+                                    height="12"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.5"
+                                  >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <path d="M15 9l-6 6" />
+                                    <path d="M9 9l6 6" />
+                                  </svg>
+                                </div>
+                                <span className="text-red-700 dark:text-red-200 text-xs sm:text-sm">
+                                  {ind.replace(/^\u{1F6A8}\s*/u, "")}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Trust signals */}
+                      {positiveIndicators.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2.5 mb-3 sm:mb-3.5">
+                            <div className="w-1 h-6 bg-green-500 rounded-full" />
+                            <h4 className="text-heading font-bold text-xs sm:text-sm md:text-[15px]">
+                              Trust Signals
+                            </h4>
+                            <span className="text-[9px] sm:text-[10px] font-mono text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-0.5 rounded-md border border-green-500/20">
+                              {positiveIndicators.length} FOUND
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {positiveIndicators.map((ind, i) => (
+                              <span
+                                key={i}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 bg-green-500/8 border border-green-500/15 rounded-xl text-green-700 dark:text-green-300 text-xs sm:text-[13px] hover:border-green-500/30 transition-colors"
+                              >
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                  className="shrink-0"
+                                >
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                                {ind}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {detFlags.length === 0 && allIndicators.length === 0 && (
+                        <div className="text-center py-10">
+                          <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-green-500/10 flex items-center justify-center">
+                            <svg
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              className="text-green-500"
+                            >
+                              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                              <path d="M9 12l2 2 4-4" />
+                            </svg>
+                          </div>
+                          <p className="text-heading font-medium text-sm">
+                            No threat indicators detected
+                          </p>
+                          <p className="text-faded text-xs mt-1">
+                            This URL passed all security checks
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
               {/* ── Details ── */}
               {activeTab === "details" && (
@@ -1832,33 +2872,94 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                   {[
                     {
                       title: "WHOIS Information",
-                      icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#545BFF]"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
+                      icon: (
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="text-[#545BFF]"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                      ),
                       data: currentScan.details?.whoisInfo,
                       accent: "[#545BFF]",
                     },
                     {
                       title: "DNS Records",
-                      icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#b19eef]"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>,
+                      icon: (
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="text-[#b19eef]"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="2" y1="12" x2="22" y2="12" />
+                          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                        </svg>
+                      ),
                       data: currentScan.details?.dnsRecords,
                       accent: "[#b19eef]",
                     },
                     {
                       title: "SSL Certificate",
-                      icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-500"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>,
-                      data: currentScan.details?.sslCertificates && !currentScan.details.sslCertificates.error ? currentScan.details.sslCertificates : null,
+                      icon: (
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="text-green-500"
+                        >
+                          <rect
+                            x="3"
+                            y="11"
+                            width="18"
+                            height="11"
+                            rx="2"
+                            ry="2"
+                          />
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                      ),
+                      data:
+                        currentScan.details?.sslCertificates &&
+                        !currentScan.details.sslCertificates.error
+                          ? currentScan.details.sslCertificates
+                          : null,
                       accent: "green-500",
                       error: currentScan.details?.sslCertificates?.error,
                     },
                   ].map(({ title, icon, data, error: dataError }) => (
                     <div key={title}>
                       <div className="flex items-center gap-2.5 mb-2.5">
-                        <div className="p-1.5 rounded-lg dark:bg-white/[0.03] bg-slate-50">{icon}</div>
-                        <h4 className="text-heading font-bold text-sm sm:text-[15px]">{title}</h4>
-                        {data && <span className="text-[9px] font-mono text-green-600 dark:text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded border border-green-500/15 uppercase tracking-wider">Available</span>}
+                        <div className="p-1.5 rounded-lg dark:bg-white/[0.03] bg-slate-50">
+                          {icon}
+                        </div>
+                        <h4 className="text-heading font-bold text-sm sm:text-[15px]">
+                          {title}
+                        </h4>
+                        {data && (
+                          <span className="text-[9px] font-mono text-green-600 dark:text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded border border-green-500/15 uppercase tracking-wider">
+                            Available
+                          </span>
+                        )}
                       </div>
                       <div className="dark:bg-white/[0.02] bg-slate-50/80 p-4 rounded-xl border border-divider/50 font-mono text-xs overflow-x-auto backdrop-blur-sm">
                         {data ? (
-                          <pre className="text-xs text-copy leading-relaxed">{JSON.stringify(data, null, 2)}</pre>
+                          <pre className="text-xs text-copy leading-relaxed">
+                            {JSON.stringify(data, null, 2)}
+                          </pre>
                         ) : (
                           <p className="text-xs text-center py-5 text-faded">
                             {dataError || `No ${title.toLowerCase()} available`}
@@ -1877,20 +2978,43 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                     <div className="flex flex-col items-center justify-center py-16 sm:py-20 px-4">
                       <div className="relative w-16 h-16 mb-6">
                         <div className="absolute inset-0 border-t-2 border-[#545BFF] rounded-full animate-spin" />
-                        <div className="absolute inset-2 border-r-2 border-[#b19eef] rounded-full animate-spin" style={{ animationDirection: "reverse" }} />
+                        <div
+                          className="absolute inset-2 border-r-2 border-[#b19eef] rounded-full animate-spin"
+                          style={{ animationDirection: "reverse" }}
+                        />
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#545BFF]"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            className="text-[#545BFF]"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                            <line x1="12" y1="17" x2="12.01" y2="17" />
+                          </svg>
                         </div>
                       </div>
-                      <p className="text-heading font-medium text-sm mb-1">AI Analysis in Progress</p>
-                      <p className="text-faded font-mono text-[10px] tracking-wide animate-pulse">Processing threat vectors...</p>
+                      <p className="text-heading font-medium text-sm mb-1">
+                        AI Analysis in Progress
+                      </p>
+                      <p className="text-faded font-mono text-[10px] tracking-wide animate-pulse">
+                        Processing threat vectors...
+                      </p>
                     </div>
                   ) : xaiExplanation ? (
                     <>
                       {/* Recommendation */}
                       <div
                         className={`rounded-xl border overflow-hidden shadow-sm ${
-                          currentScan.riskScore >= 70 ? "border-red-500/20 bg-red-500/5" : currentScan.riskScore >= 40 ? "border-yellow-500/20 bg-yellow-500/5" : "border-green-500/20 bg-green-500/5"
+                          currentScan.riskScore >= 70
+                            ? "border-red-500/20 bg-red-500/5"
+                            : currentScan.riskScore >= 40
+                              ? "border-yellow-500/20 bg-yellow-500/5"
+                              : "border-green-500/20 bg-green-500/5"
                         }`}
                       >
                         <div className="p-4 sm:p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-4 sm:gap-6">
@@ -1899,22 +3023,61 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                               currentScan.riskScore >= 70
                                 ? "bg-red-500/10 border-red-500/20 text-red-500"
                                 : currentScan.riskScore >= 40
-                                ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-500"
-                                : "bg-green-500/10 border-green-500/20 text-green-500"
+                                  ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-500"
+                                  : "bg-green-500/10 border-green-500/20 text-green-500"
                             }`}
                           >
                             {currentScan.riskScore >= 70 ? (
-                              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="sm:w-8 sm:h-8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
+                              <svg
+                                width="28"
+                                height="28"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                className="sm:w-8 sm:h-8"
+                              >
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                <path d="M12 8v4" />
+                                <path d="M12 16h.01" />
+                              </svg>
                             ) : currentScan.riskScore >= 40 ? (
-                              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="sm:w-8 sm:h-8"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+                              <svg
+                                width="28"
+                                height="28"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                className="sm:w-8 sm:h-8"
+                              >
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                <path d="M12 9v4" />
+                                <path d="M12 17h.01" />
+                              </svg>
                             ) : (
-                              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="sm:w-8 sm:h-8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" /></svg>
+                              <svg
+                                width="28"
+                                height="28"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                className="sm:w-8 sm:h-8"
+                              >
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                <path d="M9 12l2 2 4-4" />
+                              </svg>
                             )}
                           </div>
                           <div className="text-center md:text-left flex-1">
                             <h4
                               className={`text-[10px] sm:text-xs font-mono uppercase tracking-[0.18em] mb-2 sm:mb-3 ${
-                                currentScan.riskScore >= 70 ? "text-red-600 dark:text-red-400" : currentScan.riskScore >= 40 ? "text-yellow-600 dark:text-yellow-400" : "text-green-600 dark:text-green-400"
+                                currentScan.riskScore >= 70
+                                  ? "text-red-600 dark:text-red-400"
+                                  : currentScan.riskScore >= 40
+                                    ? "text-yellow-600 dark:text-yellow-400"
+                                    : "text-green-600 dark:text-green-400"
                               }`}
                             >
                               AI Recommendation
@@ -1923,8 +3086,8 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                               {currentScan.riskScore >= 70
                                 ? "This site is highly dangerous. Do not enter any personal information, credentials, or payment details. Leave the site immediately."
                                 : currentScan.riskScore >= 40
-                                ? "This site shows suspicious characteristics. Exercise caution and avoid entering sensitive information unless you can verify its legitimacy."
-                                : "Site appears safe, but always practice good security habits. Avoid sharing unnecessary personal information."}
+                                  ? "This site shows suspicious characteristics. Exercise caution and avoid entering sensitive information unless you can verify its legitimacy."
+                                  : "Site appears safe, but always practice good security habits. Avoid sharing unnecessary personal information."}
                             </p>
                           </div>
                         </div>
@@ -1933,7 +3096,8 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                       {/* Factors Grid */}
                       <div
                         className={`grid gap-5 sm:gap-6 ${
-                          xaiExplanation.risk_factors?.length > 0 && xaiExplanation.positive_factors?.length > 0
+                          xaiExplanation.risk_factors?.length > 0 &&
+                          xaiExplanation.positive_factors?.length > 0
                             ? "grid-cols-1 lg:grid-cols-2"
                             : "grid-cols-1"
                         }`}
@@ -1942,25 +3106,36 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                           <div className="space-y-3 sm:space-y-4">
                             <div className="flex items-center gap-2.5 mb-2">
                               <div className="w-1 h-6 bg-red-500 rounded-full" />
-                              <h4 className="text-heading font-bold text-sm sm:text-[15px]">Threat Vectors</h4>
+                              <h4 className="text-heading font-bold text-sm sm:text-[15px]">
+                                Threat Vectors
+                              </h4>
                               <span className="text-[10px] font-mono text-red-600 dark:text-red-400 bg-red-500/10 px-2 py-0.5 rounded-md border border-red-500/20">
                                 {xaiExplanation.risk_factors.length}
                               </span>
                             </div>
                             <div className="grid gap-2.5">
-                              {xaiExplanation.risk_factors.map((factor: any, idx: number) => (
-                                <div key={idx} className="dark:bg-white/[0.02] bg-white/70 border border-red-500/15 rounded-xl p-3.5 sm:p-4 hover:border-red-500/30 transition-all group backdrop-blur-sm">
-                                  <div className="flex items-start gap-3">
-                                    <span className="flex-shrink-0 mt-0.5 w-6 h-6 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500/60 group-hover:text-red-500 transition-colors font-mono text-[10px] font-bold">
-                                      {String(idx + 1).padStart(2, "0")}
-                                    </span>
-                                    <div>
-                                      <h5 className="text-red-700 dark:text-red-300 font-semibold text-xs sm:text-sm mb-0.5">{factor.title}</h5>
-                                      <p className="text-faded text-xs leading-relaxed">{factor.description}</p>
+                              {xaiExplanation.risk_factors.map(
+                                (factor: any, idx: number) => (
+                                  <div
+                                    key={idx}
+                                    className="dark:bg-white/[0.02] bg-white/70 border border-red-500/15 rounded-xl p-3.5 sm:p-4 hover:border-red-500/30 transition-all group backdrop-blur-sm"
+                                  >
+                                    <div className="flex items-start gap-3">
+                                      <span className="flex-shrink-0 mt-0.5 w-6 h-6 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500/60 group-hover:text-red-500 transition-colors font-mono text-[10px] font-bold">
+                                        {String(idx + 1).padStart(2, "0")}
+                                      </span>
+                                      <div>
+                                        <h5 className="text-red-700 dark:text-red-300 font-semibold text-xs sm:text-sm mb-0.5">
+                                          {factor.title}
+                                        </h5>
+                                        <p className="text-faded text-xs leading-relaxed">
+                                          {factor.description}
+                                        </p>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              ))}
+                                ),
+                              )}
                             </div>
                           </div>
                         )}
@@ -1969,25 +3144,36 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                           <div className="space-y-3 sm:space-y-4">
                             <div className="flex items-center gap-2.5 mb-2">
                               <div className="w-1 h-6 bg-green-500 rounded-full" />
-                              <h4 className="text-heading font-bold text-sm sm:text-[15px]">Trust Signals</h4>
+                              <h4 className="text-heading font-bold text-sm sm:text-[15px]">
+                                Trust Signals
+                              </h4>
                               <span className="text-[10px] font-mono text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-0.5 rounded-md border border-green-500/20">
                                 {xaiExplanation.positive_factors.length}
                               </span>
                             </div>
                             <div className="grid gap-2.5">
-                              {xaiExplanation.positive_factors.map((factor: any, idx: number) => (
-                                <div key={idx} className="dark:bg-white/[0.02] bg-white/70 border border-green-500/15 rounded-xl p-3.5 sm:p-4 hover:border-green-500/30 transition-all group backdrop-blur-sm">
-                                  <div className="flex items-start gap-3">
-                                    <span className="flex-shrink-0 mt-0.5 w-6 h-6 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500/60 group-hover:text-green-500 transition-colors font-mono text-[10px] font-bold">
-                                      {String(idx + 1).padStart(2, "0")}
-                                    </span>
-                                    <div>
-                                      <h5 className="text-green-700 dark:text-green-300 font-semibold text-xs sm:text-sm mb-0.5">{factor.title}</h5>
-                                      <p className="text-faded text-xs leading-relaxed">{factor.description}</p>
+                              {xaiExplanation.positive_factors.map(
+                                (factor: any, idx: number) => (
+                                  <div
+                                    key={idx}
+                                    className="dark:bg-white/[0.02] bg-white/70 border border-green-500/15 rounded-xl p-3.5 sm:p-4 hover:border-green-500/30 transition-all group backdrop-blur-sm"
+                                  >
+                                    <div className="flex items-start gap-3">
+                                      <span className="flex-shrink-0 mt-0.5 w-6 h-6 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500/60 group-hover:text-green-500 transition-colors font-mono text-[10px] font-bold">
+                                        {String(idx + 1).padStart(2, "0")}
+                                      </span>
+                                      <div>
+                                        <h5 className="text-green-700 dark:text-green-300 font-semibold text-xs sm:text-sm mb-0.5">
+                                          {factor.title}
+                                        </h5>
+                                        <p className="text-faded text-xs leading-relaxed">
+                                          {factor.description}
+                                        </p>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              ))}
+                                ),
+                              )}
                             </div>
                           </div>
                         )}
@@ -1996,10 +3182,26 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                   ) : (
                     <div className="text-center py-14">
                       <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-[#545BFF]/10 flex items-center justify-center">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#545BFF]"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        <svg
+                          width="22"
+                          height="22"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          className="text-[#545BFF]"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                          <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
                       </div>
-                      <p className="text-heading font-medium text-sm">Unable to generate explanation</p>
-                      <p className="text-faded text-xs mt-1">The AI analysis service may be temporarily unavailable</p>
+                      <p className="text-heading font-medium text-sm">
+                        Unable to generate explanation
+                      </p>
+                      <p className="text-faded text-xs mt-1">
+                        The AI analysis service may be temporarily unavailable
+                      </p>
                     </div>
                   )}
                 </div>
@@ -2012,10 +3214,17 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                     <div className="flex flex-col items-center justify-center py-16">
                       <div className="relative w-14 h-14 mb-5">
                         <div className="absolute inset-0 border-t-2 border-[#545BFF] rounded-full animate-spin" />
-                        <div className="absolute inset-2.5 border-r-2 border-[#b19eef] rounded-full animate-spin" style={{ animationDirection: "reverse" }} />
+                        <div
+                          className="absolute inset-2.5 border-r-2 border-[#b19eef] rounded-full animate-spin"
+                          style={{ animationDirection: "reverse" }}
+                        />
                       </div>
-                      <p className="text-heading font-medium text-sm mb-1">Loading Historical Data</p>
-                      <p className="text-faded text-[10px] font-mono tracking-wide animate-pulse">Fetching domain timeline...</p>
+                      <p className="text-heading font-medium text-sm mb-1">
+                        Loading Historical Data
+                      </p>
+                      <p className="text-faded text-[10px] font-mono tracking-wide animate-pulse">
+                        Fetching domain timeline...
+                      </p>
                     </div>
                   )}
                   {!loadingHistory && historicalData && (
@@ -2024,31 +3233,78 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                         <div>
                           <div className="flex items-center gap-2.5 mb-3.5">
                             <div className="p-1.5 rounded-lg bg-[#545BFF]/10">
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#545BFF]"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                              <svg
+                                width="15"
+                                height="15"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                className="text-[#545BFF]"
+                              >
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                              </svg>
                             </div>
-                            <h4 className="text-heading font-bold text-sm sm:text-[15px]">WHOIS Changes</h4>
-                            <span className="text-[10px] font-mono text-[#545BFF] dark:text-[#a89de8] bg-[#545BFF]/10 px-2 py-0.5 rounded-md border border-[#545BFF]/15">{historicalData.whois_changes.length}</span>
+                            <h4 className="text-heading font-bold text-sm sm:text-[15px]">
+                              WHOIS Changes
+                            </h4>
+                            <span className="text-[10px] font-mono text-[#545BFF] dark:text-[#a89de8] bg-[#545BFF]/10 px-2 py-0.5 rounded-md border border-[#545BFF]/15">
+                              {historicalData.whois_changes.length}
+                            </span>
                           </div>
                           <div className="space-y-3">
-                            {historicalData.whois_changes.map((change: any, idx: number) => (
-                              <div key={idx} className="dark:bg-white/[0.02] bg-white/60 border border-divider/50 rounded-xl p-4 hover:border-[#545BFF]/25 transition-all backdrop-blur-sm">
-                                <div className="flex items-center gap-2 mb-3 pb-2.5 border-b border-divider/30">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-[#545BFF]" />
-                                  <span className="text-faded text-[10px] sm:text-xs font-mono">{new Date(change.date).toLocaleString()}</span>
+                            {historicalData.whois_changes.map(
+                              (change: any, idx: number) => (
+                                <div
+                                  key={idx}
+                                  className="dark:bg-white/[0.02] bg-white/60 border border-divider/50 rounded-xl p-4 hover:border-[#545BFF]/25 transition-all backdrop-blur-sm"
+                                >
+                                  <div className="flex items-center gap-2 mb-3 pb-2.5 border-b border-divider/30">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-[#545BFF]" />
+                                    <span className="text-faded text-[10px] sm:text-xs font-mono">
+                                      {new Date(change.date).toLocaleString()}
+                                    </span>
+                                  </div>
+                                  <div className="space-y-2.5">
+                                    {Object.entries(change.changes).map(
+                                      ([field, fieldChange]: [string, any]) => (
+                                        <div
+                                          key={field}
+                                          className="text-sm border-l-2 border-[#545BFF]/20 pl-3 py-1.5"
+                                        >
+                                          <div className="text-faded text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5">
+                                            {field}
+                                          </div>
+                                          <div className="flex flex-col gap-1.5 text-xs">
+                                            <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                                              <span className="w-4 font-mono font-bold">
+                                                -
+                                              </span>
+                                              <span className="font-mono bg-red-500/8 px-1.5 py-0.5 rounded-md truncate">
+                                                {JSON.stringify(
+                                                  fieldChange.from,
+                                                ).replace(/^"|"$/g, "")}
+                                              </span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                                              <span className="w-4 font-mono font-bold">
+                                                +
+                                              </span>
+                                              <span className="font-mono bg-green-500/8 px-1.5 py-0.5 rounded-md truncate">
+                                                {JSON.stringify(
+                                                  fieldChange.to,
+                                                ).replace(/^"|"$/g, "")}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ),
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="space-y-2.5">
-                                  {Object.entries(change.changes).map(([field, fieldChange]: [string, any]) => (
-                                    <div key={field} className="text-sm border-l-2 border-[#545BFF]/20 pl-3 py-1.5">
-                                      <div className="text-faded text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5">{field}</div>
-                                      <div className="flex flex-col gap-1.5 text-xs">
-                                        <div className="flex items-center gap-2 text-red-600 dark:text-red-400"><span className="w-4 font-mono font-bold">-</span><span className="font-mono bg-red-500/8 px-1.5 py-0.5 rounded-md truncate">{JSON.stringify(fieldChange.from).replace(/^"|"$/g, "")}</span></div>
-                                        <div className="flex items-center gap-2 text-green-600 dark:text-green-400"><span className="w-4 font-mono font-bold">+</span><span className="font-mono bg-green-500/8 px-1.5 py-0.5 rounded-md truncate">{JSON.stringify(fieldChange.to).replace(/^"|"$/g, "")}</span></div>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
+                              ),
+                            )}
                           </div>
                         </div>
                       )}
@@ -2057,33 +3313,90 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                         <div>
                           <div className="flex items-center gap-2.5 mb-3.5">
                             <div className="p-1.5 rounded-lg bg-[#b19eef]/10">
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#b19eef]"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
+                              <svg
+                                width="15"
+                                height="15"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                className="text-[#b19eef]"
+                              >
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="2" y1="12" x2="22" y2="12" />
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                              </svg>
                             </div>
-                            <h4 className="text-heading font-bold text-sm sm:text-[15px]">DNS Changes</h4>
-                            <span className="text-[10px] font-mono text-[#b19eef] bg-[#b19eef]/10 px-2 py-0.5 rounded-md border border-[#b19eef]/15">{historicalData.dns_changes.length}</span>
+                            <h4 className="text-heading font-bold text-sm sm:text-[15px]">
+                              DNS Changes
+                            </h4>
+                            <span className="text-[10px] font-mono text-[#b19eef] bg-[#b19eef]/10 px-2 py-0.5 rounded-md border border-[#b19eef]/15">
+                              {historicalData.dns_changes.length}
+                            </span>
                           </div>
                           <div className="space-y-3">
-                            {historicalData.dns_changes.map((change: any, idx: number) => (
-                              <div key={idx} className="dark:bg-white/[0.02] bg-white/60 border border-divider/50 rounded-xl p-4 hover:border-[#b19eef]/25 transition-all backdrop-blur-sm">
-                                <div className="flex items-center gap-2 mb-3 pb-2.5 border-b border-divider/30">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-[#b19eef]" />
-                                  <span className="text-faded text-[10px] sm:text-xs font-mono">{new Date(change.date).toLocaleString()}</span>
+                            {historicalData.dns_changes.map(
+                              (change: any, idx: number) => (
+                                <div
+                                  key={idx}
+                                  className="dark:bg-white/[0.02] bg-white/60 border border-divider/50 rounded-xl p-4 hover:border-[#b19eef]/25 transition-all backdrop-blur-sm"
+                                >
+                                  <div className="flex items-center gap-2 mb-3 pb-2.5 border-b border-divider/30">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-[#b19eef]" />
+                                    <span className="text-faded text-[10px] sm:text-xs font-mono">
+                                      {new Date(change.date).toLocaleString()}
+                                    </span>
+                                  </div>
+                                  <div className="space-y-2.5">
+                                    {Object.entries(change.changes).map(
+                                      ([recordType, recordChange]: [
+                                        string,
+                                        any,
+                                      ]) => (
+                                        <div
+                                          key={recordType}
+                                          className="text-sm border-l-2 border-[#b19eef]/25 pl-3 py-1.5"
+                                        >
+                                          <div className="text-[#b19eef] text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5">
+                                            {recordType} Records
+                                          </div>
+                                          {recordChange.added?.map(
+                                            (val: string, i: number) => (
+                                              <div
+                                                key={i}
+                                                className="flex items-center gap-2 text-green-600 dark:text-green-400 text-xs font-mono mb-1"
+                                              >
+                                                <span className="font-bold">
+                                                  +
+                                                </span>
+                                                <span className="bg-green-500/8 px-1.5 py-0.5 rounded-md break-all">
+                                                  {val}
+                                                </span>
+                                              </div>
+                                            ),
+                                          )}
+                                          {recordChange.removed?.map(
+                                            (val: string, i: number) => (
+                                              <div
+                                                key={i}
+                                                className="flex items-center gap-2 text-red-600 dark:text-red-400 text-xs font-mono mb-1"
+                                              >
+                                                <span className="font-bold">
+                                                  -
+                                                </span>
+                                                <span className="bg-red-500/8 px-1.5 py-0.5 rounded-md break-all">
+                                                  {val}
+                                                </span>
+                                              </div>
+                                            ),
+                                          )}
+                                        </div>
+                                      ),
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="space-y-2.5">
-                                  {Object.entries(change.changes).map(([recordType, recordChange]: [string, any]) => (
-                                    <div key={recordType} className="text-sm border-l-2 border-[#b19eef]/25 pl-3 py-1.5">
-                                      <div className="text-[#b19eef] text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5">{recordType} Records</div>
-                                      {recordChange.added?.map((val: string, i: number) => (
-                                        <div key={i} className="flex items-center gap-2 text-green-600 dark:text-green-400 text-xs font-mono mb-1"><span className="font-bold">+</span><span className="bg-green-500/8 px-1.5 py-0.5 rounded-md break-all">{val}</span></div>
-                                      ))}
-                                      {recordChange.removed?.map((val: string, i: number) => (
-                                        <div key={i} className="flex items-center gap-2 text-red-600 dark:text-red-400 text-xs font-mono mb-1"><span className="font-bold">-</span><span className="bg-red-500/8 px-1.5 py-0.5 rounded-md break-all">{val}</span></div>
-                                      ))}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
+                              ),
+                            )}
                           </div>
                         </div>
                       )}
@@ -2092,89 +3405,229 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                         <div>
                           <div className="flex items-center gap-2.5 mb-3.5">
                             <div className="p-1.5 rounded-lg bg-green-500/10">
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-500"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                              <svg
+                                width="15"
+                                height="15"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                className="text-green-500"
+                              >
+                                <rect
+                                  x="3"
+                                  y="11"
+                                  width="18"
+                                  height="11"
+                                  rx="2"
+                                  ry="2"
+                                />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                              </svg>
                             </div>
-                            <h4 className="text-heading font-bold text-sm sm:text-[15px]">SSL Certificate History</h4>
-                            <span className="text-[10px] font-mono text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-0.5 rounded-md border border-green-500/15">{historicalData.ssl_history.length}</span>
+                            <h4 className="text-heading font-bold text-sm sm:text-[15px]">
+                              SSL Certificate History
+                            </h4>
+                            <span className="text-[10px] font-mono text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-0.5 rounded-md border border-green-500/15">
+                              {historicalData.ssl_history.length}
+                            </span>
                           </div>
                           <div className="space-y-3">
-                            {historicalData.ssl_history.slice(0, 5).map((cert: any, idx: number) => (
-                              <div key={idx} className="dark:bg-white/[0.02] bg-white/60 border border-divider/50 rounded-xl p-4 hover:border-green-500/25 transition-all backdrop-blur-sm">
-                                <div className="flex items-center gap-2 mb-3 pb-2.5 border-b border-divider/30">
-                                  <div className="p-1 rounded-lg bg-green-500/10">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-500"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                            {historicalData.ssl_history
+                              .slice(0, 5)
+                              .map((cert: any, idx: number) => (
+                                <div
+                                  key={idx}
+                                  className="dark:bg-white/[0.02] bg-white/60 border border-divider/50 rounded-xl p-4 hover:border-green-500/25 transition-all backdrop-blur-sm"
+                                >
+                                  <div className="flex items-center gap-2 mb-3 pb-2.5 border-b border-divider/30">
+                                    <div className="p-1 rounded-lg bg-green-500/10">
+                                      <svg
+                                        width="13"
+                                        height="13"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        className="text-green-500"
+                                      >
+                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                        <polyline points="22 4 12 14.01 9 11.01" />
+                                      </svg>
+                                    </div>
+                                    <span className="text-faded text-[10px] sm:text-xs font-mono">
+                                      Captured:{" "}
+                                      {new Date(
+                                        cert.snapshot_date,
+                                      ).toLocaleString()}
+                                    </span>
                                   </div>
-                                  <span className="text-faded text-[10px] sm:text-xs font-mono">Captured: {new Date(cert.snapshot_date).toLocaleString()}</span>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs ml-0 sm:ml-8">
+                                    <div>
+                                      <div className="text-faded uppercase tracking-[0.15em] text-[10px] font-bold mb-0.5">
+                                        Issuer
+                                      </div>
+                                      <div className="text-copy font-medium truncate">
+                                        {cert.issuer}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <div className="text-faded uppercase tracking-[0.15em] text-[10px] font-bold mb-0.5">
+                                        Serial Number
+                                      </div>
+                                      <div className="text-copy font-mono text-[10px] truncate">
+                                        {cert.serial_number}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <div className="text-faded uppercase tracking-[0.15em] text-[10px] font-bold mb-0.5">
+                                        Valid From
+                                      </div>
+                                      <div className="text-green-600 dark:text-green-400 font-mono text-[11px]">
+                                        {cert.valid_from}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <div className="text-faded uppercase tracking-[0.15em] text-[10px] font-bold mb-0.5">
+                                        Valid Until
+                                      </div>
+                                      <div className="text-yellow-600 dark:text-yellow-400 font-mono text-[11px]">
+                                        {cert.valid_until}
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs ml-0 sm:ml-8">
-                                  <div><div className="text-faded uppercase tracking-[0.15em] text-[10px] font-bold mb-0.5">Issuer</div><div className="text-copy font-medium truncate">{cert.issuer}</div></div>
-                                  <div><div className="text-faded uppercase tracking-[0.15em] text-[10px] font-bold mb-0.5">Serial Number</div><div className="text-copy font-mono text-[10px] truncate">{cert.serial_number}</div></div>
-                                  <div><div className="text-faded uppercase tracking-[0.15em] text-[10px] font-bold mb-0.5">Valid From</div><div className="text-green-600 dark:text-green-400 font-mono text-[11px]">{cert.valid_from}</div></div>
-                                  <div><div className="text-faded uppercase tracking-[0.15em] text-[10px] font-bold mb-0.5">Valid Until</div><div className="text-yellow-600 dark:text-yellow-400 font-mono text-[11px]">{cert.valid_until}</div></div>
-                                </div>
-                              </div>
-                            ))}
+                              ))}
                           </div>
                         </div>
                       )}
 
-                      {(!historicalData.whois_changes?.length && !historicalData.dns_changes?.length && !historicalData.ssl_history?.length) && (
-                        <div className="text-center py-14">
-                          <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-[#545BFF]/10 flex items-center justify-center">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#545BFF]"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                      {!historicalData.whois_changes?.length &&
+                        !historicalData.dns_changes?.length &&
+                        !historicalData.ssl_history?.length && (
+                          <div className="text-center py-14">
+                            <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-[#545BFF]/10 flex items-center justify-center">
+                              <svg
+                                width="22"
+                                height="22"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                className="text-[#545BFF]"
+                              >
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                              </svg>
+                            </div>
+                            <p className="text-heading font-medium text-sm">
+                              No historical changes detected
+                            </p>
+                            <p className="text-faded text-xs mt-1">
+                              Changes will appear as we track this domain over
+                              time
+                            </p>
                           </div>
-                          <p className="text-heading font-medium text-sm">No historical changes detected</p>
-                          <p className="text-faded text-xs mt-1">Changes will appear as we track this domain over time</p>
-                        </div>
-                      )}
+                        )}
                     </div>
                   )}
                   {!loadingHistory && !historicalData && (
                     <div className="text-center py-14">
                       <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-[#545BFF]/10 flex items-center justify-center">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#545BFF]"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                        <svg
+                          width="22"
+                          height="22"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          className="text-[#545BFF]"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="12 6 12 12 16 14" />
+                        </svg>
                       </div>
-                      <p className="text-heading font-medium text-sm">No historical data available</p>
-                      <p className="text-faded text-xs mt-1">Domain timeline data is not yet available for this URL</p>
+                      <p className="text-heading font-medium text-sm">
+                        No historical data available
+                      </p>
+                      <p className="text-faded text-xs mt-1">
+                        Domain timeline data is not yet available for this URL
+                      </p>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* ── Feedback ── */}
-              {activeTab === "feedback" && (
+              {/* ── Community ── */}
+              {activeTab === "community" && (
                 <div className="py-2 sm:py-4 max-w-2xl mx-auto">
                   <div className="flex items-center justify-center gap-2.5 mb-6">
                     <div className="p-1.5 rounded-lg bg-[#545BFF]/10">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#545BFF]"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="text-[#545BFF]"
+                      >
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                      </svg>
                     </div>
-                    <h3 className="text-heading font-bold text-sm sm:text-[15px]">Feedback</h3>
-                    {feedbackComments.length > 0 && (
+                    <h3 className="text-heading font-bold text-sm sm:text-[15px]">
+                      Community Feedback
+                    </h3>
+                    {communityComments.length > 0 && (
                       <span className="text-[10px] font-mono text-[#545BFF] dark:text-[#a89de8] bg-[#545BFF]/10 px-2 py-0.5 rounded-md border border-[#545BFF]/15">
-                        {feedbackComments.length}
+                        {communityComments.length}
                       </span>
                     )}
                   </div>
 
                   {!isAuthenticated || !hasCompletedScan ? (
                     <div className="rounded-xl border border-[#545BFF]/20 bg-[#545BFF]/8 p-4 sm:p-5 text-center">
-                      <p className="text-sm font-semibold text-[#545BFF] dark:text-[#a89de8]">Feedback Locked</p>
-                      <p className="text-xs text-faded mt-1">Please log in and complete a scan before commenting.</p>
+                      <p className="text-sm font-semibold text-[#545BFF] dark:text-[#a89de8]">
+                        Community Feedback Locked
+                      </p>
+                      <p className="text-xs text-faded mt-1">
+                        Please log in and complete a scan before commenting.
+                      </p>
                     </div>
                   ) : (
                     <div className="mb-5 rounded-xl border border-green-500/20 bg-green-500/8 p-4 sm:p-5">
-                      <p className="text-sm font-semibold text-green-600 dark:text-green-300">You can now comment</p>
-                      <p className="text-xs text-faded mt-1">Share what you observed on this scanned URL.</p>
+                      <p className="text-sm font-semibold text-green-600 dark:text-green-300">
+                        You can now comment
+                      </p>
+                      <p className="text-xs text-faded mt-1">
+                        Share what you observed on this scanned URL.
+                      </p>
 
-                      <form onSubmit={handleSubmitComment} className="mt-3 space-y-3">
+                      <form
+                        onSubmit={handleSubmitComment}
+                        className="mt-3 space-y-3"
+                      >
                         <div>
-                          <label htmlFor="feedback-flag" className="block text-[11px] font-medium text-faded mb-1.5">
+                          <label
+                            htmlFor="community-flag"
+                            className="block text-[11px] font-medium text-faded mb-1.5"
+                          >
                             Flag this URL as
                           </label>
                           <select
                             id="feedback-flag"
                             value={commentFlag}
-                            onChange={(e) => setCommentFlag(e.target.value as "phishing" | "legitimate" | "neutral")}
+                            onChange={(e) =>
+                              setCommentFlag(
+                                e.target.value as
+                                  | "phishing"
+                                  | "legitimate"
+                                  | "neutral",
+                              )
+                            }
                             className="w-full rounded-lg border border-divider/60 bg-white/70 dark:bg-white/[0.03] px-3 py-2 text-xs sm:text-sm text-copy focus:outline-none focus:ring-2 focus:ring-[#545BFF]/50"
                           >
                             <option value="phishing">Phishing</option>
@@ -2189,8 +3642,16 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                           rows={4}
                           className="w-full rounded-lg border border-divider/60 bg-white/70 dark:bg-white/[0.03] px-3 py-2 text-xs sm:text-sm text-copy focus:outline-none focus:ring-2 focus:ring-[#545BFF]/50"
                         />
-                        {commentError && <p className="text-xs text-red-500 dark:text-red-400">{commentError}</p>}
-                        {commentSuccess && <p className="text-xs text-green-600 dark:text-green-400">{commentSuccess}</p>}
+                        {commentError && (
+                          <p className="text-xs text-red-500 dark:text-red-400">
+                            {commentError}
+                          </p>
+                        )}
+                        {commentSuccess && (
+                          <p className="text-xs text-green-600 dark:text-green-400">
+                            {commentSuccess}
+                          </p>
+                        )}
                         <button
                           type="submit"
                           disabled={submittingComment}
@@ -2202,36 +3663,72 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                     </div>
                   )}
 
-                  {isAuthenticated && hasCompletedScan && (
-                    loadingComments ? (
+                  {isAuthenticated &&
+                    hasCompletedScan &&
+                    (loadingComments ? (
                       <div className="flex flex-col items-center py-12">
                         <div className="relative w-10 h-10 mb-4">
                           <div className="absolute inset-0 border-t-2 border-[#545BFF] rounded-full animate-spin" />
                         </div>
-                        <p className="text-faded text-xs font-mono animate-pulse">Loading feedback...</p>
+                        <p className="text-faded text-xs font-mono animate-pulse">
+                          Loading community feedback...
+                        </p>
                       </div>
-                    ) : feedbackComments.length === 0 ? (
+                    ) : communityComments.length === 0 ? (
                       <div className="text-center py-12">
                         <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-[#545BFF]/10 flex items-center justify-center">
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#545BFF]"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                          <svg
+                            width="22"
+                            height="22"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            className="text-[#545BFF]"
+                          >
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                          </svg>
                         </div>
-                        <p className="text-heading font-medium text-sm">No feedback yet</p>
-                        <p className="text-faded text-xs mt-1">Be the first to share feedback</p>
+                        <p className="text-heading font-medium text-sm">
+                          No community feedback yet
+                        </p>
+                        <p className="text-faded text-xs mt-1">
+                          Be the first to report this URL
+                        </p>
                       </div>
                     ) : (
                       <ul className="space-y-3">
-                        {feedbackComments.map((cmt, idx) => (
-                          <li key={idx} className="dark:bg-white/[0.02] bg-white/60 backdrop-blur-sm border border-divider/40 rounded-xl p-4 sm:p-5 hover:border-[#545BFF]/25 transition-all">
+                        {communityComments.map((cmt, idx) => (
+                          <li
+                            key={idx}
+                            className="dark:bg-white/[0.02] bg-white/60 backdrop-blur-sm border border-divider/40 rounded-xl p-4 sm:p-5 hover:border-[#545BFF]/25 transition-all"
+                          >
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex items-center gap-3">
                                 <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#545BFF] to-[#b19eef] p-[2px]">
                                   <div className="w-full h-full rounded-[10px] dark:bg-[#080814] bg-white flex items-center justify-center">
-                                    <span className="text-[10px] font-bold text-[#545BFF] dark:text-[#a89de8]">{cmt.user_id ? cmt.user_id.substring(0, 2).toUpperCase() : "AN"}</span>
+                                    <span className="text-[10px] font-bold text-[#545BFF] dark:text-[#a89de8]">
+                                      {cmt.user_id
+                                        ? cmt.user_id
+                                            .substring(0, 2)
+                                            .toUpperCase()
+                                        : "AN"}
+                                    </span>
                                   </div>
                                 </div>
                                 <div>
-                                  <div className="text-xs text-heading font-medium">{cmt.user_id ? `User ${cmt.user_id.substring(0, 8)}...` : "Anonymous"}</div>
-                                  <div className="text-[10px] text-faded font-mono">{cmt.created_at ? new Date(cmt.created_at).toLocaleString() : ""}</div>
+                                  <div className="text-xs text-heading font-medium">
+                                    {cmt.user_id
+                                      ? `User ${cmt.user_id.substring(0, 8)}...`
+                                      : "Anonymous"}
+                                  </div>
+                                  <div className="text-[10px] text-faded font-mono">
+                                    {cmt.created_at
+                                      ? new Date(
+                                          cmt.created_at,
+                                        ).toLocaleString()
+                                      : ""}
+                                  </div>
                                 </div>
                               </div>
                               {cmt.flag && (
@@ -2240,34 +3737,195 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
                                     cmt.flag === "legitimate"
                                       ? "bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400"
                                       : cmt.flag === "phishing"
-                                      ? "bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400"
-                                      : "bg-yellow-500/10 border-yellow-500/20 text-yellow-700 dark:text-yellow-300"
+                                        ? "bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400"
+                                        : "bg-yellow-500/10 border-yellow-500/20 text-yellow-700 dark:text-yellow-300"
                                   }`}
                                 >
                                   {cmt.flag === "legitimate" ? (
                                     <>
-                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
-                                      <span className="text-[9px] font-bold uppercase tracking-wider">Legitimate</span>
+                                      <svg
+                                        width="12"
+                                        height="12"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2.5"
+                                      >
+                                        <polyline points="20 6 9 17 4 12" />
+                                      </svg>
+                                      <span className="text-[9px] font-bold uppercase tracking-wider">
+                                        Legitimate
+                                      </span>
                                     </>
                                   ) : cmt.flag === "phishing" ? (
                                     <>
-                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                                      <span className="text-[9px] font-bold uppercase tracking-wider">Phishing</span>
+                                      <svg
+                                        width="12"
+                                        height="12"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2.5"
+                                      >
+                                        <line x1="18" y1="6" x2="6" y2="18" />
+                                        <line x1="6" y1="6" x2="18" y2="18" />
+                                      </svg>
+                                      <span className="text-[9px] font-bold uppercase tracking-wider">
+                                        Phishing
+                                      </span>
                                     </>
                                   ) : (
                                     <>
-                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><line x1="8" y1="12" x2="16" y2="12" /></svg>
-                                      <span className="text-[9px] font-bold uppercase tracking-wider">Neutral</span>
+                                      <svg
+                                        width="12"
+                                        height="12"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                      >
+                                        <circle cx="12" cy="12" r="9" />
+                                        <line x1="8" y1="12" x2="16" y2="12" />
+                                      </svg>
+                                      <span className="text-[9px] font-bold uppercase tracking-wider">
+                                        Neutral
+                                      </span>
                                     </>
                                   )}
                                 </div>
                               )}
                             </div>
-                            <div className="text-xs sm:text-[13px] text-copy leading-relaxed pl-12">{cmt.description}</div>
+                            <div className="text-xs sm:text-[13px] text-copy leading-relaxed pl-12">
+                              {cmt.description}
+                            </div>
                           </li>
                         ))}
                       </ul>
-                    )
+                    ))}
+                </div>
+              )}
+
+              {/* ── History ── */}
+              {activeTab === "history" && (
+                <div className="py-2 sm:py-4 max-w-2xl mx-auto">
+                  <div className="flex flex-col items-center mb-6">
+                    <div className="flex items-center justify-center gap-2.5 mb-3">
+                      <div className="p-1.5 rounded-lg bg-[#545BFF]/10">
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="text-[#545BFF]"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                      </div>
+                      <h3 className="text-heading font-bold text-sm sm:text-[15px]">
+                        Your Scan History
+                      </h3>
+                      {scanHistory.length > 0 && (
+                        <span className="text-[10px] font-mono text-[#545BFF] dark:text-[#a89de8] bg-[#545BFF]/10 px-2 py-0.5 rounded-md border border-[#545BFF]/15">
+                          {scanHistory.length}
+                        </span>
+                      )}
+                    </div>
+                    {currentUserEmail && (
+                      <p className="text-[10px] text-faded font-mono mt-2">
+                        Viewing scans for:{" "}
+                        <span className="text-[#545BFF] dark:text-[#a89de8] font-semibold">
+                          {currentUserEmail}
+                        </span>
+                      </p>
+                    )}
+                    {currentUserEmail && (
+                      <p className="text-[10px] text-faded font-mono">
+                        Viewing:{" "}
+                        <span className="text-[#545BFF] dark:text-[#a89de8] font-semibold">
+                          {currentUserEmail}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+
+                  {loadingScanHistory ? (
+                    <div className="flex flex-col items-center py-12">
+                      <div className="relative w-10 h-10 mb-4">
+                        <div className="absolute inset-0 border-t-2 border-[#545BFF] rounded-full animate-spin" />
+                      </div>
+                      <p className="text-faded text-xs font-mono animate-pulse">
+                        Loading history...
+                      </p>
+                    </div>
+                  ) : historyError ? (
+                    <div className="rounded-xl border border-red-500/20 bg-red-500/8 p-4 sm:p-5 text-center">
+                      <p className="text-sm font-semibold text-red-600 dark:text-red-400">
+                        Unable to load history
+                      </p>
+                      <p className="text-xs text-faded mt-1">{historyError}</p>
+                    </div>
+                  ) : scanHistory.length === 0 ? (
+                    <div className="rounded-xl border border-[#545BFF]/20 bg-[#545BFF]/8 p-4 sm:p-5 text-center">
+                      <p className="text-sm font-semibold text-[#545BFF] dark:text-[#a89de8]">
+                        No scans yet
+                      </p>
+                      <p className="text-xs text-faded mt-1">
+                        Your completed scans will appear here.
+                      </p>
+                    </div>
+                  ) : (
+                    <ul className="space-y-3">
+                      {scanHistory.map((scan, idx) => (
+                        <li
+                          key={idx}
+                          className="rounded-lg border border-divider/40 dark:border-[#545BFF]/10 bg-white/50 dark:bg-white/[0.02] p-3 sm:p-4 hover:border-[#545BFF]/30 transition-all duration-200"
+                        >
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <div
+                                  className={`w-2 h-2 rounded-full flex-shrink-0 ${scan.riskScore >= 70 ? "bg-red-500" : scan.riskScore >= 40 ? "bg-yellow-500" : "bg-green-500"}`}
+                                />
+                                <span className="text-heading text-xs md:text-sm break-all font-mono flex-1">
+                                  {scan.url}
+                                </span>
+                              </div>
+                              <div className="text-[10px] text-faded font-mono">
+                                {scan.date}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <span
+                                className={`text-[10px] sm:text-xs px-2.5 py-1 rounded-full font-bold tracking-wide whitespace-nowrap uppercase border ${
+                                  scan.riskScore >= 70
+                                    ? "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/25"
+                                    : scan.riskScore >= 40
+                                      ? "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/25"
+                                      : "bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/25"
+                                }`}
+                              >
+                                {scan.riskScore}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between text-[10px] text-faded">
+                            <span className="font-mono">{scan.status}</span>
+                            <button
+                              onClick={() => {
+                                setUrlInput(scan.url);
+                                doScan(scan.url);
+                              }}
+                              className="px-2.5 py-1 rounded-md text-[#545BFF] dark:text-[#a89de8] hover:bg-[#545BFF]/10 transition-colors duration-200 font-medium"
+                            >
+                              Rescan
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </div>
               )}
@@ -2285,22 +3943,34 @@ function GuestScanner({ inView, lowPerformanceMode, hideGuestMode }: { inView: b
    mouse-reactive rings & glow, HUD corners,
    security ticker, scan-beam sweeps.
 ───────────────────────────────────────────── */
-export default function ScanTab({ hideGuestMode = false }: { hideGuestMode?: boolean }) {
+export default function ScanTab({
+  hideGuestMode = false,
+}: {
+  hideGuestMode?: boolean;
+}) {
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
   const [lowPerformanceMode, setLowPerformanceMode] = useState(false);
 
   useEffect(() => {
     const evaluateMode = () => {
-      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
       const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
       const smallViewport = window.innerWidth < 1024;
       const lowMemory =
-        typeof (navigator as Navigator & { deviceMemory?: number }).deviceMemory === "number" &&
-        ((navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8) <= 4;
-      const lowCpu = typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4;
+        typeof (navigator as Navigator & { deviceMemory?: number })
+          .deviceMemory === "number" &&
+        ((navigator as Navigator & { deviceMemory?: number }).deviceMemory ??
+          8) <= 4;
+      const lowCpu =
+        typeof navigator.hardwareConcurrency === "number" &&
+        navigator.hardwareConcurrency <= 4;
 
-      setLowPerformanceMode(reducedMotion || coarsePointer || smallViewport || lowMemory || lowCpu);
+      setLowPerformanceMode(
+        reducedMotion || coarsePointer || smallViewport || lowMemory || lowCpu,
+      );
     };
 
     evaluateMode();
@@ -2323,19 +3993,30 @@ export default function ScanTab({ hideGuestMode = false }: { hideGuestMode?: boo
   // Section-level mouse tracking → moves rings + glow
   const mxRaw = useMotionValue(0.5);
   const myRaw = useMotionValue(0.5);
-  const smx = useSpring(mxRaw, { stiffness: 32, damping: 14, restDelta: 0.001 });
-  const smy = useSpring(myRaw, { stiffness: 32, damping: 14, restDelta: 0.001 });
+  const smx = useSpring(mxRaw, {
+    stiffness: 32,
+    damping: 14,
+    restDelta: 0.001,
+  });
+  const smy = useSpring(myRaw, {
+    stiffness: 32,
+    damping: 14,
+    restDelta: 0.001,
+  });
   const glowX = useTransform(smx, [0, 1], [-50, 50]);
   const glowY = useTransform(smy, [0, 1], [-34, 34]);
   const ringsX = useTransform(smx, [0, 1], [-22, 22]);
   const ringsY = useTransform(smy, [0, 1], [-15, 15]);
 
-  const onSectionMouse = useCallback((e: React.MouseEvent<HTMLElement>) => {
-    if (lowPerformanceMode) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    mxRaw.set((e.clientX - rect.left) / rect.width);
-    myRaw.set((e.clientY - rect.top) / rect.height);
-  }, [lowPerformanceMode, mxRaw, myRaw]);
+  const onSectionMouse = useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
+      if (lowPerformanceMode) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      mxRaw.set((e.clientX - rect.left) / rect.width);
+      myRaw.set((e.clientY - rect.top) / rect.height);
+    },
+    [lowPerformanceMode, mxRaw, myRaw],
+  );
 
   const TICKER = [
     "AI-POWERED THREAT DETECTION",
@@ -2429,7 +4110,10 @@ export default function ScanTab({ hideGuestMode = false }: { hideGuestMode?: boo
         initial={{ opacity: 0, scale: 0.7 }}
         animate={inView ? { opacity: 1, scale: 1 } : {}}
         transition={{ duration: 1.4, delay: 0.2 }}
-        style={{ x: lowPerformanceMode ? 0 : glowX, y: lowPerformanceMode ? 0 : glowY }}
+        style={{
+          x: lowPerformanceMode ? 0 : glowX,
+          y: lowPerformanceMode ? 0 : glowY,
+        }}
       >
         <div className="w-[380px] h-[380px] md:w-[600px] md:h-[600px] rounded-full bg-[#545BFF]/6 dark:bg-[#545BFF]/11 blur-[110px]" />
       </motion.div>
@@ -2452,7 +4136,8 @@ export default function ScanTab({ hideGuestMode = false }: { hideGuestMode?: boo
         className="absolute inset-x-0 h-px z-[7] pointer-events-none ss-beam"
         style={{
           top: 0,
-          background: "linear-gradient(to right, transparent 8%, rgba(84,91,255,0.12) 28%, rgba(84,91,255,0.5) 50%, rgba(84,91,255,0.12) 72%, transparent 92%)",
+          background:
+            "linear-gradient(to right, transparent 8%, rgba(84,91,255,0.12) 28%, rgba(84,91,255,0.5) 50%, rgba(84,91,255,0.12) 72%, transparent 92%)",
           boxShadow: "0 0 12px 2px rgba(84,91,255,0.08)",
         }}
       />
@@ -2465,7 +4150,8 @@ export default function ScanTab({ hideGuestMode = false }: { hideGuestMode?: boo
           transition={{ duration: 1.9, delay: 0.08, ease: "easeInOut" }}
           className="absolute inset-x-0 h-[2px] z-[8] pointer-events-none"
           style={{
-            background: "linear-gradient(to right, transparent 5%, #545BFF25 20%, #545BFF85 50%, #545BFF25 80%, transparent 95%)",
+            background:
+              "linear-gradient(to right, transparent 5%, #545BFF25 20%, #545BFF85 50%, #545BFF25 80%, transparent 95%)",
             boxShadow: "0 0 28px 8px rgba(84,91,255,0.16)",
           }}
         />
@@ -2474,14 +4160,21 @@ export default function ScanTab({ hideGuestMode = false }: { hideGuestMode?: boo
       {/* ── Dot pattern overlay ── */}
       <div
         className="absolute inset-0 z-[6] opacity-[0.014] dark:opacity-[0.028] pointer-events-none"
-        style={{ backgroundImage: "radial-gradient(circle, #545BFF 1px, transparent 1px)", backgroundSize: "28px 28px" }}
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, #545BFF 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+        }}
       />
 
       {/* ── Content ── */}
       <div className="relative z-[10] w-full pt-[calc(4rem+1px)] pb-16 sm:pt-[calc(5rem+1px)] sm:pb-20 md:pt-[calc(7rem+1px)] md:pb-28 lg:pt-[calc(8rem+1px)] lg:pb-32">
-        <GuestScanner inView={inView} lowPerformanceMode={lowPerformanceMode} hideGuestMode={hideGuestMode} />
+        <GuestScanner
+          inView={inView}
+          lowPerformanceMode={lowPerformanceMode}
+          hideGuestMode={hideGuestMode}
+        />
       </div>
     </section>
   );
 }
-

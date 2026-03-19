@@ -1,6 +1,7 @@
 "use client";
 
 import Aurora from "@components/ui/Aurora";
+import ThemeToggle from "@components/ui/ThemeToggle";
 import { createClient } from "@lib/supabase";
 import Image from "next/image";
 import Link from "next/link";
@@ -129,7 +130,7 @@ export default function AdminSettingsClient() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-page text-heading transition-colors duration-300">
       <header className="border-b border-[#545BFF]/15 bg-page/85 backdrop-blur relative overflow-hidden">
         <div className="absolute inset-0 opacity-25 pointer-events-none">
           <Aurora
@@ -158,8 +159,12 @@ export default function AdminSettingsClient() {
             </div>
           </div>
 
-          <div className="text-xs sm:text-sm text-gray-200/90">
-            Admin: <span className="text-white font-medium">{adminEmail}</span>
+          <div className="flex items-center gap-3">
+            <div className="text-xs sm:text-sm text-gray-200/90">
+              Admin:{" "}
+              <span className="text-white font-medium">{adminEmail}</span>
+            </div>
+            <ThemeToggle />
           </div>
         </div>
       </header>

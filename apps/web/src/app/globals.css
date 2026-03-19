@@ -1,7 +1,9 @@
 @import "tailwindcss";
 
 /* ── Class-based dark mode (Tailwind v4) ── */
-@custom-variant dark (&:where(.dark, .dark *));
+@layer utilities {
+  @dark: (&:where(.dark, .dark *));
+}
 
 /* ── Semantic colour tokens → bg-page, text-heading, etc. ── */
 @theme {
@@ -62,27 +64,62 @@ body {
 
 /* ── Scan ring pulse for hero shield ── */
 @keyframes pulseScaleRing {
-  0%   { transform: scale(0.85); opacity: 0.6; }
-  60%  { opacity: 0.15; }
-  100% { transform: scale(1.15); opacity: 0; }
+  0% {
+    transform: scale(0.85);
+    opacity: 0.6;
+  }
+  60% {
+    opacity: 0.15;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
 }
 
 /* ── FeatureGrid card scan beam (CSS-only, replaces motion.div loop) ── */
 @keyframes ss-card-beam {
-  0%    { transform: translateY(-2px); opacity: 0; }
-  3%    { opacity: 0.8; }
-  58%   { opacity: 0.8; }
-  61%   { transform: translateY(362px); opacity: 0; }
-  61.1% { transform: translateY(-2px); opacity: 0; }
-  100%  { transform: translateY(-2px); opacity: 0; }
+  0% {
+    transform: translateY(-2px);
+    opacity: 0;
+  }
+  3% {
+    opacity: 0.8;
+  }
+  58% {
+    opacity: 0.8;
+  }
+  61% {
+    transform: translateY(362px);
+    opacity: 0;
+  }
+  61.1% {
+    transform: translateY(-2px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(-2px);
+    opacity: 0;
+  }
 }
 
 /* ── FeatureGrid icon scan ring (CSS-only, replaces motion.div loop) ── */
 @keyframes ss-icon-ring {
-  0%   { opacity: 0; transform: scale(0.82); }
-  18%  { opacity: 0.55; }
-  78%  { opacity: 0; transform: scale(1.12); }
-  100% { opacity: 0; transform: scale(1.12); }
+  0% {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+  18% {
+    opacity: 0.55;
+  }
+  78% {
+    opacity: 0;
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.12);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
