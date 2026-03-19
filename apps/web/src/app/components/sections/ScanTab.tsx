@@ -1009,10 +1009,6 @@ function GuestScanner({
     null,
   );
   const [retryCountdown, setRetryCountdown] = useState(0);
-<<<<<<< Updated upstream
-  const [apiStatus, setApiStatus] = useState<"checking" | "online" | "offline">("checking");
-  const [activeTab, setActiveTab] = useState<"detection" | "explanation" | "details" | "relations" | "feedback">("detection");
-=======
   const [apiStatus, setApiStatus] = useState<"checking" | "online" | "offline">(
     "checking",
   );
@@ -1024,7 +1020,6 @@ function GuestScanner({
     | "community"
     | "history"
   >("detection");
->>>>>>> Stashed changes
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [hasCompletedScan, setHasCompletedScan] = useState(false);
@@ -1037,8 +1032,8 @@ function GuestScanner({
   const [historicalData, setHistoricalData] = useState<any>(null);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
-  // Feedback (read-only for guests)
-  const [feedbackComments, setFeedbackComments] = useState<any[]>([]);
+  // Community (read-only for guests)
+  const [communityComments, setCommunityComments] = useState<any[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [commentFlag, setCommentFlag] = useState<
@@ -1211,9 +1206,6 @@ function GuestScanner({
 
   /* Fetch feedback when tab active */
   useEffect(() => {
-<<<<<<< Updated upstream
-    if (activeTab !== "feedback" || !currentScan || !isAuthenticated || !hasCompletedScan) return;
-=======
     if (
       activeTab !== "community" ||
       !currentScan ||
@@ -1221,7 +1213,6 @@ function GuestScanner({
       !hasCompletedScan
     )
       return;
->>>>>>> Stashed changes
     setLoadingComments(true);
     (async () => {
       try {
@@ -1230,12 +1221,12 @@ function GuestScanner({
         );
         if (res.ok) {
           const data = await res.json();
-          setFeedbackComments(data.reports || []);
+          setCommunityComments(data.reports || []);
         } else {
-          setFeedbackComments([]);
+          setCommunityComments([]);
         }
       } catch {
-        setFeedbackComments([]);
+        setCommunityComments([]);
       } finally {
         setLoadingComments(false);
       }
@@ -1488,27 +1479,6 @@ function GuestScanner({
     doScan(currentScan.url);
   };
 
-<<<<<<< Updated upstream
-  const refreshFeedbackComments = useCallback(async () => {
-    if (!currentScan) return;
-    setLoadingComments(true);
-    try {
-      const res = await fetch(`${WHOIS_API_URL}/api/reports?url=${encodeURIComponent(currentScan.url)}`);
-      if (res.ok) {
-        const data = await res.json();
-        setFeedbackComments(data.reports || []);
-      } else {
-        setFeedbackComments([]);
-      }
-    } catch {
-      setFeedbackComments([]);
-    } finally {
-      setLoadingComments(false);
-    }
-  }, [WHOIS_API_URL, currentScan]);
-
-=======
->>>>>>> Stashed changes
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
     setCommentError(null);
@@ -1546,7 +1516,7 @@ function GuestScanner({
       setCommentText("");
       setCommentFlag("neutral");
       setCommentSuccess("Comment submitted successfully.");
-      await refreshFeedbackComments();
+      await refreshCommunityComments();
     } catch {
       setCommentError("Unable to submit comment.");
     } finally {
@@ -2380,15 +2350,6 @@ function GuestScanner({
           <div className="dark:bg-[#080814]/80 bg-white/90 backdrop-blur-xl border border-divider/40 dark:border-[#545BFF]/10 rounded-2xl overflow-hidden shadow-2xl dark:shadow-[0_8px_48px_rgba(84,91,255,0.06)]">
             {/* Tab bar with responsive design */}
             <div className="flex overflow-x-auto p-1 sm:p-2 gap-1 border-b border-divider/20 dark:bg-white/[0.01] bg-slate-50/50 scrollbar-hide">
-<<<<<<< Updated upstream
-              {([
-                { key: "detection" as const, icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>, label: "Detection" },
-                { key: "explanation" as const, icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, label: "Explanation" },
-                { key: "details" as const, icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>, label: "Details" },
-                { key: "relations" as const, icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, label: "Relations" },
-                { key: "feedback" as const, icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>, label: "Feedback" },
-              ]).map(({ key, icon, label }) => (
-=======
               {[
                 {
                   key: "detection" as const,
@@ -2499,7 +2460,6 @@ function GuestScanner({
                     ]
                   : []),
               ].map(({ key, icon, label }) => (
->>>>>>> Stashed changes
                 <button
                   key={key}
                   onClick={() => setActiveTab(key)}
@@ -3598,8 +3558,8 @@ function GuestScanner({
                 </div>
               )}
 
-              {/* ── Feedback ── */}
-              {activeTab === "feedback" && (
+              {/* ── Community ── */}
+              {activeTab === "community" && (
                 <div className="py-2 sm:py-4 max-w-2xl mx-auto">
                   <div className="flex items-center justify-center gap-2.5 mb-6">
                     <div className="p-1.5 rounded-lg bg-[#545BFF]/10">
@@ -3618,34 +3578,24 @@ function GuestScanner({
                         <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                       </svg>
                     </div>
-<<<<<<< Updated upstream
-                    <h3 className="text-heading font-bold text-sm sm:text-[15px]">Feedback</h3>
-                    {feedbackComments.length > 0 && (
-=======
                     <h3 className="text-heading font-bold text-sm sm:text-[15px]">
                       Community Feedback
                     </h3>
                     {communityComments.length > 0 && (
->>>>>>> Stashed changes
                       <span className="text-[10px] font-mono text-[#545BFF] dark:text-[#a89de8] bg-[#545BFF]/10 px-2 py-0.5 rounded-md border border-[#545BFF]/15">
-                        {feedbackComments.length}
+                        {communityComments.length}
                       </span>
                     )}
                   </div>
 
                   {!isAuthenticated || !hasCompletedScan ? (
                     <div className="rounded-xl border border-[#545BFF]/20 bg-[#545BFF]/8 p-4 sm:p-5 text-center">
-<<<<<<< Updated upstream
-                      <p className="text-sm font-semibold text-[#545BFF] dark:text-[#a89de8]">Feedback Locked</p>
-                      <p className="text-xs text-faded mt-1">Please log in and complete a scan before commenting.</p>
-=======
                       <p className="text-sm font-semibold text-[#545BFF] dark:text-[#a89de8]">
                         Community Feedback Locked
                       </p>
                       <p className="text-xs text-faded mt-1">
                         Please log in and complete a scan before commenting.
                       </p>
->>>>>>> Stashed changes
                     </div>
                   ) : (
                     <div className="mb-5 rounded-xl border border-green-500/20 bg-green-500/8 p-4 sm:p-5">
@@ -3661,14 +3611,10 @@ function GuestScanner({
                         className="mt-3 space-y-3"
                       >
                         <div>
-<<<<<<< Updated upstream
-                          <label htmlFor="feedback-flag" className="block text-[11px] font-medium text-faded mb-1.5">
-=======
                           <label
                             htmlFor="community-flag"
                             className="block text-[11px] font-medium text-faded mb-1.5"
                           >
->>>>>>> Stashed changes
                             Flag this URL as
                           </label>
                           <select
@@ -3724,15 +3670,11 @@ function GuestScanner({
                         <div className="relative w-10 h-10 mb-4">
                           <div className="absolute inset-0 border-t-2 border-[#545BFF] rounded-full animate-spin" />
                         </div>
-<<<<<<< Updated upstream
-                        <p className="text-faded text-xs font-mono animate-pulse">Loading feedback...</p>
-=======
                         <p className="text-faded text-xs font-mono animate-pulse">
                           Loading community feedback...
                         </p>
->>>>>>> Stashed changes
                       </div>
-                    ) : feedbackComments.length === 0 ? (
+                    ) : communityComments.length === 0 ? (
                       <div className="text-center py-12">
                         <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-[#545BFF]/10 flex items-center justify-center">
                           <svg
@@ -3747,15 +3689,6 @@ function GuestScanner({
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                           </svg>
                         </div>
-<<<<<<< Updated upstream
-                        <p className="text-heading font-medium text-sm">No feedback yet</p>
-                        <p className="text-faded text-xs mt-1">Be the first to share feedback</p>
-                      </div>
-                    ) : (
-                      <ul className="space-y-3">
-                        {feedbackComments.map((cmt, idx) => (
-                          <li key={idx} className="dark:bg-white/[0.02] bg-white/60 backdrop-blur-sm border border-divider/40 rounded-xl p-4 sm:p-5 hover:border-[#545BFF]/25 transition-all">
-=======
                         <p className="text-heading font-medium text-sm">
                           No community feedback yet
                         </p>
@@ -3770,7 +3703,6 @@ function GuestScanner({
                             key={idx}
                             className="dark:bg-white/[0.02] bg-white/60 backdrop-blur-sm border border-divider/40 rounded-xl p-4 sm:p-5 hover:border-[#545BFF]/25 transition-all"
                           >
->>>>>>> Stashed changes
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex items-center gap-3">
                                 <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#545BFF] to-[#b19eef] p-[2px]">
