@@ -4059,6 +4059,230 @@
         gap: 10px;
       }
 
+      .community-compose-card {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.02);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .community-compose-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .community-flag-row {
+        display: flex;
+        gap: 6px;
+      }
+
+      .community-flag-btn {
+        flex: 1;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--muted);
+        font-family: var(--font);
+        font-size: 10px;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 6px 4px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .community-flag-btn:hover {
+        border-color: var(--border-h);
+        color: var(--text);
+      }
+
+      .community-flag-btn.active {
+        color: #fff;
+      }
+
+      .community-flag-btn[data-flag="legitimate"].active {
+        background: rgba(16, 185, 129, 0.24);
+        border-color: rgba(16, 185, 129, 0.5);
+      }
+
+      .community-flag-btn[data-flag="neutral"].active {
+        background: rgba(107, 114, 128, 0.3);
+        border-color: rgba(107, 114, 128, 0.55);
+      }
+
+      .community-flag-btn[data-flag="phishing"].active {
+        background: rgba(239, 68, 68, 0.26);
+        border-color: rgba(239, 68, 68, 0.55);
+      }
+
+      .community-comment-input {
+        width: 100%;
+        min-height: 72px;
+        resize: vertical;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 11px;
+        line-height: 1.4;
+        padding: 8px 9px;
+      }
+
+      .community-comment-input::placeholder {
+        color: var(--muted2);
+      }
+
+      .community-comment-input:focus {
+        outline: none;
+        border-color: rgba(84, 91, 255, 0.4);
+        box-shadow: 0 0 0 2px rgba(84, 91, 255, 0.15);
+      }
+
+      .community-comment-status {
+        font-size: 10px;
+        border-radius: 7px;
+        padding: 6px 8px;
+      }
+
+      .community-comment-status.info {
+        color: var(--muted);
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .community-comment-status.success {
+        color: #bbf7d0;
+        border: 1px solid rgba(16, 185, 129, 0.35);
+        background: rgba(16, 185, 129, 0.14);
+      }
+
+      .community-comment-status.error {
+        color: #fecaca;
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        background: rgba(239, 68, 68, 0.14);
+      }
+
+      .community-actions-row {
+        display: flex;
+        gap: 8px;
+      }
+
+      .community-submit-btn {
+        flex: 1;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-family: var(--font);
+        font-size: 11px;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(135deg, var(--primary) 0%, #6b73ff 100%);
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .community-submit-btn:hover {
+        filter: brightness(1.06);
+        transform: translateY(-1px);
+      }
+
+      .community-submit-btn:active {
+        transform: translateY(0);
+      }
+
+      .community-submit-btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+
+      .community-feedback-results {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .community-feedback-results.hidden {
+        display: none !important;
+      }
+
+      .community-feedback-state {
+        font-size: 10.5px;
+        color: var(--muted);
+        padding: 8px 10px;
+        border: 1px dashed var(--border);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .community-feedback-list {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        max-height: 168px;
+        overflow-y: auto;
+        padding-right: 2px;
+      }
+
+      .community-feedback-item {
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 8px 10px;
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .community-feedback-item-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 5px;
+      }
+
+      .community-feedback-flag {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 3px 7px;
+        border-radius: 999px;
+      }
+
+      .community-feedback-flag.phishing {
+        color: #fecaca;
+        background: rgba(239, 68, 68, 0.2);
+        border: 1px solid rgba(239, 68, 68, 0.35);
+      }
+
+      .community-feedback-flag.legitimate {
+        color: #bbf7d0;
+        background: rgba(16, 185, 129, 0.18);
+        border: 1px solid rgba(16, 185, 129, 0.35);
+      }
+
+      .community-feedback-flag.neutral {
+        color: #d1d5db;
+        background: rgba(107, 114, 128, 0.2);
+        border: 1px solid rgba(107, 114, 128, 0.35);
+      }
+
+      .community-feedback-date {
+        font-size: 10px;
+        color: var(--muted2);
+      }
+
+      .community-feedback-desc {
+        font-size: 11px;
+        color: var(--text);
+        line-height: 1.5;
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
       .community-section-title {
         font-size: 12px;
         font-weight: 600;
@@ -4542,13 +4766,37 @@
             <!-- Community View Button (for authenticated users) -->
             <div id="community-content-section" class="community-view-section hidden">
               <p class="community-section-title">Community Feedback</p>
-              <button id="community-view-feedback-btn" class="community-view-btn">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-                View Feedback →
-              </button>
+              <div class="community-compose-card">
+                <p class="community-compose-title">Share your feedback</p>
+                <div class="community-flag-row" id="community-flag-row">
+                  <button type="button" class="community-flag-btn" data-flag="legitimate" aria-pressed="false">Safe</button>
+                  <button type="button" class="community-flag-btn active" data-flag="neutral" aria-pressed="true">Neutral</button>
+                  <button type="button" class="community-flag-btn" data-flag="phishing" aria-pressed="false">Dangerous</button>
+                </div>
+                <textarea
+                  id="community-comment-input"
+                  class="community-comment-input"
+                  placeholder="Write your feedback about this site..."
+                  maxlength="1000"
+                ></textarea>
+                <div id="community-comment-status" class="community-comment-status info hidden"></div>
+                <div class="community-actions-row">
+                  <button id="community-submit-comment-btn" class="community-submit-btn">Submit Comment</button>
+                  <button id="community-view-feedback-btn" class="community-view-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    Refresh
+                  </button>
+                </div>
+              </div>
+              <div id="community-feedback-results" class="community-feedback-results hidden">
+                <div id="community-feedback-state" class="community-feedback-state">
+                  Click "Refresh" to load comments for this site.
+                </div>
+                <div id="community-feedback-list" class="community-feedback-list hidden"></div>
+              </div>
             </div>
           </div>
         </div>
