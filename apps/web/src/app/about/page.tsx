@@ -630,7 +630,7 @@ function CTASection() {
               </span>
               <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
             </Link>
-            <a
+            <Link
               href="/#scan"
               className="group relative px-5 sm:px-7 h-10 sm:h-11 w-full sm:w-auto flex items-center justify-center dark:text-heading text-[#263a5e] text-[13px] sm:text-sm border dark:border-divider/40 border-[#545BFF]/50 dark:hover:border-[#545BFF]/70 hover:border-[#545BFF]/80 dark:hover:bg-[#545BFF]/8 hover:bg-[#545BFF]/12 rounded-full font-semibold backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 overflow-hidden"
             >
@@ -640,7 +640,7 @@ function CTASection() {
                   <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
               </span>
-            </a>
+            </Link>
           </div>
         </motion.div>
       </div>
