@@ -231,6 +231,30 @@ export default function AboutTab() {
           </div>
         </div>
 
+        {/* ── CTA button ────────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="flex justify-center mt-10 md:mt-12"
+        >
+          <a
+            href="/about"
+            className="group relative inline-flex items-center gap-3 px-8 py-3.5 rounded-full font-semibold text-white overflow-hidden
+              bg-gradient-to-r from-[#545BFF] to-[#6B73FF] hover:from-[#4349dd] hover:to-[#545BFF]
+              shadow-[0_0_28px_rgba(84,91,255,0.45)] hover:shadow-[0_0_40px_rgba(84,91,255,0.65)]
+              transition-all duration-300 hover:-translate-y-1"
+          >
+            <span className="relative z-10 flex items-center gap-2 text-sm md:text-base">
+              More About SmartShield
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:translate-x-1 transition-transform">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </span>
+            <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          </a>
+        </motion.div>
+
       </div>
     </section>
   );

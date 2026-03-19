@@ -1,221 +1,369 @@
-import React from 'react';
-import PrivacyBackButton from '@components/ui/PrivacyBackButton';
+"use client";
 
-export const metadata = {
-  title: 'Privacy Policy - SmartShield',
-  description: 'SmartShield Privacy Policy - Learn how we protect your data',
-};
+import Footer from "../components/layout/Footer";
+import Navbar from "../components/layout/Navbar";
 
 export default function PrivacyPolicy() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black">
-      <div className="max-w-4xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
-        <div className="prose prose-invert max-w-none">
-          <PrivacyBackButton />
-          <h1 className="text-4xl font-bold mb-2 text-white">Privacy Policy</h1>
-          <p className="text-gray-400 mb-8">Last updated: February 23, 2026</p>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4">1. Introduction</h2>
-            <p className="text-gray-300 mb-4">
-              SmartShield (&quot;we,&quot; &quot;our,&quot; &quot;us,&quot; or &quot;Company&quot;) is committed to protecting your privacy. 
-              This Privacy Policy explains how we collect, use, disclose, and safeguard your information 
-              when you use our browser extension and related services.
+    <div className="min-h-screen bg-page flex flex-col">
+      <Navbar />
+      
+      <main className="flex-1 w-full">
+        {/* Hero Section */}
+        <section className="relative pt-20 pb-12 px-6 overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none" style={{
+            backgroundImage: "radial-gradient(circle at 20% 50%, rgba(84,91,255,0.1) 0%, transparent 50%)",
+          }} />
+          
+          <div className="max-w-4xl mx-auto relative z-10">
+            <h1 className="text-4xl md:text-5xl font-bold text-heading mb-4">
+              Privacy Policy
+            </h1>
+            <p className="text-lg text-faded">
+              SmartShield: AI-Powered Phishing Website Detector
             </p>
-            <p className="text-gray-300">
-              Please read this Privacy Policy carefully. If you do not agree with our policies and practices, 
-              please do not use our services.
+            <p className="text-sm text-faded/70 mt-2">
+              Effective Date: March 2026
             </p>
-          </section>
+          </div>
+        </section>
 
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4">2. Information We Collect</h2>
+        {/* Content Section */}
+        <section className="py-12 px-6">
+          <div className="max-w-4xl mx-auto space-y-12">
             
-            <h3 className="text-xl font-semibold text-white mt-6 mb-3">2.1 Domain Information</h3>
-            <p className="text-gray-300 mb-4">
-              When you visit a website, SmartShield collects the domain name (e.g., example.com) to perform 
-              security analysis. We do NOT collect:
-            </p>
-            <ul className="list-disc list-inside text-gray-300 mb-4 space-y-2">
-              <li>URLs with query parameters or personal data in the path</li>
-              <li>Page content or form data</li>
-              <li>Cookies or session tokens</li>
-              <li>Login credentials or sensitive personal information</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold text-white mt-6 mb-3">2.2 WHOIS & DNS Data</h3>
-            <p className="text-gray-300 mb-4">
-              To assess domain security, we retrieve publicly available WHOIS and DNS records through 
-              third-party APIs. This data includes:
-            </p>
-            <ul className="list-disc list-inside text-gray-300 mb-4 space-y-2">
-              <li>Domain registrant information (publicly available)</li>
-              <li>DNS records (MX, A, NS, TXT records)</li>
-              <li>SSL/TLS certificate details</li>
-              <li>Domain registration and expiration dates</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold text-white mt-6 mb-3">2.3 Threat Analysis & Cache</h3>
-            <p className="text-gray-300 mb-4">
-              SmartShield stores threat assessment results locally on your device for 24 hours to improve performance 
-              and reduce API calls. This data is:
-            </p>
-            <ul className="list-disc list-inside text-gray-300 space-y-2">
-              <li>Stored exclusively on your local machine</li>
-              <li>Never transmitted to our servers</li>
-              <li>Automatically deleted after 24 hours</li>
-              <li>Not used for profiling or tracking</li>
-            </ul>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4">3. How We Use Your Information</h2>
-            <p className="text-gray-300 mb-4">We use collected information solely for:</p>
-            <ul className="list-disc list-inside text-gray-300 space-y-2">
-              <li>Detecting phishing attempts and malicious domains</li>
-              <li>Providing real-time security threat alerts</li>
-              <li>Displaying threat analysis and remediation recommendations</li>
-              <li>Improving detection algorithms (anonymized data only)</li>
-              <li>Preventing fraud and malicious activity</li>
-            </ul>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4">4. Data Sharing & Third Parties</h2>
-            
-            <h3 className="text-xl font-semibold text-white mt-6 mb-3">4.1 Third-Party APIs</h3>
-            <p className="text-gray-300 mb-4">
-              SmartShield uses the following third-party services to perform security analysis:
-            </p>
-            <ul className="list-disc list-inside text-gray-300 mb-4 space-y-2">
-              <li><strong>WHOIS Lookup Services:</strong> To retrieve domain registration information</li>
-              <li><strong>DNS Query Services:</strong> To analyze domain DNS records</li>
-              <li><strong>SSL Certificate Checkers:</strong> To verify SSL/TLS configuration</li>
-              <li><strong>Threat Databases:</strong> To cross-reference known malicious domains</li>
-            </ul>
-            <p className="text-gray-300 mb-4">
-              These services receive only the domain name for analysis. Please review their privacy policies 
-              for their data handling practices.
-            </p>
-
-            <h3 className="text-xl font-semibold text-white mt-6 mb-3">4.2 We Do NOT Share Data With</h3>
-            <ul className="list-disc list-inside text-gray-300 space-y-2">
-              <li>Marketing or advertising partners</li>
-              <li>Data brokers or analytics companies</li>
-              <li>Social media platforms</li>
-              <li>Any third party for commercial purposes</li>
-            </ul>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4">5. Your Privacy Rights</h2>
-            
-            <h3 className="text-xl font-semibold text-white mt-6 mb-3">5.1 Data Control</h3>
-            <p className="text-gray-300 mb-4">
-              Since SmartShield stores all threat data locally on your device:
-            </p>
-            <ul className="list-disc list-inside text-gray-300 mb-4 space-y-2">
-              <li>You have complete control over your data</li>
-              <li>You can clear cache anytime through extension settings</li>
-              <li>Uninstalling the extension deletes all stored data</li>
-              <li>No central server stores your browsing history</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold text-white mt-6 mb-3">5.2 Opt-Out</h3>
-            <p className="text-gray-300 mb-4">
-              You can disable SmartShield at any time by:
-            </p>
-            <ul className="list-disc list-inside text-gray-300 space-y-2">
-              <li>Toggling &quot;Safe Mode&quot; off in the extension popup</li>
-              <li>Removing the extension from Chrome</li>
-              <li>Using the Chrome settings to disable the extension</li>
-            </ul>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4">6. Data Security</h2>
-            <p className="text-gray-300 mb-4">
-              SmartShield implements industry-standard security practices:
-            </p>
-            <ul className="list-disc list-inside text-gray-300 space-y-2">
-              <li>All API communications use HTTPS encryption</li>
-              <li>Local data is encrypted in Chrome storage</li>
-              <li>We do not log or store domain lists on central servers</li>
-              <li>Regular security audits and updates</li>
-            </ul>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4">7. Children&apos;s Privacy</h2>
-            <p className="text-gray-300">
-              SmartShield is not intended for children under 13. We do not knowingly collect personal 
-              information from children. If we learn that we have collected personal information from a 
-              child under 13, we will delete such information promptly.
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4">8. Policy Updates</h2>
-            <p className="text-gray-300 mb-4">
-              We may update this Privacy Policy from time to time to reflect changes in our practices, 
-              technology, legal requirements, or other factors. We will notify you of any material changes 
-              by updating the &quot;Last Updated&quot; date at the top of this page.
-            </p>
-            <p className="text-gray-300">
-              Continued use of SmartShield after changes are posted means you accept the updated Privacy Policy.
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4">9. Contact Us</h2>
-            <p className="text-gray-300 mb-4">
-              If you have questions about this Privacy Policy or SmartShield&apos;s privacy practices, please contact us at:
-            </p>
-            <div className="bg-gray-800 p-4 rounded-lg">
-              <p className="text-gray-300">
-                <strong>Email:</strong> privacy@smartshield.example.com
+            {/* Section 1 */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold text-heading">1. Introduction</h2>
+              <p className="text-faded leading-relaxed">
+                SmartShield is an AI-powered phishing website detection system that utilizes ensemble machine learning and Explainable Artificial Intelligence (XAI) to classify websites as phishing or legitimate. This Privacy Policy outlines how data is processed, protected, and handled in compliance with the Data Privacy Act of 2012 (Republic Act No. 10173).
               </p>
-              <p className="text-gray-300 mt-2">
-                <strong>Website:</strong> smartshield.example.com
+              <p className="text-faded leading-relaxed">
+                The system is designed with a privacy-first approach, ensuring transparency, accountability, and minimal data handling.
               </p>
             </div>
-          </section>
 
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4">10. California Privacy Rights (CCPA)</h2>
-            <p className="text-gray-300 mb-4">
-              Under California law, you have the right to:
-            </p>
-            <ul className="list-disc list-inside text-gray-300 space-y-2">
-              <li>Know what personal data is collected</li>
-              <li>Delete your personal data</li>
-              <li>Opt-out of data sales (we don&apos;t sell data)</li>
-              <li>Non-discrimination for exercising your rights</li>
-            </ul>
-            <p className="text-gray-300 mt-4">
-              Since SmartShield collects data locally and does not maintain a centralized user database, 
-              these rights are automatically enforced through local storage control.
-            </p>
-          </section>
+            {/* Section 2 */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold text-heading">2. Scope of This Policy</h2>
+              <p className="text-faded leading-relaxed mb-4">
+                This policy applies to all users interacting with SmartShield through:
+              </p>
+              <ul className="space-y-2 ml-6">
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Web Application Interface</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Browser Extension Deployment</span>
+                </li>
+              </ul>
+              <p className="text-faded leading-relaxed mt-4">
+                These platforms provide real-time phishing detection and analysis.
+              </p>
+            </div>
 
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4">11. GDPR Compliance (EU Users)</h2>
-            <p className="text-gray-300 mb-4">
-              SmartShield complies with the General Data Protection Regulation (GDPR):
-            </p>
-            <ul className="list-disc list-inside text-gray-300 space-y-2">
-              <li>Data is processed with legitimate security interests</li>
-              <li>No personal data is stored long-term</li>
-              <li>You can withdraw consent anytime by disabling the extension</li>
-              <li>Data retention is minimal (24-hour cache only)</li>
-            </ul>
-          </section>
+            {/* Section 3 */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold text-heading">3. Nature of Data Processed</h2>
+              
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-heading">3.1 Input Data</h3>
+                <p className="text-faded leading-relaxed mb-3">
+                  SmartShield processes only technical and non-personal data, including:
+                </p>
+                <ul className="space-y-2 ml-6">
+                  <li className="text-faded flex items-start gap-3">
+                    <span className="text-[#545BFF] font-bold mt-1">•</span>
+                    <span>Website URLs submitted or visited</span>
+                  </li>
+                  <li className="text-faded flex items-start gap-3">
+                    <span className="text-[#545BFF] font-bold mt-1">•</span>
+                    <span>Domain-based features (e.g., domain age, reputation)</span>
+                  </li>
+                  <li className="text-faded flex items-start gap-3">
+                    <span className="text-[#545BFF] font-bold mt-1">•</span>
+                    <span>Web-based features (e.g., HTML structure, URL patterns)</span>
+                  </li>
+                  <li className="text-faded flex items-start gap-3">
+                    <span className="text-[#545BFF] font-bold mt-1">•</span>
+                    <span>Third-party reputation indicators</span>
+                  </li>
+                </ul>
+                <p className="text-faded leading-relaxed mt-3">
+                  These inputs are required for machine learning classification.
+                </p>
+              </div>
 
-          <p className="text-gray-400 text-sm mt-12">
-            © 2026 SmartShield. All rights reserved.
-          </p>
-        </div>
-      </div>
-    </main>
+              <div className="space-y-3 pt-6">
+                <h3 className="text-lg font-semibold text-heading">3.2 No Personal Data Collection</h3>
+                <p className="text-faded leading-relaxed mb-3">
+                  SmartShield strictly adheres to the following principles:
+                </p>
+                <ul className="space-y-2 ml-6">
+                  <li className="text-faded flex items-start gap-3">
+                    <span className="text-[#545BFF] font-bold mt-1">•</span>
+                    <span>No collection of personally identifiable information (PII)</span>
+                  </li>
+                  <li className="text-faded flex items-start gap-3">
+                    <span className="text-[#545BFF] font-bold mt-1">•</span>
+                    <span>No storage of browsing history</span>
+                  </li>
+                  <li className="text-faded flex items-start gap-3">
+                    <span className="text-[#545BFF] font-bold mt-1">•</span>
+                    <span>No tracking of user identity or behavior</span>
+                  </li>
+                </ul>
+                <p className="text-faded leading-relaxed mt-3">
+                  The system operates independently of user identity.
+                </p>
+              </div>
+            </div>
+
+            {/* Section 4 */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold text-heading">4. Purpose of Data Processing</h2>
+              <p className="text-faded leading-relaxed mb-3">
+                All processed data is used exclusively for:
+              </p>
+              <ul className="space-y-2 ml-6">
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Real-time phishing detection</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Classification of websites (phishing vs legitimate)</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Generation of explainable outputs using XAI (LIME, SHAP)</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Improving system accuracy and reliability</span>
+                </li>
+              </ul>
+              <p className="text-faded leading-relaxed mt-4">
+                No data is used for marketing, profiling, or surveillance.
+              </p>
+            </div>
+
+            {/* Section 5 */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold text-heading">5. Data Processing Mechanism</h2>
+              <p className="text-faded leading-relaxed mb-3">
+                SmartShield follows a local and secure processing model:
+              </p>
+              <ul className="space-y-2 ml-6">
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Data is analyzed through a stacking ensemble model (CNN, SVM, XGBoost + Logistic Regression meta-learner)</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Feature extraction and classification occur in real-time</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>XAI techniques provide transparent explanations</span>
+                </li>
+              </ul>
+              <p className="text-faded leading-relaxed mt-4 mb-3">
+                All processing is aligned with ethical AI principles such as:
+              </p>
+              <ul className="space-y-2 ml-6">
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Transparency</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Fairness</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Accountability</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Section 6 */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold text-heading">6. Data Storage and Retention</h2>
+              <p className="text-faded leading-relaxed mb-3">
+                SmartShield enforces a zero-retention policy:
+              </p>
+              <ul className="space-y-2 ml-6">
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>No persistent storage of user-submitted data</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>All inputs are processed temporarily</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Data is discarded immediately after classification</span>
+                </li>
+              </ul>
+              <p className="text-faded leading-relaxed mt-4">
+                This ensures compliance with data minimization and proportionality principles.
+              </p>
+            </div>
+
+            {/* Section 7 */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold text-heading">7. Data Security Measures</h2>
+              <p className="text-faded leading-relaxed mb-3">
+                To protect system integrity and user privacy:
+              </p>
+              <ul className="space-y-2 ml-6">
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Processing is performed locally whenever possible</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>No centralized database of user data is maintained</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Secure handling of input URLs</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Protection against unauthorized access</span>
+                </li>
+              </ul>
+              <p className="text-faded leading-relaxed mt-4">
+                These safeguards align with national cybersecurity and privacy standards.
+              </p>
+            </div>
+
+            {/* Section 8 */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold text-heading">8. Third-Party Integration</h2>
+              <p className="text-faded leading-relaxed mb-3">
+                SmartShield may utilize:
+              </p>
+              <ul className="space-y-2 ml-6">
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Public datasets</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Threat intelligence sources</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Domain reputation services</span>
+                </li>
+              </ul>
+              <p className="text-faded leading-relaxed mt-4 mb-3">
+                However:
+              </p>
+              <ul className="space-y-2 ml-6">
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>No personal user data is transmitted</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Only technical website-related data may be processed</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Section 9 */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold text-heading">9. User Rights</h2>
+              <p className="text-faded leading-relaxed mb-3">
+                Users are entitled to:
+              </p>
+              <ul className="space-y-2 ml-6">
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Use the system anonymously</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Be informed about how their data is processed</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Discontinue use at any time</span>
+                </li>
+              </ul>
+              <p className="text-faded leading-relaxed mt-4">
+                Since no personal data is stored, rights such as data access or deletion are inherently preserved.
+              </p>
+            </div>
+
+            {/* Section 10 */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold text-heading">10. Compliance with Law</h2>
+              <p className="text-faded leading-relaxed mb-3">
+                SmartShield complies with:
+              </p>
+              <ul className="space-y-2 ml-6">
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Data Privacy Act of 2012 (RA 10173)</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Principles of lawful, fair, and transparent processing</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Philippine National Cybersecurity Plan alignment</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Section 11 */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold text-heading">11. Policy Updates</h2>
+              <p className="text-faded leading-relaxed mb-3">
+                This Privacy Policy may be updated to reflect:
+              </p>
+              <ul className="space-y-2 ml-6">
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>System improvements</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>Legal or regulatory changes</span>
+                </li>
+                <li className="text-faded flex items-start gap-3">
+                  <span className="text-[#545BFF] font-bold mt-1">•</span>
+                  <span>New features or integrations</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Section 12 */}
+            <div className="space-y-4 pb-8">
+              <h2 className="text-2xl font-bold text-heading">12. Contact Information</h2>
+              <p className="text-faded leading-relaxed">
+                For inquiries regarding privacy and data protection:
+              </p>
+              <p className="text-lg">
+                📧 <a href="mailto:smartshield.project@gmail.com" className="text-[#545BFF] hover:text-[#545BFF]/80 transition-colors font-medium">
+                  smartshield.project@gmail.com
+                </a>
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <Footer />
+    </div>
   );
 }

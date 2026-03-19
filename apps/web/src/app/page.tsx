@@ -46,11 +46,17 @@ export default function Home() {
 
       <HowItWorks />
 
-      <DeferredScanTab />
+      <div id="scan">
+        <DeferredScanTab />
+      </div>
       <AIBanner />
 
-      <AboutTab />
-      <FAQTab />
+      <div id="about">
+        <AboutTab />
+      </div>
+      <div id="faq">
+        <FAQTab />
+      </div>
 
       <CTASection />
       <Footer />
