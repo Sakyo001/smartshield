@@ -6,6 +6,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   const WEB_APP_ORIGIN = "https://smartshield.it.com";
+  const WHOIS_API_URL = "https://web-production-568aa.up.railway.app";
   // ─────────────────────────────────────────
   // ONBOARDING
   // ─────────────────────────────────────────
@@ -128,6 +129,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const communityViewFeedbackBtn = document.getElementById(
       "community-view-feedback-btn",
     );
+    const communitySubmitCommentBtn = document.getElementById(
+      "community-submit-comment-btn",
+    );
+    const communityCommentInput = document.getElementById(
+      "community-comment-input",
+    );
+    const communityCommentStatus = document.getElementById(
+      "community-comment-status",
+    );
+    const communityFlagButtons = document.querySelectorAll(".community-flag-btn");
+    const communityFeedbackResults = document.getElementById(
+      "community-feedback-results",
+    );
+    const communityFeedbackState = document.getElementById(
+      "community-feedback-state",
+    );
+    const communityFeedbackList = document.getElementById(
+      "community-feedback-list",
+    );
 
     // ── Theme toggle ──
     const themeToggleBtn = document.getElementById("theme-toggle");
@@ -177,6 +197,203 @@ document.addEventListener("DOMContentLoaded", () => {
     let lastScanResult = null;
     let detailsFetched = false;
     let dismissedDomains = new Set();
+    let selectedCommentFlag = "neutral";
+    let submittingComment = false;
+
+    function setCommentStatus(message, kind = "info") {
+      if (!communityCommentStatus) return;
+      communityCommentStatus.classList.remove("hidden", "info", "success", "error");
+      communityCommentStatus.classList.add(kind);
+      communityCommentStatus.textContent = message;
+    }
+
+    function clearCommentStatus() {
+      if (!communityCommentStatus) return;
+      communityCommentStatus.textContent = "";
+      communityCommentStatus.classList.add("hidden");
+      communityCommentStatus.classList.remove("info", "success", "error");
+    }
+
+    function setSubmittingCommentState(isSubmitting) {
+      submittingComment = isSubmitting;
+      if (communitySubmitCommentBtn) {
+        communitySubmitCommentBtn.disabled = isSubmitting;
+        communitySubmitCommentBtn.textContent = isSubmitting
+          ? "Submitting..."
+          : "Submit Comment";
+      }
+    }
+
+    function setActiveCommentFlag(flag) {
+      selectedCommentFlag = flag;
+      communityFlagButtons.forEach((button) => {
+        const matches = button?.dataset?.flag === flag;
+        button.classList.toggle("active", matches);
+        button.setAttribute("aria-pressed", matches ? "true" : "false");
+      });
+    }
+
+    function formatFeedbackDate(value) {
+      if (!value) return "";
+      try {
+        return new Date(value).toLocaleString();
+      } catch {
+        return "";
+      }
+    }
+
+    function renderFeedbackState(message) {
+      if (!communityFeedbackResults || !communityFeedbackState || !communityFeedbackList) {
+        return;
+      }
+      communityFeedbackResults.classList.remove("hidden");
+      communityFeedbackState.classList.remove("hidden");
+      communityFeedbackState.textContent = message;
+      communityFeedbackList.classList.add("hidden");
+      communityFeedbackList.innerHTML = "";
+    }
+
+    function renderFeedbackList(reports) {
+      if (!communityFeedbackResults || !communityFeedbackState || !communityFeedbackList) {
+        return;
+      }
+
+      communityFeedbackResults.classList.remove("hidden");
+
+      if (!Array.isArray(reports) || reports.length === 0) {
+        communityFeedbackState.classList.remove("hidden");
+        communityFeedbackState.textContent = "No community feedback yet for this site.";
+        communityFeedbackList.classList.add("hidden");
+        communityFeedbackList.innerHTML = "";
+        return;
+      }
+
+      communityFeedbackState.classList.add("hidden");
+      communityFeedbackList.classList.remove("hidden");
+      communityFeedbackList.innerHTML = reports
+        .map((report) => {
+          const rawFlag =
+            typeof report?.flag === "string" ? report.flag.toLowerCase() : "neutral";
+          const flag = ["phishing", "legitimate", "neutral"].includes(rawFlag)
+            ? rawFlag
+            : "neutral";
+          const label =
+            flag === "phishing"
+              ? "Dangerous"
+              : flag === "legitimate"
+                ? "Safe"
+                : "Neutral";
+          const description =
+            typeof report?.description === "string" && report.description.trim().length > 0
+              ? report.description.trim()
+              : "No description provided.";
+          const createdAt = formatFeedbackDate(report?.created_at);
+
+          return `
+            <article class="community-feedback-item">
+              <div class="community-feedback-item-head">
+                <span class="community-feedback-flag ${flag}">${label}</span>
+                <span class="community-feedback-date">${createdAt}</span>
+              </div>
+              <p class="community-feedback-desc">${description
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")}</p>
+            </article>
+          `;
+        })
+        .join("");
+    }
+
+    async function fetchCommunityFeedback() {
+      if (!currentRootDomain) {
+        renderFeedbackState("Run a scan first to load feedback for the current site.");
+        return;
+      }
+
+      renderFeedbackState("Loading community feedback...");
+
+      try {
+        const endpoint = `${WHOIS_API_URL}/api/reports?url=${encodeURIComponent(currentRootDomain)}`;
+        const response = await fetch(endpoint, {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          renderFeedbackState("Unable to load feedback right now.");
+          return;
+        }
+
+        const data = await response.json().catch(() => ({}));
+        renderFeedbackList(data?.reports || []);
+      } catch {
+        renderFeedbackState("Unable to load feedback right now.");
+      }
+    }
+
+    async function submitCommunityComment() {
+      if (submittingComment) return;
+
+      if (!currentRootDomain) {
+        setCommentStatus("Run a scan before submitting feedback.", "error");
+        return;
+      }
+
+      const description =
+        typeof communityCommentInput?.value === "string"
+          ? communityCommentInput.value.trim()
+          : "";
+
+      if (description.length < 3) {
+        setCommentStatus("Comment must be at least 3 characters.", "error");
+        return;
+      }
+
+      if (description.length > 1000) {
+        setCommentStatus("Comment is too long.", "error");
+        return;
+      }
+
+      setSubmittingCommentState(true);
+      clearCommentStatus();
+
+      try {
+        const response = await fetch(`${WEB_APP_ORIGIN}/api/community`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            url: currentRootDomain,
+            description,
+            flag: selectedCommentFlag,
+          }),
+        });
+
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          setCommentStatus(
+            body?.error ||
+              (response.status === 401
+                ? "Please log in before commenting."
+                : "Unable to submit comment right now."),
+            "error",
+          );
+          return;
+        }
+
+        if (communityCommentInput) {
+          communityCommentInput.value = "";
+        }
+        setActiveCommentFlag("neutral");
+        setCommentStatus("Comment submitted successfully.", "success");
+        await fetchCommunityFeedback();
+      } catch {
+        setCommentStatus("Unable to submit comment right now.", "error");
+      } finally {
+        setSubmittingCommentState(false);
+      }
+    }
 
     // Load previously dismissed domains from session storage
     chrome.storage.session.get(["dismissedAlerts"], (r) => {
@@ -206,18 +423,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ── Community Helpers ──
     async function checkCommunityAuth() {
-      // First, try to ask content script for auth status
+      // First, ask content scripts for auth status across SmartShield tabs.
+      // Users may sign in on a different tab than the currently active one.
       try {
         const tabs = await chrome.tabs.query({
-          active: true,
-          currentWindow: true,
+          url: ["*://smartshield.it.com/*", "*://www.smartshield.it.com/*"],
         });
-        if (tabs[0]) {
-          const response = await chrome.tabs
-            .sendMessage(tabs[0].id, { action: "checkAuth" })
+
+        for (const tab of tabs) {
+          if (!tab?.id) continue;
+
+          await chrome.tabs
+            .sendMessage(tab.id, { action: "requestSessionSync" })
             .catch(() => null);
-          if (response && response.authenticated !== undefined) {
-            return response.authenticated;
+
+          const response = await chrome.tabs
+            .sendMessage(tab.id, { action: "checkAuth" })
+            .catch(() => null);
+
+          if (response?.authenticated === true) {
+            return true;
           }
         }
       } catch {
@@ -270,6 +495,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (isAuthenticated) {
         communityLoginPrompt.classList.add("hidden");
         communityContentSection.classList.remove("hidden");
+        clearCommentStatus();
+        await fetchCommunityFeedback();
       } else {
         communityLoginPrompt.classList.remove("hidden");
         communityContentSection.classList.add("hidden");
@@ -361,15 +588,44 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (communityViewFeedbackBtn) {
-      communityViewFeedbackBtn.addEventListener("click", () => {
-        if (!currentRootDomain) return;
-        // Open dashboard with current URL as parameter
-        const encodedUrl = encodeURIComponent(currentRootDomain);
-        chrome.tabs.create({
-          url: `${WEB_APP_ORIGIN}/dashboard?url=${encodedUrl}`,
-        });
+      communityViewFeedbackBtn.addEventListener("click", async () => {
+        await fetchCommunityFeedback();
       });
     }
+
+    if (communitySubmitCommentBtn) {
+      communitySubmitCommentBtn.addEventListener("click", async () => {
+        await submitCommunityComment();
+      });
+    }
+
+    if (communityCommentInput) {
+      communityCommentInput.addEventListener("input", () => {
+        if (communityCommentStatus && !communityCommentStatus.classList.contains("hidden")) {
+          clearCommentStatus();
+        }
+      });
+
+      communityCommentInput.addEventListener("keydown", async (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+          event.preventDefault();
+          await submitCommunityComment();
+        }
+      });
+    }
+
+    communityFlagButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const nextFlag = button?.dataset?.flag;
+        if (
+          nextFlag === "legitimate" ||
+          nextFlag === "neutral" ||
+          nextFlag === "phishing"
+        ) {
+          setActiveCommentFlag(nextFlag);
+        }
+      });
+    });
 
     // ── Spotlight effect for warning banner ──
     if (scanWarnings) {

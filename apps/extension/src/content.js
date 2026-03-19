@@ -166,6 +166,25 @@
     } catch {
       // localStorage access error
     }
+
+    // Cookie fallback for SSR/cookie-based Supabase sessions.
+    // Supabase cookie keys usually contain "sb-" and "auth-token".
+    try {
+      const cookieBlob = typeof document.cookie === "string" ? document.cookie : "";
+      if (cookieBlob.length > 0) {
+        const hasSupabaseAuthCookie = cookieBlob
+          .split(";")
+          .map((c) => c.trim().toLowerCase())
+          .some((c) => c.startsWith("sb-") && c.includes("auth-token"));
+
+        if (hasSupabaseAuthCookie) {
+          return true;
+        }
+      }
+    } catch {
+      // cookie access error
+    }
+
     return false;
   }
 
