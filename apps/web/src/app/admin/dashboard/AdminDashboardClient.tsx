@@ -25,6 +25,154 @@ function getDayKey(value: string | Date): string {
   return date.toLocaleDateString("en-CA");
 }
 
+function IconAlertTriangle({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+      <path d="M12 9v4" />
+      <path d="M12 17h.01" />
+    </svg>
+  );
+}
+
+function IconExclamationCircle({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4" />
+      <path d="M12 8h.01" />
+    </svg>
+  );
+}
+
+function IconCheckCircle({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9 12l2 2 4-4" />
+    </svg>
+  );
+}
+
+function IconCopy({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M20 9h-9a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2z" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+
+function IconExternalLink({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M14 3h7v7" />
+      <path d="M10 14L21 3" />
+      <path d="M21 14v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h7" />
+    </svg>
+  );
+}
+
+function IconCalendar({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M8 2v4M16 2v4" />
+      <path d="M3 10h18" />
+      <path d="M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+    </svg>
+  );
+}
+
+function IconMessageCircle({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
+function IconInfoCircle({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4" />
+      <path d="M12 8h.01" />
+    </svg>
+  );
+}
+
 function createLast7DaysTemplate(): Record<string, number> {
   const template: Record<string, number> = {};
   for (let i = 6; i >= 0; i--) {
@@ -115,6 +263,7 @@ export default function AdminDashboardClient() {
   );
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState<any>(null);
+  const [copiedUrl, setCopiedUrl] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
   const [communityReportCounts, setCommunityReportCounts] = useState<
     Record<string, number>
@@ -588,7 +737,7 @@ export default function AdminDashboardClient() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && selectedFeedback) {
-        setSelectedFeedback(null);
+        closeFeedbackModal();
       }
     };
 
@@ -763,13 +912,44 @@ export default function AdminDashboardClient() {
 
   const handleFeedbackClick = async (item: any) => {
     setSelectedFeedback(item);
+    setCopiedUrl(false);
     await fetchComments(item.url);
+  };
+
+  const closeFeedbackModal = () => {
+    setSelectedFeedback(null);
+    setCopiedUrl(false);
+  };
+
+  const copySelectedUrl = async () => {
+    const url = selectedFeedback?.url;
+    if (typeof url !== "string" || url.length === 0) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedUrl(true);
+      window.setTimeout(() => setCopiedUrl(false), 1200);
+    } catch {
+      try {
+        const el = document.createElement("textarea");
+        el.value = url;
+        el.style.position = "fixed";
+        el.style.opacity = "0";
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand("copy");
+        document.body.removeChild(el);
+        setCopiedUrl(true);
+        window.setTimeout(() => setCopiedUrl(false), 1200);
+      } catch {
+        // ignore
+      }
+    }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-heading">Loading...</div>
       </div>
     );
   }
@@ -792,7 +972,7 @@ export default function AdminDashboardClient() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-950 to-black text-gray-100">
+    <div className="min-h-screen">
       <style>{`
         @keyframes slideIn {
           from {
@@ -853,7 +1033,7 @@ export default function AdminDashboardClient() {
           left: 0;
           width: 0;
           height: 2px;
-          background: #6B73FF;
+          background: #545BFF;
           transition: width 0.3s ease;
         }
 
@@ -871,83 +1051,198 @@ export default function AdminDashboardClient() {
         }
       `}</style>
 
-      {/* Navbar with Aurora */}
+      {/* Navbar with Enhanced Design */}
       <nav
-        className={`fixed top-0 left-0 z-50 w-full transition-all duration-300 ${
+        className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 ${
           isScrolled
-            ? "bg-gray-900/90 dark:bg-gray-950/90 backdrop-blur-md shadow-sm border-b border-gray-800/50"
-            : "bg-transparent border-transparent"
+            ? "py-2 bg-page/85 backdrop-blur-xl border-b border-[#545BFF]/15 shadow-[0_1px_32px_rgba(84,91,255,0.08)]"
+            : "py-4 bg-transparent border-b border-transparent"
         }`}
       >
+        {/* Gradient glow line at bottom edge — visible on scroll */}
         <div
-          className={`absolute inset-0 h-full w-full pointer-events-none transition-opacity duration-300 ${
-            isScrolled ? "opacity-20" : "opacity-0"
+          className={`absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#545BFF]/55 to-transparent pointer-events-none transition-opacity duration-500 ${
+            isScrolled ? "opacity-100" : "opacity-0"
           }`}
+        />
+
+        {/* Subtle cyber dot grid — techy feel when scrolled */}
+        <div
+          className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ${isScrolled ? "opacity-100" : "opacity-0"}`}
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, rgba(84,91,255,0.09) 1px, transparent 1px)",
+            backgroundSize: "24px 24px",
+          }}
+        />
+
+        {/* HUD corner brackets — top-left & top-right */}
+        <div
+          className={`pointer-events-none absolute top-0 left-0 transition-opacity duration-500 ${isScrolled ? "opacity-100" : "opacity-0"}`}
         >
-          <Aurora
-            colorStops={["#6B73FF", "#b19eef", "#6B73FF"]}
-            amplitude={1.2}
-            blend={0.5}
-          />
+          <span className="block w-4 h-4 border-t-2 border-l-2 border-[#545BFF]/40 rounded-tl-sm" />
+        </div>
+        <div
+          className={`pointer-events-none absolute top-0 right-0 transition-opacity duration-500 ${isScrolled ? "opacity-100" : "opacity-0"}`}
+        >
+          <span className="block w-4 h-4 border-t-2 border-r-2 border-[#545BFF]/40 rounded-tr-sm" />
         </div>
 
-        <div className="w-full max-w-7xl mx-auto px-6 py-4 flex items-center justify-between relative z-10">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 flex items-center justify-between relative">
           {/* Logo Section */}
           <Link
             href="/"
-            className="flex items-center gap-3 group transition-opacity hover:opacity-80"
+            className="flex items-center gap-2.5 sm:gap-3 group"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           >
-            <div className="relative w-20 h-20 shrink-0">
+            {/* Image area — all hover FX scoped here */}
+            <div
+              className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 shrink-0
+                transition-all duration-500
+                group-hover:scale-105
+                group-hover:drop-shadow-[0_0_22px_rgba(84,91,255,0.65)]"
+            >
+              {/* Always-rotating dashed orbit ring — fades in on hover */}
+              <motion.div
+                className="absolute inset-[-7px] rounded-full border border-dashed
+                  border-[#545BFF]/0 group-hover:border-[#545BFF]/40
+                  transition-colors duration-300 pointer-events-none"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+              />
+
+              {/* Solid pulse ring — expands on hover */}
+              <div
+                className="absolute inset-[-2px] rounded-full border border-[#545BFF]/0
+                group-hover:border-[#545BFF]/20 scale-95 group-hover:scale-110
+                transition-all duration-500 pointer-events-none"
+              />
+
+              {/* HUD corner brackets — slide outward on hover */}
+              <span
+                className="absolute -top-1.5 -left-1.5 w-3 h-3 border-t-2 border-l-2
+                border-[#545BFF]/0 group-hover:border-[#545BFF]/90
+                group-hover:-translate-x-1 group-hover:-translate-y-1
+                transition-all duration-300 pointer-events-none"
+              />
+              <span
+                className="absolute -top-1.5 -right-1.5 w-3 h-3 border-t-2 border-r-2
+                border-[#545BFF]/0 group-hover:border-[#545BFF]/90
+                group-hover:translate-x-1 group-hover:-translate-y-1
+                transition-all duration-300 pointer-events-none"
+              />
+              <span
+                className="absolute -bottom-1.5 -left-1.5 w-3 h-3 border-b-2 border-l-2
+                border-[#545BFF]/0 group-hover:border-[#545BFF]/90
+                group-hover:-translate-x-1 group-hover:translate-y-1
+                transition-all duration-300 pointer-events-none"
+              />
+              <span
+                className="absolute -bottom-1.5 -right-1.5 w-3 h-3 border-b-2 border-r-2
+                border-[#545BFF]/0 group-hover:border-[#545BFF]/90
+                group-hover:translate-x-1 group-hover:translate-y-1
+                transition-all duration-300 pointer-events-none"
+              />
+
+              {/* Logo image */}
               <Image
                 src="/images/light-logo.png"
                 alt="SmartShield Logo"
                 fill
-                sizes="80px"
+                sizes="64px"
                 className="object-contain"
                 priority
               />
+
+              {/* Status dot — Protection Active */}
+              <span className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center w-3.5 h-3.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-50" />
+                <span
+                  className="relative inline-flex rounded-full w-2.5 h-2.5 bg-emerald-400 border-[1.5px] border-page"
+                  style={{ boxShadow: "0 0 6px rgba(52,211,153,0.9)" }}
+                />
+              </span>
             </div>
-            <div className="flex flex-col justify-center">
-              <span className="text-white text-lg md:text-xl font-bold tracking-wide">
+
+            {/* Text block — subtle rightward nudge on hover */}
+            <div className="flex flex-col justify-center transition-transform duration-300 group-hover:translate-x-0.5">
+              <span className="text-heading text-lg sm:text-xl md:text-2xl tracking-wide font-bold leading-none">
                 SmartShield
               </span>
-              <span className="font-medium text-[#6B73FF] tracking-wide text-[10px] md:text-xs">
-                Admin Dashboard
+              <span className="font-medium text-[#545BFF] dark:text-[#a89de8] tracking-wide text-[9px] sm:text-[10px] md:text-xs mt-0.5 transition-colors duration-300 group-hover:text-[#6B73FF] dark:group-hover:text-[#b19eef]">
+                Admin Panel
               </span>
             </div>
           </Link>
 
           {/* Center Navigation Links */}
-          <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-8">
-            {["Dashboard", "URLs", "Settings"].map((item) => (
-              <Link
-                key={item}
-                href={
-                  item === "URLs"
-                    ? "/admin/urls"
-                    : item === "Settings"
-                      ? "/admin/settings"
-                      : `#${item.toLowerCase()}`
-                }
-                className="nav-link text-sm font-medium text-gray-400 hover:text-white transition-colors"
-              >
-                {item}
-              </Link>
-            ))}
+          <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-0.5">
+            {["Dashboard", "URLs", "Settings"].map((item) => {
+              const href =
+                item === "URLs"
+                  ? "/admin/urls"
+                  : item === "Settings"
+                    ? "/admin/settings"
+                    : "/admin/dashboard";
+              const isActive = false; // Will be determined by pathname in real implementation
+              return (
+                <Link
+                  key={item}
+                  href={href}
+                  className={`relative px-5 py-2 text-sm rounded-full transition-colors duration-300 font-medium ${
+                    isActive
+                      ? "text-[#545BFF] dark:text-[#7c83ff] font-semibold"
+                      : "text-faded hover:text-[#545BFF]"
+                  }`}
+                >
+                  {/* Sliding glass pill — morphs between active items */}
+                  {isActive && (
+                    <motion.span
+                      layoutId="nav-bg-pill"
+                      className="absolute inset-0 rounded-full bg-[#545BFF]/10"
+                      transition={{
+                        type: "spring",
+                        stiffness: 380,
+                        damping: 32,
+                      }}
+                    />
+                  )}
+                  <span className="relative z-10">{item}</span>
+                  {/* Glowing pip dot under active link */}
+                  {isActive && (
+                    <motion.span
+                      layoutId="nav-active-pip"
+                      className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#545BFF]"
+                      style={{ boxShadow: "0 0 7px rgba(84,91,255,0.9)" }}
+                    />
+                  )}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Right Section */}
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-gray-400 hidden sm:block">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="text-sm text-copy/65 hidden sm:block">
               Admin:{" "}
-              <span className="text-white font-medium">{adminEmail}</span>
+              <span className="text-heading font-medium">{adminEmail}</span>
             </div>
             <button
               onClick={handleLogout}
               disabled={logoutLoading}
-              className="logout-button px-4 py-2 text-sm font-medium text-gray-300 hover:text-white bg-gradient-to-r from-[#6B73FF]/20 to-[#5A62E8]/20 hover:from-[#6B73FF]/30 hover:to-[#5A62E8]/30 border border-[#6B73FF]/30 rounded-lg transition-all duration-300"
+              className={`group relative inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-full overflow-hidden
+                bg-gradient-to-r from-[#545BFF] to-[#6B73FF] hover:from-[#4349dd] hover:to-[#545BFF]
+                text-white
+                shadow-[0_0_20px_rgba(84,91,255,0.38)] hover:shadow-[0_0_36px_rgba(84,91,255,0.62)]
+                hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              {logoutLoading ? "Logging out..." : "Logout"}
+              <span className="relative z-10 flex items-center gap-2">
+                {logoutLoading ? "Logging out..." : "Logout"}
+              </span>
+              {/* Shimmer sweep */}
+              {!logoutLoading && (
+                <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+              )}
             </button>
           </div>
         </div>
@@ -1239,6 +1534,10 @@ export default function AdminDashboardClient() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 bg-black/70 backdrop-blur-lg flex items-center justify-center z-50 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Feedback and risk report"
+            onClick={closeFeedbackModal}
           >
             <motion.div
               initial={{ opacity: 0, y: 32, scale: 0.96 }}
@@ -1251,6 +1550,7 @@ export default function AdminDashboardClient() {
                 damping: 22,
               }}
               className="bg-black border border-gray-800 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden relative"
+              onClick={(e) => e.stopPropagation()}
             >
               {/* Animated ambient background glows */}
               <motion.div
@@ -1271,7 +1571,7 @@ export default function AdminDashboardClient() {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 }}
-                className="bg-black border-b border-gray-800 px-8 py-7 flex items-center justify-between relative z-10"
+                className="bg-black/90 backdrop-blur border-b border-gray-800 px-6 sm:px-8 py-5 sm:py-7 flex items-center justify-between relative z-20 sticky top-0"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
@@ -1298,7 +1598,7 @@ export default function AdminDashboardClient() {
                   </p>
                 </div>
                 <motion.button
-                  onClick={() => setSelectedFeedback(null)}
+                  onClick={closeFeedbackModal}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
                   className="ml-4 p-2 hover:bg-gray-900 rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-300 border border-gray-800 hover:border-gray-700"
@@ -1324,7 +1624,7 @@ export default function AdminDashboardClient() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.4, delay: 0.15 }}
-                className="max-h-[70vh] overflow-y-auto scroll-smooth"
+                className="max-h-[75vh] overflow-y-auto scroll-smooth"
               >
                 <div className="p-8 space-y-6 relative z-10">
                   {/* Primary Info Section - URL Card (Hero) */}
@@ -1360,7 +1660,7 @@ export default function AdminDashboardClient() {
                         </motion.div>
                         <div className="flex-1 min-w-0">
                           <label className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 block flex items-center gap-2">
-                            📍 Scanned URL
+                            Scanned URL
                           </label>
                           <motion.p
                             initial={{ opacity: 0 }}
@@ -1370,6 +1670,29 @@ export default function AdminDashboardClient() {
                           >
                             {selectedFeedback.url}
                           </motion.p>
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={copySelectedUrl}
+                              className="group relative inline-flex items-center gap-2 px-4 h-9 rounded-full overflow-hidden bg-gradient-to-r from-[#545BFF]/18 to-[#4349CD]/18 hover:from-[#545BFF]/28 hover:to-[#4349CD]/28 border border-[#545BFF]/28 hover:border-[#545BFF]/45 text-xs font-medium text-heading transition-all duration-300"
+                            >
+                              <span className="relative z-10 flex items-center gap-2">
+                                <IconCopy className="w-4 h-4" />
+                                {copiedUrl ? "Copied" : "Copy URL"}
+                              </span>
+                            </button>
+                            <a
+                              href={selectedFeedback.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="group relative inline-flex items-center gap-2 px-4 h-9 rounded-full overflow-hidden border border-[#545BFF]/30 bg-gradient-to-r from-[#545BFF]/15 to-[#6B73FF]/15 hover:from-[#545BFF]/25 hover:to-[#6B73FF]/25 hover:border-[#545BFF]/50 text-xs font-medium text-heading transition-all duration-300"
+                            >
+                              <span className="relative z-10 flex items-center gap-2">
+                                <IconExternalLink className="w-4 h-4" />
+                                Open
+                              </span>
+                            </a>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1380,81 +1703,107 @@ export default function AdminDashboardClient() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.25 }}
-                    className="grid grid-cols-3 gap-3"
+                    className="grid grid-cols-1 sm:grid-cols-3 gap-3"
                   >
                     {/* Scan Date Card */}
                     <motion.div
                       whileHover={{ y: -2 }}
-                      className="bg-gray-900 rounded-xl p-5 border border-gray-800 hover:border-gray-700 transition-all shadow-lg"
+                      className="bg-gray-900/70 rounded-xl p-5 border border-gray-800/80 hover:border-gray-700 transition-all shadow-lg"
                     >
-                      <label className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3 block">
-                        📅 Date
-                      </label>
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.35 }}
-                        className="text-white font-semibold text-base leading-tight"
-                      >
-                        {selectedFeedback.date.split(",")[0]}
-                      </motion.p>
-                      <p className="text-gray-500 text-sm mt-2">
-                        {selectedFeedback.date.split(",").slice(1).join(",")}
-                      </p>
+                      <div className="flex flex-col items-center">
+                        <label className="text-xs font-semibold text-gray-400 tracking-wide mb-3 inline-flex items-center gap-2">
+                          <IconCalendar className="w-5 h-5" />
+                          Date
+                        </label>
+                        <motion.p
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.35 }}
+                          className="text-white font-semibold text-base leading-tight text-center"
+                        >
+                          {selectedFeedback.date.split(",")[0]}
+                        </motion.p>
+                        <p className="text-gray-500 text-sm mt-2 text-center">
+                          {selectedFeedback.date.split(",").slice(1).join(",")}
+                        </p>
+                      </div>
                     </motion.div>
 
                     {/* Risk Level Card */}
                     <motion.div
                       whileHover={{ y: -2 }}
-                      className="bg-gray-900 rounded-xl p-5 border border-gray-800 hover:border-gray-700 transition-all shadow-lg"
+                      className="bg-gray-900/70 rounded-xl p-5 border border-gray-800/80 hover:border-gray-700 transition-all shadow-lg"
                     >
-                      <label className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3 block">
-                        ⚠️ Risk Level
-                      </label>
-                      <motion.div
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{
-                          delay: 0.35,
-                          type: "spring",
-                          stiffness: 150,
-                        }}
-                      >
-                        <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold text-white bg-gray-800/60">
+                      <div className="flex flex-col items-center">
+                        <label className="text-xs font-semibold text-gray-400 tracking-wide mb-3 inline-flex items-center gap-2">
+                          {selectedFeedback.risk === "Phishing" ? (
+                            <IconAlertTriangle className="w-5 h-5" />
+                          ) : selectedFeedback.risk === "Suspicious" ? (
+                            <IconExclamationCircle className="w-5 h-5" />
+                          ) : (
+                            <IconCheckCircle className="w-5 h-5" />
+                          )}
+                          Risk Level
+                        </label>
+                        <motion.div
+                          initial={{ scale: 0.9, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{
+                            delay: 0.35,
+                            type: "spring",
+                            stiffness: 150,
+                          }}
+                          className="flex justify-center"
+                        >
                           <span
-                            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                            className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold text-white border ${
                               selectedFeedback.risk === "Phishing"
-                                ? "bg-red-500"
+                                ? "bg-red-950/40 border-red-500/30"
                                 : selectedFeedback.risk === "Suspicious"
-                                  ? "bg-yellow-500"
-                                  : "bg-emerald-500"
+                                  ? "bg-yellow-950/35 border-yellow-500/30"
+                                  : "bg-green-950/30 border-green-500/25"
                             }`}
-                            style={{ animation: "indicatorPulse 2s infinite" }}
-                          ></span>
-                          {selectedFeedback.risk}
-                        </span>
-                      </motion.div>
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                                selectedFeedback.risk === "Phishing"
+                                  ? "bg-red-500"
+                                  : selectedFeedback.risk === "Suspicious"
+                                    ? "bg-yellow-500"
+                                    : "bg-emerald-500"
+                              }`}
+                              style={{
+                                animation: "indicatorPulse 2s infinite",
+                              }}
+                            ></span>
+                            {selectedFeedback.risk}
+                          </span>
+                        </motion.div>
+                      </div>
                     </motion.div>
 
                     {/* Community Reports Card */}
                     <motion.div
                       whileHover={{ y: -2 }}
-                      className="bg-gray-900 rounded-xl p-5 border border-gray-800 hover:border-gray-700 transition-all shadow-lg"
+                      className="bg-gray-900/70 rounded-xl p-5 border border-gray-800/80 hover:border-gray-700 transition-all shadow-lg"
                     >
-                      <label className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3 block">
-                        💬 Reports
-                      </label>
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.35 }}
-                        className="text-white font-bold text-2xl"
-                      >
-                        {comments.length || "—"}
-                      </motion.p>
-                      <p className="text-gray-500 text-sm mt-2">
-                        community flags
-                      </p>
+                      <div className="flex flex-col items-center">
+                        <label className="text-xs font-semibold text-gray-400 tracking-wide mb-3 inline-flex items-center gap-2">
+                          <IconMessageCircle className="w-5 h-5" />
+                          Reports
+                        </label>
+                        <motion.p
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.35 }}
+                          className="text-white font-bold text-2xl text-center tabular-nums"
+                        >
+                          {comments.length || "—"}
+                        </motion.p>
+                        <p className="text-gray-500 text-sm mt-2 text-center">
+                          community flags
+                        </p>
+                      </div>
                     </motion.div>
                   </motion.div>
 
@@ -1545,11 +1894,20 @@ export default function AdminDashboardClient() {
                                   : "text-gray-500"
                             }`}
                           >
-                            {selectedFeedback.confidence >= 70
-                              ? "🔴 HIGH RISK - Phishing indicators detected"
-                              : selectedFeedback.confidence >= 40
-                                ? "🟡 MEDIUM RISK - Suspicious activity"
-                                : "🟢 LOW RISK - Appears legitimate"}
+                            <span className="inline-flex items-center gap-2">
+                              {selectedFeedback.confidence >= 70 ? (
+                                <IconAlertTriangle className="w-5 h-5" />
+                              ) : selectedFeedback.confidence >= 40 ? (
+                                <IconExclamationCircle className="w-5 h-5" />
+                              ) : (
+                                <IconCheckCircle className="w-5 h-5" />
+                              )}
+                              {selectedFeedback.confidence >= 70
+                                ? "HIGH RISK - Phishing indicators detected"
+                                : selectedFeedback.confidence >= 40
+                                  ? "MEDIUM RISK - Suspicious activity"
+                                  : "LOW RISK - Appears legitimate"}
+                            </span>
                           </p>
                         </div>
                       </div>
@@ -1610,38 +1968,311 @@ export default function AdminDashboardClient() {
                     </div>
                   )}
 
-                  {/* Risk Indicators */}
+                  {/* Risk Indicators*/}
                   {selectedFeedback.prediction?.risk_adjustment?.indicators
                     ?.length > 0 && (
                     <div className="space-y-3">
-                      <div className="flex items-center gap-3 px-0.5">
-                        <motion.div
-                          animate={{ scale: [1, 1.1, 1] }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                          className="w-1.5 h-5 bg-white rounded-full flex-shrink-0"
-                          style={{ animation: "indicatorPulse 2s infinite" }}
-                        ></motion.div>
-                        <h3 className="text-white font-semibold text-base">
-                          Risk Indicators
-                        </h3>
-                      </div>
-                      <div className="bg-gray-900/40 rounded-xl p-5 border border-gray-800 space-y-3 shadow-lg">
-                        {selectedFeedback.prediction.risk_adjustment.indicators.map(
-                          (flag: string, i: number) => (
-                            <div
-                              key={i}
-                              className="flex items-start gap-3 text-sm p-4 bg-black rounded-lg border border-gray-800 hover:border-gray-700 transition-colors"
-                            >
-                              <span className="flex-shrink-0 font-bold text-xl text-red-400 leading-none">
-                                ⚠️
-                              </span>
-                              <span className="text-gray-400 leading-relaxed font-medium">
-                                {flag.replace(/[🚨⚠️]/g, "").trim()}
-                              </span>
+                      {(() => {
+                        const highConfidence =
+                          selectedFeedback.confidence >= 70;
+
+                        const indicatorStrings = (
+                          selectedFeedback.prediction?.risk_adjustment
+                            ?.indicators ?? []
+                        ).filter(
+                          (v: unknown) => typeof v === "string",
+                        ) as string[];
+
+                        const emojiStripRegex = /[\u{1F6A8}\u{26A0}\u{2705}]/gu; // 🚨 ⚠️ ✅
+
+                        type IndicatorSeverity =
+                          | "critical"
+                          | "warning"
+                          | "safe"
+                          | "info";
+
+                        const parseIndicator = (
+                          raw: string,
+                        ): {
+                          severity: IndicatorSeverity;
+                          text: string;
+                        } => {
+                          const hasCritical =
+                            raw.includes("CRITICAL") || raw.includes("🚨");
+
+                          const hasSafe =
+                            raw.includes("✅") ||
+                            /\b(legitimate|safe|benign|trusted|positive)\b/i.test(
+                              raw,
+                            );
+
+                          const hasWarning =
+                            raw.includes("⚠️") ||
+                            /\b(suspicious|untrusted|unusual|warning|risk factor|very new|new domain|whois|tld)\b/i.test(
+                              raw,
+                            );
+
+                          const severity: IndicatorSeverity = hasCritical
+                            ? "critical"
+                            : hasSafe
+                              ? "safe"
+                              : hasWarning
+                                ? "warning"
+                                : "warning";
+
+                          const cleaned = raw
+                            .replace(emojiStripRegex, "")
+                            .replace(/\bCRITICAL\b/gi, "")
+                            .replace(/^\s*[•]\s*/g, "")
+                            .replace(/^\s*[-–—]\s*/g, "")
+                            .replace(/\s+/g, " ")
+                            .trim();
+
+                          return { severity, text: cleaned };
+                        };
+
+                        const parsedIndicators =
+                          indicatorStrings.map(parseIndicator);
+
+                        const hasCritical = parsedIndicators.some(
+                          (i) => i.severity === "critical",
+                        );
+                        const hasWarning = parsedIndicators.some(
+                          (i) => i.severity === "warning",
+                        );
+
+                        const scanSeverityFromRisk: IndicatorSeverity =
+                          selectedFeedback.risk === "Phishing"
+                            ? "critical"
+                            : selectedFeedback.risk === "Legitimate"
+                              ? "safe"
+                              : "warning";
+
+                        // Keep UI consistent with the scan result (verdict).
+                        // Indicators may contain "warning-ish" text even on safe verdicts.
+                        const viewSeverity: IndicatorSeverity =
+                          scanSeverityFromRisk;
+
+                        const severityContainerConfig: Record<
+                          Exclude<IndicatorSeverity, "info">,
+                          {
+                            bgClass: string;
+                            borderClass: string;
+                            textColor: string;
+                            accentColor: string;
+                            title: string;
+                          }
+                        > = {
+                          critical: {
+                            bgClass: "bg-red-950/20",
+                            borderClass: "border-red-500/30",
+                            textColor: "text-red-200",
+                            accentColor: "text-red-400",
+                            title: "Phishing Indicators Detected",
+                          },
+                          warning: {
+                            bgClass: "bg-yellow-950/20",
+                            borderClass: "border-yellow-500/30",
+                            textColor: "text-yellow-100",
+                            accentColor: "text-yellow-400",
+                            title: "Suspicious Factors Identified",
+                          },
+                          safe: {
+                            bgClass: "bg-green-950/20",
+                            borderClass: "border-green-500/30",
+                            textColor: "text-green-100",
+                            accentColor: "text-green-400",
+                            title: "Safety Indicators Confirmed",
+                          },
+                        };
+
+                        const severityItemConfig: Record<
+                          IndicatorSeverity,
+                          {
+                            itemBgClass: string;
+                            itemBorderClass: string;
+                            textColor: string;
+                            accentColor: string;
+                          }
+                        > = {
+                          critical: {
+                            itemBgClass: "bg-red-950/30",
+                            itemBorderClass: "border-red-500/30",
+                            textColor: "text-red-200",
+                            accentColor: "text-red-400",
+                          },
+                          warning: {
+                            itemBgClass: "bg-yellow-950/30",
+                            itemBorderClass: "border-yellow-500/30",
+                            textColor: "text-yellow-100",
+                            accentColor: "text-yellow-400",
+                          },
+                          safe: {
+                            itemBgClass: "bg-green-950/30",
+                            itemBorderClass: "border-green-500/30",
+                            textColor: "text-green-100",
+                            accentColor: "text-green-400",
+                          },
+                          info: {
+                            itemBgClass: "bg-gray-900/30",
+                            itemBorderClass: "border-gray-700/50",
+                            textColor: "text-gray-200",
+                            accentColor: "text-gray-300",
+                          },
+                        };
+
+                        const containerConfig =
+                          severityContainerConfig[viewSeverity];
+
+                        const scanResultTitle =
+                          selectedFeedback.risk === "Phishing"
+                            ? "Phishing Indicators Detected"
+                            : selectedFeedback.risk === "Legitimate"
+                              ? "Safe Indicators Confirmed"
+                              : "Suspicious Factors Identified";
+
+                        const ViewHeaderIcon =
+                          viewSeverity === "critical"
+                            ? IconAlertTriangle
+                            : viewSeverity === "warning"
+                              ? IconExclamationCircle
+                              : IconCheckCircle;
+
+                        const viewHeaderDotClass =
+                          viewSeverity === "critical"
+                            ? "bg-red-500"
+                            : viewSeverity === "warning"
+                              ? "bg-yellow-500"
+                              : "bg-green-500";
+
+                        return (
+                          <>
+                            <div className="flex items-center gap-3 px-0.5">
+                              <motion.div
+                                animate={{ scale: [1, 1.1, 1] }}
+                                transition={{
+                                  duration: highConfidence ? 1.5 : 2,
+                                  repeat: Infinity,
+                                }}
+                                className={`w-1.5 h-5 rounded-full flex-shrink-0 ${
+                                  viewHeaderDotClass
+                                }`}
+                                style={{
+                                  animation: "indicatorPulse 2s infinite",
+                                }}
+                              ></motion.div>
+                              <h3
+                                className={`font-semibold text-base ${containerConfig.textColor}`}
+                              >
+                                <ViewHeaderIcon className="w-5 h-5 inline-block -mt-0.5 mr-1" />
+                                {scanResultTitle}
+                              </h3>
                             </div>
-                          ),
-                        )}
-                      </div>
+
+                            <div
+                              className={`${containerConfig.bgClass} rounded-xl p-5 border ${containerConfig.borderClass} space-y-3 shadow-lg`}
+                            >
+                              {parsedIndicators.map((indicator, i) => {
+                                const effectiveSeverity: IndicatorSeverity =
+                                  // Keep row styling consistent with the scan verdict:
+                                  // - Safe verdict: allow safe + neutral info only
+                                  // - Suspicious verdict: allow safe + warning only (no critical/red)
+                                  // - Phishing verdict: everything is critical/red
+                                  scanSeverityFromRisk === "critical"
+                                    ? "critical"
+                                    : scanSeverityFromRisk === "warning"
+                                      ? indicator.severity === "safe"
+                                        ? "safe"
+                                        : "warning"
+                                      : indicator.severity === "safe"
+                                        ? "safe"
+                                        : "info";
+
+                                const itemConfig =
+                                  severityItemConfig[effectiveSeverity];
+                                const ItemIcon =
+                                  effectiveSeverity === "critical"
+                                    ? IconAlertTriangle
+                                    : effectiveSeverity === "warning"
+                                      ? IconExclamationCircle
+                                      : effectiveSeverity === "info"
+                                        ? IconInfoCircle
+                                        : IconCheckCircle;
+
+                                return (
+                                  <motion.div
+                                    key={`${effectiveSeverity}-${i}`}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{
+                                      delay: i * 0.05,
+                                      duration: 0.3,
+                                    }}
+                                    className={`flex items-start gap-3 text-sm p-4 ${itemConfig.itemBgClass} rounded-lg border ${itemConfig.itemBorderClass} transition-all group hover:border-opacity-75`}
+                                  >
+                                    <span
+                                      className={`flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform ${itemConfig.accentColor}`}
+                                    >
+                                      <ItemIcon className="w-6 h-6" />
+                                    </span>
+                                    <span
+                                      className={`leading-relaxed font-medium ${itemConfig.textColor}`}
+                                    >
+                                      {indicator.text}
+                                    </span>
+                                  </motion.div>
+                                );
+                              })}
+
+                              {/* Summary Footer */}
+                              <div
+                                className={`mt-4 pt-4 border-t ${containerConfig.borderClass} flex items-start gap-3`}
+                              >
+                                <div className="text-xs space-y-1.5 flex-1">
+                                  {viewSeverity === "critical" && (
+                                    <>
+                                      <p className="text-red-300 font-semibold inline-flex items-center gap-2">
+                                        <IconAlertTriangle className="w-5 h-5" />
+                                        This URL exhibits phishing
+                                        characteristics
+                                      </p>
+                                      <p className={`text-red-200/70`}>
+                                        Multiple security indicators suggest
+                                        this is a malicious site designed to
+                                        deceive users.
+                                      </p>
+                                    </>
+                                  )}
+                                  {viewSeverity === "warning" && (
+                                    <>
+                                      <p className="text-yellow-300 font-semibold inline-flex items-center gap-2">
+                                        <IconExclamationCircle className="w-5 h-5" />
+                                        This URL has suspicious characteristics
+                                      </p>
+                                      <p className={`text-yellow-200/70`}>
+                                        Some security factors are concerning,
+                                        but additional verification recommended.
+                                      </p>
+                                    </>
+                                  )}
+                                  {viewSeverity === "safe" && (
+                                    <>
+                                      <p className="text-green-300 font-semibold inline-flex items-center gap-2">
+                                        <IconCheckCircle className="w-5 h-5" />
+                                        This URL appears to be safe
+                                      </p>
+                                      <p className={`text-green-200/70`}>
+                                        Security checks completed successfully.
+                                        No major threats detected.
+                                      </p>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   )}
 

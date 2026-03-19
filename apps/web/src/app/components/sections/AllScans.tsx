@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { createClient } from "@lib/supabase";
-import { motion, useInView, AnimatePresence } from "motion/react";
+import { AnimatePresence, motion, useInView } from "motion/react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 
 interface Scan {
   id: string;
@@ -18,13 +18,15 @@ const getStatusColor = (decision: string) => {
   switch (decision) {
     case "safe":
       return {
-        badge: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+        badge:
+          "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
         dot: "bg-emerald-500",
         label: "Safe",
       };
     case "warning":
       return {
-        badge: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+        badge:
+          "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
         dot: "bg-amber-500",
         label: "Suspicious",
       };
@@ -36,7 +38,8 @@ const getStatusColor = (decision: string) => {
       };
     default:
       return {
-        badge: "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20",
+        badge:
+          "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20",
         dot: "bg-gray-500",
         label: "Unknown",
       };
@@ -73,7 +76,9 @@ export default function AllScans() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"all" | "safe" | "warning" | "dangerous">("all");
+  const [filterStatus, setFilterStatus] = useState<
+    "all" | "safe" | "warning" | "dangerous"
+  >("all");
   const sectionRef = useRef<HTMLElement>(null);
   const inView = useInView(sectionRef, { once: true, margin: "-80px" });
 
@@ -111,8 +116,11 @@ export default function AllScans() {
 
   // Filter scans
   const filteredScans = scans.filter((scan) => {
-    const matchesSearch = scan.url.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === "all" || scan.decision === filterStatus;
+    const matchesSearch = scan.url
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesFilter =
+      filterStatus === "all" || scan.decision === filterStatus;
     return matchesSearch && matchesFilter;
   });
 
@@ -142,7 +150,10 @@ export default function AllScans() {
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse space-y-4">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-16 bg-[#545BFF]/10 rounded-xl border border-[#545BFF]/15" />
+              <div
+                key={i}
+                className="h-16 bg-[#545BFF]/10 rounded-xl border border-[#545BFF]/15"
+              />
             ))}
           </div>
         </div>
@@ -151,9 +162,15 @@ export default function AllScans() {
   }
 
   return (
-    <section ref={sectionRef} className="py-8 md:py-10 px-4 sm:px-6 bg-page relative overflow-hidden min-h-screen">
+    <section
+      ref={sectionRef}
+      className="py-8 md:py-10 px-4 sm:px-6 bg-page relative overflow-hidden min-h-screen"
+    >
       {/* Ambient glows */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
+      <div
+        className="absolute inset-0 pointer-events-none overflow-hidden"
+        aria-hidden
+      >
         <div className="absolute top-[5%] left-[8%] w-72 h-72 md:w-96 md:h-96 rounded-full bg-[#545BFF]/8 blur-[100px]" />
         <div className="absolute bottom-[5%] right-[8%] w-72 h-72 md:w-96 md:h-96 rounded-full bg-[#b19eef]/6 blur-[100px]" />
       </div>
@@ -163,7 +180,7 @@ export default function AllScans() {
         <div className="mb-3">
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-2 text-faded hover:text-heading transition-colors mb-3 text-sm font-medium"
+            className="group relative inline-flex items-center gap-2 px-5 h-10 rounded-full overflow-hidden border border-[#545BFF]/30 bg-gradient-to-r from-[#545BFF]/15 to-[#6B73FF]/15 hover:from-[#545BFF]/25 hover:to-[#6B73FF]/25 text-heading text-sm font-semibold hover:border-[#545BFF]/50 hover:-translate-y-0.5 transition-all duration-300 mb-3"
           >
             <svg
               width="16"
@@ -174,6 +191,7 @@ export default function AllScans() {
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
+              className="group-hover:-translate-x-0.5 transition-transform duration-200"
             >
               <line x1="19" y1="12" x2="5" y2="12" />
               <polyline points="12 19 5 12 12 5" />
@@ -210,13 +228,14 @@ export default function AllScans() {
                 transition={{ duration: 0.5, delay: 0.3 }}
                 className="text-copy/80 text-sm md:text-base max-w-xl leading-relaxed"
               >
-                View and manage all your URL scans. {filteredScans.length} total {filteredScans.length === 1 ? "scan" : "scans"}
+                View and manage all your URL scans. {filteredScans.length} total{" "}
+                {filteredScans.length === 1 ? "scan" : "scans"}
                 {searchTerm && ` matching "${searchTerm}"`}
               </motion.p>
             </div>
 
             {/* Status filters */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
@@ -225,7 +244,9 @@ export default function AllScans() {
               {["all", "safe", "warning", "dangerous"].map((status) => (
                 <button
                   key={status}
-                  onClick={() => handleFilterChange(status as typeof filterStatus)}
+                  onClick={() =>
+                    handleFilterChange(status as typeof filterStatus)
+                  }
                   className={`px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all duration-300 border ${
                     filterStatus === status
                       ? "bg-gradient-to-r from-[#545BFF] to-[#6B73FF] text-white border-transparent shadow-md shadow-[#545BFF]/25"
@@ -306,8 +327,12 @@ export default function AllScans() {
                         {/* Left: URL and status */}
                         <div className="flex-1 min-w-0 w-full">
                           <div className="flex items-center gap-3 mb-2">
-                            <span className={`inline-block w-2 h-2 rounded-full ${colors.dot}`} />
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${colors.badge}`}>
+                            <span
+                              className={`inline-block w-2 h-2 rounded-full ${colors.dot}`}
+                            />
+                            <span
+                              className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${colors.badge}`}
+                            >
                               {colors.label}
                             </span>
                           </div>
@@ -360,7 +385,8 @@ export default function AllScans() {
                 className="flex items-center justify-between gap-4 pt-6 border-t border-[#545BFF]/10"
               >
                 <div className="text-sm text-faded">
-                  Page {currentPage} of {totalPages} ({filteredScans.length} total)
+                  Page {currentPage} of {totalPages} ({filteredScans.length}{" "}
+                  total)
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -374,7 +400,9 @@ export default function AllScans() {
                     ← Previous
                   </button>
                   <button
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
                     disabled={currentPage === totalPages}
                     className="px-4 py-2 rounded-lg border border-[#545BFF]/20
                       text-copy hover:text-heading hover:border-[#545BFF]/40 hover:bg-[#545BFF]/6
@@ -411,7 +439,9 @@ export default function AllScans() {
                 <line x1="8" y1="12" x2="16" y2="12" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-heading mb-2">No scans found</h3>
+            <h3 className="text-lg font-semibold text-heading mb-2">
+              No scans found
+            </h3>
             <p className="text-faded text-sm max-w-xs mx-auto">
               {searchTerm
                 ? `No scans match "${searchTerm}"`
