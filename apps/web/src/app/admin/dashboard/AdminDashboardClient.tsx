@@ -5,7 +5,7 @@ import { createClient } from "@lib/supabase";
 import { motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 function normalizeDecision(
@@ -243,6 +243,7 @@ function buildUrlCandidates(rawUrl: string): string[] {
 export default function AdminDashboardClient() {
   const WHOIS_API_URL = process.env.NEXT_PUBLIC_WHOIS_API_URL;
   const router = useRouter();
+  const pathname = usePathname();
   const activeUserIdsRef = useRef<Set<string>>(new Set());
   const processedRealtimeScanIdsRef = useRef<Set<string>>(new Set());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -972,7 +973,7 @@ export default function AdminDashboardClient() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="dark min-h-screen bg-page text-heading">
       <style>{`
         @keyframes slideIn {
           from {
@@ -1055,7 +1056,7 @@ export default function AdminDashboardClient() {
       <nav
         className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 ${
           isScrolled
-            ? "py-2 bg-page/85 backdrop-blur-xl border-b border-[#545BFF]/15 shadow-[0_1px_32px_rgba(84,91,255,0.08)]"
+            ? "py-2 bg-gray-950/95 backdrop-blur-xl border-b border-[#545BFF]/25 shadow-[0_1px_32px_rgba(84,91,255,0.12)]"
             : "py-4 bg-transparent border-b border-transparent"
         }`}
       >
@@ -1071,7 +1072,7 @@ export default function AdminDashboardClient() {
           className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ${isScrolled ? "opacity-100" : "opacity-0"}`}
           style={{
             backgroundImage:
-              "radial-gradient(circle, rgba(84,91,255,0.09) 1px, transparent 1px)",
+              "radial-gradient(circle, rgba(84,91,255,0.05) 1px, transparent 1px)",
             backgroundSize: "24px 24px",
           }}
         />
@@ -1088,10 +1089,10 @@ export default function AdminDashboardClient() {
           <span className="block w-4 h-4 border-t-2 border-r-2 border-[#545BFF]/40 rounded-tr-sm" />
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 md:px-6 flex items-center justify-between relative">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 flex items-center justify-between relative z-10">
           {/* Logo Section */}
           <Link
-            href="/"
+            href="/admin/dashboard"
             className="flex items-center gap-2.5 sm:gap-3 group"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           >
@@ -1146,7 +1147,7 @@ export default function AdminDashboardClient() {
 
               {/* Logo image */}
               <Image
-                src="/images/light-logo.png"
+                src="/images/logo 1.png"
                 alt="SmartShield Logo"
                 fill
                 sizes="64px"
@@ -1169,7 +1170,7 @@ export default function AdminDashboardClient() {
               <span className="text-heading text-lg sm:text-xl md:text-2xl tracking-wide font-bold leading-none">
                 SmartShield
               </span>
-              <span className="font-medium text-[#545BFF] dark:text-[#a89de8] tracking-wide text-[9px] sm:text-[10px] md:text-xs mt-0.5 transition-colors duration-300 group-hover:text-[#6B73FF] dark:group-hover:text-[#b19eef]">
+              <span className="font-medium text-[#a89de8] dark:text-[#a89de8] tracking-wide text-[9px] sm:text-[10px] md:text-xs mt-0.5 transition-colors duration-300 group-hover:text-[#b19eef]">
                 Admin Panel
               </span>
             </div>
@@ -1184,7 +1185,7 @@ export default function AdminDashboardClient() {
                   : item === "Settings"
                     ? "/admin/settings"
                     : "/admin/dashboard";
-              const isActive = false; // Will be determined by pathname in real implementation
+              const isActive = pathname === href;
               return (
                 <Link
                   key={item}
@@ -1223,16 +1224,15 @@ export default function AdminDashboardClient() {
 
           {/* Right Section */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="text-sm text-copy/65 hidden sm:block">
-              Admin:{" "}
-              <span className="text-heading font-medium">{adminEmail}</span>
+            <div className="text-sm text-faded hidden sm:block">
+              Admin: <span className="text-copy font-medium">{adminEmail}</span>
             </div>
             <button
               onClick={handleLogout}
               disabled={logoutLoading}
               className={`group relative inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-full overflow-hidden
                 bg-gradient-to-r from-[#545BFF] to-[#6B73FF] hover:from-[#4349dd] hover:to-[#545BFF]
-                text-white
+                text-copy
                 shadow-[0_0_20px_rgba(84,91,255,0.38)] hover:shadow-[0_0_36px_rgba(84,91,255,0.62)]
                 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed`}
             >
@@ -1251,8 +1251,8 @@ export default function AdminDashboardClient() {
       {/* Main Content */}
       <div className="dashboard-content pt-24 max-w-7xl mx-auto px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Hello, Admin</h1>
-          <p className="text-gray-400">
+          <h1 className="text-4xl font-bold text-heading mb-2">Hello, Admin</h1>
+          <p className="text-faded">
             Welcome to the SmartShield admin dashboard
           </p>
         </div>
@@ -1264,7 +1264,7 @@ export default function AdminDashboardClient() {
               label: "Total Scans",
               value: totalScans.toLocaleString(),
               sub: "All security scans",
-              color: "text-white",
+              color: "text-copy",
               subColor: "text-blue-400",
             },
             {
@@ -1291,10 +1291,10 @@ export default function AdminDashboardClient() {
           ].map((stat, index) => (
             <div
               key={index}
-              className="stat-card bg-gradient-to-br from-gray-900/50 to-gray-800/30 border border-gray-800/50 hover:border-[#6B73FF]/50 rounded-lg p-6 backdrop-blur-sm"
+              className="stat-card bg-panel border border-divider hover:border-[#6B73FF]/40 rounded-lg p-6 backdrop-blur-sm"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <p className="text-gray-400 text-sm mb-2">{stat.label}</p>
+              <p className="text-faded text-sm mb-2">{stat.label}</p>
               <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
               <p className={`${stat.subColor} text-xs mt-2`}>{stat.sub}</p>
             </div>
@@ -1304,11 +1304,11 @@ export default function AdminDashboardClient() {
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Bar Chart */}
-          <div className="lg:col-span-2 bg-gradient-to-br from-gray-900/50 to-gray-800/30 border border-gray-800/50 rounded-lg p-6 backdrop-blur-sm hover:border-[#6B73FF]/30 transition-all duration-300">
-            <h2 className="text-white font-semibold mb-4">
+          <div className="lg:col-span-2 bg-panel border border-divider rounded-lg p-6 backdrop-blur-sm hover:border-[#6B73FF]/30 transition-all duration-300">
+            <h2 className="text-heading font-semibold mb-4">
               Scan Activity (Last 7 Days)
             </h2>
-            <div className="h-64 flex items-end justify-around gap-2 bg-gray-950/50 rounded p-4">
+            <div className="h-64 flex items-end justify-around gap-2 bg-inset rounded p-4">
               {(() => {
                 const dates = [];
                 for (let i = 6; i >= 0; i--) {
@@ -1338,11 +1338,11 @@ export default function AdminDashboardClient() {
                         style={{ height: `${heightPercent}px` || "20px" }}
                         title={`${dateStr}: ${scans} scans`}
                       >
-                        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-panel text-copy text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
                           {scans} scans
                         </div>
                       </div>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-faded">
                         {date.toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
@@ -1356,8 +1356,8 @@ export default function AdminDashboardClient() {
           </div>
 
           {/* Pie Chart */}
-          <div className="bg-gradient-to-br from-gray-900/50 to-gray-800/30 border border-gray-800/50 rounded-lg p-6 backdrop-blur-sm hover:border-[#6B73FF]/30 transition-all duration-300">
-            <h2 className="text-white font-semibold mb-4">Total Scan</h2>
+          <div className="bg-panel border border-divider rounded-lg p-6 backdrop-blur-sm hover:border-[#6B73FF]/30 transition-all duration-300">
+            <h2 className="text-heading font-semibold mb-4">Total Scan</h2>
             <div className="flex flex-col items-center gap-4">
               {(() => {
                 const total =
@@ -1400,12 +1400,12 @@ export default function AdminDashboardClient() {
                         background: `conic-gradient(#ef4444 0deg ${phishingPercent * 3.6}deg, #eab308 ${phishingPercent * 3.6}deg ${(phishingPercent + suspiciousPercent) * 3.6}deg, #10b981 ${(phishingPercent + suspiciousPercent) * 3.6}deg)`,
                       }}
                     >
-                      <div className="w-32 h-32 rounded-full bg-gray-900 flex items-center justify-center z-10">
+                      <div className="w-32 h-32 rounded-full bg-panel flex items-center justify-center z-10">
                         <div className="text-center leading-tight">
-                          <div className="text-[11px] uppercase tracking-wide text-gray-400">
+                          <div className="text-[11px] uppercase tracking-wide text-faded">
                             Total
                           </div>
-                          <div className="text-xl font-bold text-white">
+                          <div className="text-xl font-bold text-heading">
                             {total.toLocaleString()}
                           </div>
                         </div>
@@ -1415,7 +1415,7 @@ export default function AdminDashboardClient() {
                       {breakdown.map((item) => (
                         <div
                           key={item.label}
-                          className="flex items-center justify-between rounded-md border border-gray-800/70 bg-gray-900/40 px-3 py-2"
+                          className="flex items-center justify-between rounded-md border border-divider bg-panel/40 px-3 py-2"
                         >
                           <div className="flex items-center gap-2">
                             <span
@@ -1426,10 +1426,10 @@ export default function AdminDashboardClient() {
                             </span>
                           </div>
                           <div className="text-right">
-                            <div className="text-sm font-semibold text-white">
+                            <div className="text-sm font-semibold text-heading">
                               {item.percent.toFixed(1)}%
                             </div>
-                            <div className="text-[11px] text-gray-400">
+                            <div className="text-[11px] text-gray-600">
                               {item.count.toLocaleString()} scans
                             </div>
                           </div>
@@ -1444,10 +1444,12 @@ export default function AdminDashboardClient() {
         </div>
 
         {/* Recent Activity Table */}
-        <div className="bg-gradient-to-br from-gray-900/50 to-gray-800/30 border border-gray-800/50 rounded-lg overflow-hidden backdrop-blur-sm hover:border-[#6B73FF]/30 transition-all duration-300">
-          <div className="p-6 border-b border-gray-800/50 bg-gradient-to-r from-gray-900/50 to-transparent">
+        <div className="bg-panel border border-divider rounded-lg overflow-hidden backdrop-blur-sm hover:border-[#6B73FF]/30 transition-all duration-300">
+          <div className="p-6 border-b border-divider bg-panel/60">
             <div className="flex items-center justify-between">
-              <h2 className="text-white font-semibold">Recent Scan Activity</h2>
+              <h2 className="text-heading font-semibold">
+                Recent Scan Activity
+              </h2>
               <div className="flex items-center gap-3 text-xs">
                 <span
                   className={
@@ -1458,13 +1460,13 @@ export default function AdminDashboardClient() {
                 >
                   {realtimeConnected ? "Live" : "Offline"}
                 </span>
-                <span className="text-gray-400">Updates: {realtimeEvents}</span>
+                <span className="text-gray-500">Updates: {realtimeEvents}</span>
               </div>
             </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-800/30 border-b border-gray-700/50">
+              <thead className="bg-gray-900 border-b border-gray-800">
                 <tr>
                   {["Date", "URL", "Risk", "Feedback"].map((header) => (
                     <th
@@ -1476,21 +1478,21 @@ export default function AdminDashboardClient() {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800/30">
+              <tbody className="divide-y divide-gray-800">
                 {scanData.map((item, idx) => (
                   <tr
                     key={idx}
-                    className="hover:bg-gray-800/20 transition-colors duration-200 group"
+                    className="hover:bg-gray-800/30 transition-colors duration-200 group"
                   >
-                    <td className="px-6 py-4 text-sm text-gray-300 group-hover:text-white transition-colors">
+                    <td className="px-6 py-4 text-sm text-gray-400 group-hover:text-gray-100 transition-colors">
                       {item.date}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-300 truncate max-w-[200px] group-hover:text-white transition-colors">
+                    <td className="px-6 py-4 text-sm text-gray-400 truncate max-w-[200px] group-hover:text-gray-100 transition-colors">
                       {item.url}
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <span
-                        className={`px-3 py-1 rounded text-xs font-medium text-white ${getRiskColor(item.risk)} hover:scale-110 transition-transform`}
+                        className={`px-3 py-1 rounded text-xs font-medium text-gray-100 ${getRiskColor(item.risk)} hover:scale-110 transition-transform`}
                       >
                         {item.risk}
                       </span>
@@ -1513,7 +1515,7 @@ export default function AdminDashboardClient() {
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                         </svg>
                         {(item.reportCount ?? 0) > 0 && (
-                          <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-xs font-bold text-white bg-gradient-to-r from-[#6B73FF] to-[#5A62E8] rounded-full shadow-lg animate-pulse">
+                          <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-xs font-bold text-gray-100 bg-gradient-to-r from-[#6B73FF] to-[#5A62E8] rounded-full shadow-lg animate-pulse">
                             {item.reportCount}
                           </span>
                         )}
@@ -1533,7 +1535,7 @@ export default function AdminDashboardClient() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-lg flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/85 backdrop-blur-lg flex items-center justify-center z-50 p-4"
             role="dialog"
             aria-modal="true"
             aria-label="Feedback and risk report"
@@ -1549,7 +1551,7 @@ export default function AdminDashboardClient() {
                 stiffness: 120,
                 damping: 22,
               }}
-              className="bg-black border border-gray-800 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden relative"
+              className="bg-gray-950 border border-gray-800 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden relative"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Animated ambient background glows */}
@@ -1571,7 +1573,7 @@ export default function AdminDashboardClient() {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 }}
-                className="bg-black/90 backdrop-blur border-b border-gray-800 px-6 sm:px-8 py-5 sm:py-7 flex items-center justify-between relative z-20 sticky top-0"
+                className="bg-gray-950/90 backdrop-blur border-b border-gray-800 px-6 sm:px-8 py-5 sm:py-7 flex items-center justify-between relative z-20 sticky top-0"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
@@ -1582,18 +1584,18 @@ export default function AdminDashboardClient() {
                       className="relative w-10 h-10 flex-shrink-0"
                     >
                       <Image
-                        src="/images/light-logo.png"
+                        src="/images/logo 1.png"
                         alt="SmartShield"
                         fill
                         sizes="40px"
                         className="object-contain"
                       />
                     </motion.div>
-                    <h2 className="text-3xl font-bold text-white">
+                    <h2 className="text-3xl font-bold text-gray-100">
                       Security Assessment
                     </h2>
                   </div>
-                  <p className="text-base text-gray-400 font-medium">
+                  <p className="text-base text-gray-500 font-medium">
                     Detailed URL Analysis & Risk Report
                   </p>
                 </div>
@@ -1633,7 +1635,7 @@ export default function AdminDashboardClient() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.2 }}
                   >
-                    <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 hover:border-gray-700 transition-all shadow-lg">
+                    <div className="bg-gray-900/50 rounded-xl p-6 border border-gray-800 hover:border-gray-700 transition-all shadow-lg">
                       <div className="flex items-start gap-4 mb-4">
                         <motion.div
                           initial={{ scale: 0 }}
@@ -1652,21 +1654,21 @@ export default function AdminDashboardClient() {
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="2.5"
-                            className="text-white"
+                            className="text-gray-100"
                           >
                             <circle cx="12" cy="12" r="10"></circle>
                             <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
                           </svg>
                         </motion.div>
                         <div className="flex-1 min-w-0">
-                          <label className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 block flex items-center gap-2">
+                          <label className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-3 block flex items-center gap-2">
                             Scanned URL
                           </label>
                           <motion.p
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.35 }}
-                            className="text-white font-mono text-base break-all leading-relaxed bg-black rounded-lg px-4 py-3 border border-gray-800"
+                            className="text-gray-200 font-mono text-base break-all leading-relaxed bg-black/50 rounded-lg px-4 py-3 border border-gray-800"
                           >
                             {selectedFeedback.url}
                           </motion.p>
@@ -1674,7 +1676,7 @@ export default function AdminDashboardClient() {
                             <button
                               type="button"
                               onClick={copySelectedUrl}
-                              className="group relative inline-flex items-center gap-2 px-4 h-9 rounded-full overflow-hidden bg-gradient-to-r from-[#545BFF]/18 to-[#4349CD]/18 hover:from-[#545BFF]/28 hover:to-[#4349CD]/28 border border-[#545BFF]/28 hover:border-[#545BFF]/45 text-xs font-medium text-heading transition-all duration-300"
+                              className="group relative inline-flex items-center gap-2 px-4 h-9 rounded-full overflow-hidden bg-gradient-to-r from-[#545BFF]/20 to-[#4349CD]/20 hover:from-[#545BFF]/30 hover:to-[#4349CD]/30 border border-[#545BFF]/30 hover:border-[#545BFF]/50 text-xs font-medium text-gray-200 transition-all duration-300"
                             >
                               <span className="relative z-10 flex items-center gap-2">
                                 <IconCopy className="w-4 h-4" />
@@ -1685,7 +1687,7 @@ export default function AdminDashboardClient() {
                               href={selectedFeedback.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="group relative inline-flex items-center gap-2 px-4 h-9 rounded-full overflow-hidden border border-[#545BFF]/30 bg-gradient-to-r from-[#545BFF]/15 to-[#6B73FF]/15 hover:from-[#545BFF]/25 hover:to-[#6B73FF]/25 hover:border-[#545BFF]/50 text-xs font-medium text-heading transition-all duration-300"
+                              className="group relative inline-flex items-center gap-2 px-4 h-9 rounded-full overflow-hidden border border-[#545BFF]/30 bg-gradient-to-r from-[#545BFF]/15 to-[#6B73FF]/15 hover:from-[#545BFF]/25 hover:to-[#6B73FF]/25 hover:border-[#545BFF]/50 text-xs font-medium text-gray-200 transition-all duration-300"
                             >
                               <span className="relative z-10 flex items-center gap-2">
                                 <IconExternalLink className="w-4 h-4" />
@@ -1719,7 +1721,7 @@ export default function AdminDashboardClient() {
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: 0.35 }}
-                          className="text-white font-semibold text-base leading-tight text-center"
+                          className="text-gray-100 font-semibold text-base leading-tight text-center"
                         >
                           {selectedFeedback.date.split(",")[0]}
                         </motion.p>
@@ -1756,7 +1758,7 @@ export default function AdminDashboardClient() {
                           className="flex justify-center"
                         >
                           <span
-                            className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold text-white border ${
+                            className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold text-gray-100 border ${
                               selectedFeedback.risk === "Phishing"
                                 ? "bg-red-950/40 border-red-500/30"
                                 : selectedFeedback.risk === "Suspicious"
@@ -1796,11 +1798,11 @@ export default function AdminDashboardClient() {
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: 0.35 }}
-                          className="text-white font-bold text-2xl text-center tabular-nums"
+                          className="text-gray-100 font-bold text-2xl text-center tabular-nums"
                         >
                           {comments.length || "—"}
                         </motion.p>
-                        <p className="text-gray-500 text-sm mt-2 text-center">
+                        <p className="text-gray-600 text-sm mt-2 text-center">
                           community flags
                         </p>
                       </div>
@@ -1819,16 +1821,16 @@ export default function AdminDashboardClient() {
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="2.5"
-                            className="text-white"
+                            className="text-gray-100"
                           >
                             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                           </svg>
                         </div>
                         <div className="flex-1">
-                          <label className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3 block">
+                          <label className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-3 block">
                             🏢 Domain
                           </label>
-                          <p className="text-gray-200 font-mono text-base bg-black rounded-lg px-4 py-2.5 border border-gray-800 break-all">
+                          <p className="text-gray-300 font-mono text-base bg-black/50 rounded-lg px-4 py-2.5 border border-gray-800 break-all">
                             {selectedFeedback.domain}
                           </p>
                         </div>
@@ -1848,7 +1850,7 @@ export default function AdminDashboardClient() {
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="2.5"
-                            className="text-white"
+                            className="text-gray-100"
                           >
                             <line x1="12" y1="2" x2="12" y2="22"></line>
                             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
@@ -1862,16 +1864,16 @@ export default function AdminDashboardClient() {
                             <span
                               className={`text-sm font-bold px-4 py-2 rounded-lg ${
                                 selectedFeedback.confidence >= 70
-                                  ? "bg-red-950/60 text-white"
+                                  ? "bg-red-950/60 text-gray-100"
                                   : selectedFeedback.confidence >= 40
-                                    ? "bg-gray-700/60 text-white"
-                                    : "bg-gray-800/60 text-white"
+                                    ? "bg-gray-700/60 text-gray-100"
+                                    : "bg-gray-800/60 text-gray-100"
                               }`}
                             >
                               {selectedFeedback.confidence}%
                             </span>
                           </div>
-                          <div className="w-full h-3 bg-black rounded-full overflow-hidden border border-gray-800">
+                          <div className="w-full h-3 bg-black/50 rounded-full overflow-hidden border border-gray-800">
                             <div
                               className={`h-full rounded-full transition-all ${
                                 selectedFeedback.confidence >= 70
@@ -1921,13 +1923,13 @@ export default function AdminDashboardClient() {
                         <motion.div
                           animate={{ scale: [1, 1.1, 1] }}
                           transition={{ duration: 2, repeat: Infinity }}
-                          className="w-1.5 h-5 bg-white rounded-full flex-shrink-0"
+                          className="w-1.5 h-5 bg-gray-200 rounded-full flex-shrink-0"
                           style={{ animation: "indicatorPulse 2s infinite" }}
                         ></motion.div>
-                        <h3 className="text-white font-semibold text-base">
+                        <h3 className="text-gray-100 font-semibold text-base">
                           Detection Results
                         </h3>
-                        <span className="ml-auto text-xs bg-gray-800/60 text-gray-400 px-3 py-1.5 rounded-full border border-gray-700/50 font-semibold">
+                        <span className="ml-auto text-xs bg-gray-800/60 text-gray-500 px-3 py-1.5 rounded-full border border-gray-700/50 font-semibold">
                           {
                             selectedFeedback.prediction.detections.filter(
                               (d: any) =>
@@ -1939,25 +1941,25 @@ export default function AdminDashboardClient() {
                           flagged
                         </span>
                       </div>
-                      <div className="bg-gray-900/40 rounded-xl p-4 border border-gray-800 space-y-2 shadow-lg">
+                      <div className="bg-gray-900/20 rounded-xl p-4 border border-gray-800 space-y-2 shadow-lg">
                         {selectedFeedback.prediction.detections
                           .slice(0, 8)
                           .map((det: any, i: number) => (
                             <div
                               key={i}
-                              className="flex items-center justify-between bg-black rounded-lg px-4 py-3 text-sm border border-gray-800 hover:border-gray-700 transition-colors"
+                              className="flex items-center justify-between bg-black/40 rounded-lg px-4 py-3 text-sm border border-gray-800 hover:border-gray-700 transition-colors"
                             >
-                              <span className="text-gray-400 truncate max-w-[60%] font-semibold">
+                              <span className="text-gray-500 truncate max-w-[60%] font-semibold">
                                 {det.service}
                               </span>
                               <span
                                 className={`px-3 py-1.5 rounded-md font-bold text-xs whitespace-nowrap ml-2 ${
                                   det.category === "phishing" ||
                                   det.category === "malicious"
-                                    ? "bg-red-950/60 text-white"
+                                    ? "bg-red-950/60 text-gray-100"
                                     : det.category === "suspicious"
-                                      ? "bg-gray-700/60 text-white"
-                                      : "bg-gray-800/60 text-white"
+                                      ? "bg-gray-700/60 text-gray-100"
+                                      : "bg-gray-800/60 text-gray-100"
                                 }`}
                               >
                                 {det.result || det.category || "clean"}
@@ -2284,10 +2286,10 @@ export default function AdminDashboardClient() {
                         <motion.div
                           animate={{ scale: [1, 1.1, 1] }}
                           transition={{ duration: 2, repeat: Infinity }}
-                          className="w-1.5 h-5 bg-white rounded-full flex-shrink-0"
+                          className="w-1.5 h-5 bg-gray-200 rounded-full flex-shrink-0"
                           style={{ animation: "indicatorPulse 2s infinite" }}
                         ></motion.div>
-                        <h3 className="text-white font-semibold text-base">
+                        <h3 className="text-gray-100 font-semibold text-base">
                           Verification Details
                         </h3>
                       </div>
@@ -2304,7 +2306,7 @@ export default function AdminDashboardClient() {
                                   fill="none"
                                   stroke="currentColor"
                                   strokeWidth="2.5"
-                                  className="text-white"
+                                  className="text-gray-100"
                                 >
                                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                                 </svg>
@@ -2316,8 +2318,8 @@ export default function AdminDashboardClient() {
                             <span
                               className={`text-sm font-bold inline-block px-4 py-2 rounded-lg ${
                                 selectedFeedback.prediction.ssl.valid
-                                  ? "bg-gray-800/60 text-white"
-                                  : "bg-red-950/60 text-white"
+                                  ? "bg-gray-800/60 text-gray-100"
+                                  : "bg-red-950/60 text-gray-100"
                               }`}
                             >
                               {selectedFeedback.prediction.ssl.valid
@@ -2337,7 +2339,7 @@ export default function AdminDashboardClient() {
                                   fill="none"
                                   stroke="currentColor"
                                   strokeWidth="2.5"
-                                  className="text-white"
+                                  className="text-gray-100"
                                 >
                                   <circle cx="12" cy="12" r="10"></circle>
                                   <polyline points="12 6 12 12 16 14"></polyline>
@@ -2362,16 +2364,16 @@ export default function AdminDashboardClient() {
                       <motion.div
                         animate={{ scale: [1, 1.1, 1] }}
                         transition={{ duration: 2, repeat: Infinity }}
-                        className="w-1.5 h-5 bg-white rounded-full flex-shrink-0"
+                        className="w-1.5 h-5 bg-gray-200 rounded-full flex-shrink-0"
                         style={{ animation: "indicatorPulse 2s infinite" }}
                       ></motion.div>
-                      <h3 className="text-white font-bold text-base">
+                      <h3 className="text-gray-100 font-bold text-base">
                         Community Reports
                       </h3>
                       <span className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-800/30 text-gray-400 text-xs font-bold rounded-lg border border-gray-800 shadow-md">
                         <span className="relative flex items-center justify-center">
-                          <span className="absolute inline-flex h-2 w-2 rounded-full bg-white animate-pulse"></span>
-                          <span className="inline-flex h-2 w-2 rounded-full bg-white opacity-75"></span>
+                          <span className="absolute inline-flex h-2 w-2 rounded-full bg-gray-200 animate-pulse"></span>
+                          <span className="inline-flex h-2 w-2 rounded-full bg-gray-200 opacity-75"></span>
                         </span>
                         {commentsLoading
                           ? "Loading..."
@@ -2383,7 +2385,7 @@ export default function AdminDashboardClient() {
                         {commentsLoading ? (
                           <div className="flex items-center justify-center py-6">
                             <div className="text-center">
-                              <div className="inline-block animate-spin rounded-full h-5 w-5 border-2 border-white border-t-gray-500 mb-2"></div>
+                              <div className="inline-block animate-spin rounded-full h-5 w-5 border-2 border-gray-200 border-t-gray-600 mb-2"></div>
                               <p className="text-gray-400 text-xs font-medium">
                                 Loading reports...
                               </p>
@@ -2396,11 +2398,11 @@ export default function AdminDashboardClient() {
                               className="bg-gray-950 rounded-lg p-4 border border-gray-800 hover:border-gray-700 transition-all group shadow-md"
                             >
                               <div className="flex items-center justify-between gap-3 mb-2">
-                                <p className="text-gray-300 text-base font-bold group-hover:text-white transition-colors duration-200">
+                                <p className="text-gray-300 text-base font-bold group-hover:text-gray-100 transition-colors duration-200">
                                   {c.author}
                                 </p>
                                 <span
-                                  className={`text-xs px-3 py-1.5 rounded-md font-bold whitespace-nowrap text-white shadow-md ${
+                                  className={`text-xs px-3 py-1.5 rounded-md font-bold whitespace-nowrap text-gray-100 shadow-md ${
                                     c.flag === "phishing"
                                       ? "bg-red-950/60"
                                       : c.flag === "legitimate"
@@ -2417,7 +2419,7 @@ export default function AdminDashboardClient() {
                                   {c.url}
                                 </p>
                               )}
-                              <p className="text-white text-base mb-2 leading-relaxed font-medium">
+                              <p className="text-gray-300 text-base mb-2 leading-relaxed font-medium">
                                 {c.comment}
                               </p>
                               <p className="text-gray-500 text-sm">{c.date}</p>
@@ -2439,7 +2441,7 @@ export default function AdminDashboardClient() {
               <div className="relative z-10 border-t border-gray-800 bg-black px-8 py-6 flex items-center justify-between gap-4 rounded-b-2xl">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-white animate-pulse shadow-lg shadow-white/30"></div>
+                    <div className="w-2.5 h-2.5 rounded-full bg-gray-100 animate-pulse shadow-lg shadow-gray-100/30"></div>
                     <span className="text-sm text-gray-400 font-semibold uppercase tracking-wider">
                       SCAN REPORT
                     </span>
@@ -2450,7 +2452,7 @@ export default function AdminDashboardClient() {
                 </div>
                 <button
                   onClick={() => setSelectedFeedback(null)}
-                  className="px-7 py-2.5 bg-white hover:bg-gray-100 text-black font-semibold rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-white/20 active:scale-95 text-base uppercase tracking-wide"
+                  className="px-7 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-950 font-semibold rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-gray-100/20 active:scale-95 text-base uppercase tracking-wide"
                 >
                   Close
                 </button>
@@ -2461,7 +2463,7 @@ export default function AdminDashboardClient() {
       </div>
 
       {/* Footer */}
-      <footer className="relative bg-gray-900/50 border-t border-gray-800/50 py-8 px-6 transition-colors overflow-hidden mt-16">
+      <footer className="relative bg-gray-950 border-t border-gray-800 py-8 px-6 transition-colors overflow-hidden mt-16">
         {/* Aurora Background Effect */}
         <div className="absolute bottom-0 left-0 w-full h-[500px] pointer-events-none z-0">
           <div className="w-full h-full opacity-100 [mask-image:linear-gradient(to_top,black_40%,transparent_100%)]">
@@ -2487,7 +2489,7 @@ export default function AdminDashboardClient() {
                 className="object-contain"
               />
             </div>
-            <span className="text-white text-lg font-semibold transition-colors">
+            <span className="text-gray-100 text-lg font-semibold transition-colors">
               SmartShield
             </span>
           </div>
