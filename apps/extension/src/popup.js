@@ -5,6 +5,7 @@
  */
 
 document.addEventListener("DOMContentLoaded", () => {
+  const WEB_APP_ORIGIN = "https://smartshield.it.com";
   // ─────────────────────────────────────────
   // ONBOARDING
   // ─────────────────────────────────────────
@@ -242,6 +243,21 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch {
         // localStorage access error
       }
+
+      // Final fallback: check auth synced from web app into extension storage.
+      try {
+        const stored = await chrome.storage.local.get(["smartshield_auth"]);
+        const auth = stored?.smartshield_auth;
+        const hasToken = typeof auth?.access_token === "string" && auth.access_token.length > 0;
+        const notExpired =
+          typeof auth?.expires_at !== "number" || auth.expires_at > Date.now();
+        if (hasToken && notExpired) {
+          return true;
+        }
+      } catch {
+        // storage read error
+      }
+
       return false;
     }
 
@@ -337,9 +353,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // ── Community Feedback Section Init ──
     if (communityLoginBtn) {
       communityLoginBtn.addEventListener("click", () => {
-        // Open main app login page in new tab
+        // Open production web app login page and let extension-sync bridge hand off session.
         chrome.tabs.create({
-          url: "https://smartshield-ai.vercel.app/login",
+          url: `${WEB_APP_ORIGIN}/login?source=extension`,
         });
       });
     }
@@ -350,7 +366,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Open dashboard with current URL as parameter
         const encodedUrl = encodeURIComponent(currentRootDomain);
         chrome.tabs.create({
-          url: `https://smartshield-ai.vercel.app/dashboard?url=${encodedUrl}`,
+          url: `${WEB_APP_ORIGIN}/dashboard?url=${encodedUrl}`,
         });
       });
     }
