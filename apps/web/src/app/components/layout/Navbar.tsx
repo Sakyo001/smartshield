@@ -16,10 +16,10 @@ const poppins = Poppins({
 });
 
 const NAV_LINKS = [
-  { label: "Home", href: "#home" },
-  { label: "Scan", href: "#scan" },
-  { label: "About", href: "#about" },
-  { label: "FAQ", href: "#faq" },
+  { label: "Home", href: "/" },
+  { label: "Scan", href: "/#scan" },
+  { label: "About", href: "/#about" },
+  { label: "FAQ", href: "/#faq" },
 ] as const;
 
 const DASHBOARD_NAV_LINKS = [
@@ -153,36 +153,28 @@ export default function Navbar() {
     e: React.MouseEvent<HTMLAnchorElement>,
     href: string
   ) => {
-    if (isDashboardRoute) {
-      // On dashboard routes, use regular navigation
+    // Check if it's a hash link (starts with # or contains #)
+    if (href.includes("#")) {
       e.preventDefault();
       setMobileOpen(false);
-      router.push(href);
+      
+      // Parse the hash
+      const hashOnly = href.split("#")[1];
+      const el = document.getElementById(hashOnly);
+      
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        setActiveSection(hashOnly);
+        window.dispatchEvent(
+          new CustomEvent("smartshield:tabchange", { detail: { tab: hashOnly } })
+        );
+      }
       return;
     }
 
-    // On landing page, use hash-based scroll navigation
-    e.preventDefault();
+    // For regular page navigation
     setMobileOpen(false);
-    const targetId = href.replace("#", "");
-    const el = document.getElementById(targetId);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-      setActiveSection(targetId);
-      window.dispatchEvent(
-        new CustomEvent("smartshield:tabchange", { detail: { tab: targetId } })
-      );
-      return;
-    }
-
-    // Fallback for deferred sections: persist hash and retry once after mount.
-    window.location.hash = targetId;
-    window.setTimeout(() => {
-      const retryEl = document.getElementById(targetId);
-      if (!retryEl) return;
-      retryEl.scrollIntoView({ behavior: "smooth", block: "start" });
-      setActiveSection(targetId);
-    }, 120);
+    // Let the link navigate naturally
   };
 
   const handleLogout = async () => {
@@ -310,42 +302,46 @@ export default function Navbar() {
           </Link>
 
           {/* ── Desktop nav links — centered ──────────────────────────────── */}
-          <div className={`hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-0.5 ${poppins.className}`}>
+          <div className={`hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-1 ${poppins.className}`}>
             {currentNavLinks.map(({ label, href }) => {
               let isActive = false;
               if (isDashboardRoute) {
-                isActive = pathname === href;
+                isActive = pathname === href || pathname?.startsWith(href);
               } else {
-                isActive = activeSection === label.toLowerCase();
+                // Check if current page matches the href
+                const isCurrentPath = pathname === href || (href === "/" && pathname === "/");
+                const hashPart = href.split("#")[1];
+                isActive = isCurrentPath || activeSection === hashPart;
               }
               return (
                 <a
                   key={label}
                   href={href}
                   onClick={(e) => handleSmoothScroll(e, href)}
-                  className={`relative px-5 py-2 text-sm rounded-full transition-colors duration-300 font-medium ${
+                  className={`relative px-4 py-2 text-sm rounded-lg transition-all duration-300 font-medium ${
                     isActive
-                      ? "text-[#545BFF] dark:text-[#7c83ff] font-semibold"
-                      : "text-faded hover:text-[#545BFF]"
+                      ? "text-[#545BFF] dark:text-[#a89de8]"
+                      : "text-faded hover:text-heading"
                   }`}
                 >
-                  {/* Sliding glass pill — morphs between active items */}
+                  {/* Background pill on active */}
                   {isActive && (
                     <motion.span
                       layoutId="nav-bg-pill"
-                      className="absolute inset-0 rounded-full bg-[#545BFF]/10"
+                      className="absolute inset-0 rounded-lg bg-[#545BFF]/12 -z-10"
                       transition={{ type: "spring", stiffness: 380, damping: 32 }}
                     />
                   )}
-                  <span className="relative z-10">{label}</span>
-                  {/* Glowing pip dot under active link */}
-                  {isActive && (
-                    <motion.span
-                      layoutId="nav-active-pip"
-                      className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#545BFF]"
-                      style={{ boxShadow: "0 0 7px rgba(84,91,255,0.9)" }}
-                    />
-                  )}
+                  <span className="relative z-10 flex items-center gap-2">
+                    {label}
+                    {isActive && (
+                      <motion.span
+                        layoutId="nav-active-indicator"
+                        className="w-1.5 h-1.5 rounded-full bg-[#545BFF]"
+                        style={{ boxShadow: "0 0 6px rgba(84,91,255,0.8)" }}
+                      />
+                    )}
+                  </span>
                 </a>
               );
             })}
@@ -358,31 +354,42 @@ export default function Navbar() {
             <button
               onClick={toggleTheme}
               aria-label={`Switch to ${effectiveTheme === "dark" ? "light" : "dark"} mode`}
-              className="relative hidden md:flex items-center w-[72px] h-9 rounded-full overflow-hidden
-                dark:bg-[#0c0d1a]/80 bg-slate-100/90
-                border border-[#545BFF]/20 hover:border-[#545BFF]/50
-                backdrop-blur-sm shadow-inner
-                transition-all duration-300 hover:shadow-[0_0_18px_rgba(84,91,255,0.25)]"
+              className="relative hidden md:flex items-center w-[82px] h-10 rounded-full overflow-hidden
+                dark:bg-[#0a0d1f]/80 bg-white/85
+                border border-[#545BFF]/25 hover:border-[#545BFF]/55
+                backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]
+                transition-all duration-300 hover:shadow-[0_0_24px_rgba(84,91,255,0.28)]"
             >
-              {/* Sliding glowing knob */}
-              <motion.div
-                className="absolute top-[4px] h-[28px] w-[28px] rounded-full bg-gradient-to-br from-[#545BFF] to-[#8B5CF6]"
-                style={{ boxShadow: "0 0 14px rgba(84,91,255,0.65), 0 0 4px rgba(139,92,246,0.4)" }}
-                animate={{ x: effectiveTheme === "light" ? 4 : 40 }}
-                transition={{ type: "spring", stiffness: 300, damping: 26 }}
-              />
-              {/* Sun — left slot (light mode) */}
-              <span className={`relative z-10 flex-1 flex justify-center transition-colors duration-300 ${
-                effectiveTheme === "light" ? "text-white" : "text-faded/40"
-              }`}>
+              <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#545BFF]/12 via-transparent to-[#b19eef]/16" />
+              <span className="pointer-events-none absolute inset-[3px] rounded-full border border-white/35 dark:border-[#a4acff]/12" />
+
+              {/* Sun — left slot */}
+              <span
+                className={`relative z-10 flex-1 flex justify-center transition-colors duration-300 ${
+                  effectiveTheme === "light" ? "text-[#f59e0b]" : "text-faded/45"
+                }`}
+              >
                 <SunIcon size={14} />
               </span>
-              {/* Moon — right slot (dark mode) */}
-              <span className={`relative z-10 flex-1 flex justify-center transition-colors duration-300 ${
-                effectiveTheme === "dark" ? "text-white" : "text-faded/40"
-              }`}>
+
+              {/* Moon — right slot */}
+              <span
+                className={`relative z-10 flex-1 flex justify-center transition-colors duration-300 ${
+                  effectiveTheme === "dark" ? "text-[#b19eef]" : "text-faded/45"
+                }`}
+              >
                 <MoonIcon size={14} />
               </span>
+
+              {/* Sliding core knob */}
+              <motion.span
+                className="absolute top-[4px] h-[30px] w-[30px] rounded-full bg-gradient-to-br from-[#545BFF] to-[#8B5CF6] flex items-center justify-center text-white"
+                style={{ boxShadow: "0 0 16px rgba(84,91,255,0.62), 0 0 6px rgba(139,92,246,0.35)" }}
+                animate={{ x: effectiveTheme === "light" ? 5 : 47 }}
+                transition={{ type: "spring", stiffness: 280, damping: 24 }}
+              >
+                {effectiveTheme === "light" ? <SunIcon size={13} /> : <MoonIcon size={13} />}
+              </motion.span>
             </button>
 
             {/* CTA button — desktop */}
@@ -443,11 +450,13 @@ export default function Navbar() {
             <button
               onClick={toggleTheme}
               aria-label="Toggle theme"
-              className="md:hidden relative flex items-center justify-center w-9 h-9 rounded-lg overflow-hidden
-                dark:bg-[#0c0d1a]/60 bg-slate-100/80
-                border border-[#545BFF]/20 hover:border-[#545BFF]/50
-                transition-all duration-300 hover:shadow-[0_0_12px_rgba(84,91,255,0.3)]"
+              className="md:hidden relative flex items-center justify-center w-10 h-10 rounded-xl overflow-hidden
+                dark:bg-[#0a0d1f]/70 bg-white/80
+                border border-[#545BFF]/25 hover:border-[#545BFF]/55
+                transition-all duration-300 hover:shadow-[0_0_16px_rgba(84,91,255,0.32)]"
             >
+              <span className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#545BFF]/14 to-[#b19eef]/14" />
+              <span className="pointer-events-none absolute inset-[2px] rounded-[10px] border border-white/35 dark:border-[#a4acff]/12" />
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={effectiveTheme}
@@ -455,7 +464,7 @@ export default function Navbar() {
                   animate={{ rotate: 0, opacity: 1, scale: 1 }}
                   exit={{ rotate: 90, opacity: 0, scale: 0.6 }}
                   transition={{ duration: 0.2 }}
-                  className={effectiveTheme === "dark" ? "text-[#a89de8]" : "text-[#545BFF]"}
+                  className={`relative z-10 ${effectiveTheme === "dark" ? "text-[#b19eef]" : "text-[#545BFF]"}`}
                 >
                   {effectiveTheme === "dark" ? <SunIcon size={18} /> : <MoonIcon size={18} />}
                 </motion.div>
@@ -542,9 +551,11 @@ export default function Navbar() {
                 {currentNavLinks.map(({ label, href }, i) => {
                   let isActive = false;
                   if (isDashboardRoute) {
-                    isActive = pathname === href;
+                    isActive = pathname === href || pathname?.startsWith(href);
                   } else {
-                    isActive = activeSection === label.toLowerCase();
+                    const isCurrentPath = pathname === href || (href === "/" && pathname === "/");
+                    const hashPart = href.split("#")[1];
+                    isActive = isCurrentPath || activeSection === hashPart;
                   }
                   return (
                     <motion.a
@@ -556,7 +567,7 @@ export default function Navbar() {
                       transition={{ delay: i * 0.055 + 0.08, type: "spring", stiffness: 280, damping: 28 }}
                       className={`flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm transition-all duration-200 ${poppins.className}
                         ${isActive
-                          ? "text-[#545BFF] dark:text-[#7c83ff] bg-[#545BFF]/10 font-semibold"
+                          ? "text-[#545BFF] dark:text-[#a89de8] bg-[#545BFF]/10 font-semibold"
                           : "text-copy font-medium hover:text-[#545BFF] hover:bg-[#545BFF]/6"
                         }`}
                     >
@@ -568,7 +579,14 @@ export default function Navbar() {
                             : "bg-transparent"
                         }`}
                       />
-                      {label}
+                      <span>{label}</span>
+                      {isActive && (
+                        <motion.span
+                          className="ml-auto w-1.5 h-1.5 rounded-full bg-[#545BFF]"
+                          layoutId="mobile-nav-active"
+                          style={{ boxShadow: "0 0 6px rgba(84,91,255,0.8)" }}
+                        />
+                      )}
                     </motion.a>
                   );
                 })}

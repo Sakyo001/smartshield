@@ -19,6 +19,103 @@
   if (window.__smartshieldLoaded) return;
   window.__smartshieldLoaded = true;
 
+  const TRUSTED_WEB_APP_ORIGINS = new Set([
+    "https://smartshield.it.com",
+    "https://www.smartshield.it.com",
+    "https://smartshield-ai.vercel.app",
+  ]);
+
+  function isTrustedWebAppOrigin(origin) {
+    return TRUSTED_WEB_APP_ORIGINS.has(origin);
+  }
+
+  function isWebAppHost() {
+    const host = window.location.hostname.toLowerCase();
+    return (
+      host === "smartshield.it.com" ||
+      host === "www.smartshield.it.com" ||
+      host === "smartshield-ai.vercel.app"
+    );
+  }
+
+  function requestSessionSyncFromPage() {
+    if (!isWebAppHost()) return;
+    window.postMessage(
+      {
+        type: "SMARTSHIELD_REQUEST_SESSION",
+      },
+      window.location.origin,
+    );
+  }
+
+  async function persistSyncedAuth(tokens) {
+    if (!tokens || typeof tokens !== "object") {
+      throw new Error("Invalid token payload");
+    }
+
+    const accessToken =
+      typeof tokens.access_token === "string" ? tokens.access_token : "";
+    const refreshToken =
+      typeof tokens.refresh_token === "string" ? tokens.refresh_token : "";
+
+    if (!accessToken || !refreshToken) {
+      throw new Error("Missing access or refresh token");
+    }
+
+    const expiresIn = Number(tokens.expires_in || 0);
+    const expiresAt = Number.isFinite(expiresIn) && expiresIn > 0
+      ? Date.now() + expiresIn * 1000
+      : null;
+
+    const authPayload = {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user: tokens.user || null,
+      token_type: tokens.token_type || "bearer",
+      expires_at: expiresAt,
+      synced_at: Date.now(),
+    };
+
+    await chrome.storage.local.set({
+      smartshield_auth: authPayload,
+    });
+  }
+
+  window.addEventListener("message", (event) => {
+    if (event.source !== window) return;
+    if (!isTrustedWebAppOrigin(event.origin)) return;
+
+    const data = event.data || {};
+    if (data.type !== "SMARTSHIELD_SYNC_SESSION") return;
+
+    Promise.resolve(persistSyncedAuth(data.tokens))
+      .then(() => {
+        window.postMessage(
+          {
+            type: "SMARTSHIELD_SYNC_CONFIRMED",
+            success: true,
+          },
+          event.origin,
+        );
+      })
+      .catch((err) => {
+        window.postMessage(
+          {
+            type: "SMARTSHIELD_SYNC_CONFIRMED",
+            success: false,
+            error: err instanceof Error ? err.message : "Unknown sync error",
+          },
+          event.origin,
+        );
+      });
+  });
+
+  // Request session hand-off shortly after script boot for already logged-in users.
+  if (isWebAppHost()) {
+    setTimeout(requestSessionSyncFromPage, 400);
+    setTimeout(requestSessionSyncFromPage, 1800);
+  }
+
   // Tracks domains the user has *explicitly* closed via the X button this session.
   // Safe auto-dismisses do NOT add here so the badge can re-appear on tab switch.
   const dismissedDomains = new Set();
@@ -133,6 +230,11 @@
       if (message.action === "checkAuth") {
         const authenticated = checkAuthStatus();
         sendResponse({ authenticated });
+      }
+
+      if (message.action === "requestSessionSync") {
+        requestSessionSyncFromPage();
+        sendResponse({ requested: true });
       }
     });
 

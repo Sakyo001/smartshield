@@ -1,6 +1,39 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const ADMIN_2FA_COOKIE_NAME = "admin_2fa_verified";
+
+async function sha256Hex(value: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  const digestBytes = Array.from(new Uint8Array(digest));
+  return digestBytes.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function hasValidAdminTwoFactorSession(
+  request: NextRequest,
+  adminUser: {
+    two_factor_verified_token_hash?: string | null;
+    two_factor_verified_expires_at?: string | null;
+  }
+): Promise<boolean> {
+  const cookieValue = request.cookies.get(ADMIN_2FA_COOKIE_NAME)?.value;
+  if (!cookieValue) return false;
+
+  if (!adminUser.two_factor_verified_token_hash || !adminUser.two_factor_verified_expires_at) {
+    return false;
+  }
+
+  const expiresAt = new Date(adminUser.two_factor_verified_expires_at);
+  if (Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() <= Date.now()) {
+    return false;
+  }
+
+  const cookieHash = await sha256Hex(cookieValue);
+  return cookieHash === adminUser.two_factor_verified_token_hash;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -39,11 +72,11 @@ export async function middleware(request: NextRequest) {
     if (!userError && user?.email) {
       const { data: adminUser } = await supabase
         .from("admin_users")
-        .select("email")
+        .select("email, two_factor_verified_token_hash, two_factor_verified_expires_at")
         .eq("email", user.email)
         .maybeSingle();
 
-      if (adminUser) {
+      if (adminUser && (await hasValidAdminTwoFactorSession(request, adminUser))) {
         return NextResponse.redirect(dashboardUrl);
       }
     }
@@ -58,11 +91,22 @@ export async function middleware(request: NextRequest) {
   // And that user must exist in admin_users.
   const { data: adminUser, error: adminError } = await supabase
     .from("admin_users")
-    .select("email")
+    .select("email, two_factor_verified_token_hash, two_factor_verified_expires_at")
     .eq("email", user.email)
     .maybeSingle();
 
   if (adminError || !adminUser) {
+    return NextResponse.redirect(loginUrl);
+  }
+
+  const hasValid2faSession = await hasValidAdminTwoFactorSession(request, adminUser);
+  if (!hasValid2faSession) {
+    response.cookies.set({
+      name: ADMIN_2FA_COOKIE_NAME,
+      value: "",
+      path: "/",
+      maxAge: 0,
+    });
     return NextResponse.redirect(loginUrl);
   }
 
