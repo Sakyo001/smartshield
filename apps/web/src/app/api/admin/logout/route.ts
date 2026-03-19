@@ -1,6 +1,8 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const ADMIN_2FA_COOKIE_NAME = "admin_2fa_verified";
+
 export async function POST(request: NextRequest) {
   const response = NextResponse.json({ ok: true });
 
@@ -22,7 +24,28 @@ export async function POST(request: NextRequest) {
     }
   );
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user?.email) {
+    await supabase
+      .from("admin_users")
+      .update({
+        two_factor_verified_token_hash: null,
+        two_factor_verified_expires_at: null,
+      })
+      .eq("email", user.email);
+  }
+
   await supabase.auth.signOut();
+
+  response.cookies.set({
+    name: ADMIN_2FA_COOKIE_NAME,
+    value: "",
+    path: "/",
+    maxAge: 0,
+  });
 
   return response;
 }

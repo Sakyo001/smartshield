@@ -1,11 +1,11 @@
 // src/app/components/AdminLoginForm.tsx
 "use client";
 
+import { createClient } from "@lib/supabase";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { createClient } from "@lib/supabase";
 
 export function AdminLoginForm() {
   const router = useRouter();
@@ -23,10 +23,12 @@ export function AdminLoginForm() {
 
     try {
       // Try Supabase auth first
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data, error: authError } = await supabase.auth.signInWithPassword(
+        {
+          email,
+          password,
+        },
+      );
 
       if (authError) {
         setError("Invalid email or password");
@@ -63,7 +65,7 @@ export function AdminLoginForm() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-gray-900 to-black flex items-center justify-center px-3 sm:px-6 py-4 sm:py-12 overflow-auto">
+    <div className="w-full flex items-center justify-center px-3 sm:px-6 py-6 sm:py-14">
       <style>{`
         @keyframes fadeIn {
           from {
@@ -109,7 +111,7 @@ export function AdminLoginForm() {
         }
 
         .password-toggle:hover {
-          color: #6B73FF;
+          color: #545BFF;
         }
       `}</style>
 
@@ -126,18 +128,24 @@ export function AdminLoginForm() {
                 className="object-contain"
               />
             </div>
-            <span className="text-white text-lg sm:text-2xl font-bold">SmartShield</span>
+            <span className="text-gray-100 text-lg sm:text-2xl font-bold">
+              SmartShield
+            </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">Admin Portal</h1>
-          <p className="text-gray-400 text-sm sm:text-base">Sign in to access the admin dashboard</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-100 mb-1 sm:mb-2">
+            Admin Portal
+          </h1>
+          <p className="text-gray-400 text-sm sm:text-base">
+            Sign in to access the admin dashboard
+          </p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700 rounded-xl p-5 sm:p-8 shadow-2xl">
+        <div className="bg-panel backdrop-blur-xl border border-[#545BFF]/20 rounded-2xl p-5 sm:p-8 shadow-[0_24px_64px_rgba(0,0,0,0.35)]">
           <form onSubmit={handleLogin} className="space-y-4 sm:space-y-6">
             {/* Email Input */}
             <div className="space-y-1.5 sm:space-y-2">
-              <label className="block text-xs sm:text-sm font-medium text-gray-300">
+              <label className="block text-xs sm:text-sm font-medium text-copy">
                 Email Address
               </label>
               <input
@@ -145,14 +153,14 @@ export function AdminLoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@smartshield.com"
-                className="form-input w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-900/50 border border-gray-600 rounded-lg text-white placeholder-gray-500 text-sm sm:text-base focus:outline-none focus:border-[#6B73FF] focus:ring-1 focus:ring-[#6B73FF]"
+                className="form-input w-full px-3 sm:px-4 py-2 sm:py-3 bg-inset border border-[#545BFF]/15 rounded-xl text-heading placeholder:text-faded text-sm sm:text-base focus:outline-none focus:border-[#545BFF]/45 focus:ring-2 focus:ring-[#545BFF]/25"
                 required
               />
             </div>
 
             {/* Password Input */}
             <div className="space-y-1.5 sm:space-y-2">
-              <label className="block text-xs sm:text-sm font-medium text-gray-300">
+              <label className="block text-xs sm:text-sm font-medium text-copy">
                 Password
               </label>
               <div className="relative">
@@ -161,13 +169,13 @@ export function AdminLoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="form-input w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-900/50 border border-gray-600 rounded-lg text-white placeholder-gray-500 text-sm sm:text-base focus:outline-none focus:border-[#6B73FF] focus:ring-1 focus:ring-[#6B73FF]"
+                  className="form-input w-full px-3 sm:px-4 py-2 sm:py-3 bg-inset border border-[#545BFF]/15 rounded-xl text-heading placeholder:text-faded text-sm sm:text-base focus:outline-none focus:border-[#545BFF]/45 focus:ring-2 focus:ring-[#545BFF]/25"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="password-toggle absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-gray-400"
+                  className="password-toggle absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-faded"
                 >
                   {showPassword ? (
                     <svg
@@ -200,14 +208,14 @@ export function AdminLoginForm() {
 
             {/* Error Message */}
             {error && (
-              <div className="p-2.5 sm:p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <div className="p-2.5 sm:p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
                 <p className="text-xs sm:text-sm text-red-400">{error}</p>
               </div>
             )}
 
             {/* Demo Credentials Info */}
-            <div className="p-2.5 sm:p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-              <p className="text-xs text-blue-300">
+            <div className="p-2.5 sm:p-3 bg-[#545BFF]/10 border border-[#545BFF]/25 rounded-xl">
+              <p className="text-xs text-[#545BFF]/90">
                 <span className="font-semibold">Demo Credentials:</span>
                 <br />
                 Email: admin@smartshield.com
@@ -220,11 +228,11 @@ export function AdminLoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="login-button w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gradient-to-r from-[#6B73FF] to-[#5A62E8] text-white font-semibold rounded-lg text-sm sm:text-base hover:shadow-lg disabled:opacity-50 transition-all duration-300"
+              className="login-button w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gradient-to-r from-[#545BFF] to-[#4349CD] text-heading font-semibold rounded-xl text-sm sm:text-base hover:shadow-lg disabled:opacity-50 transition-all duration-300"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <span className="inline-block w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  <span className="inline-block w-3 h-3 sm:w-4 sm:h-4 border-2 border-gray-100 border-t-transparent rounded-full animate-spin"></span>
                   Signing in...
                 </span>
               ) : (
@@ -235,12 +243,12 @@ export function AdminLoginForm() {
         </div>
 
         {/* Footer */}
-        <div className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-gray-400">
+        <div className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-faded">
           <p>
             Need help?{" "}
             <Link
               href="/contact"
-              className="text-[#6B73FF] hover:text-[#5A62E8] transition-colors"
+              className="text-[#545BFF] hover:text-[#6B73FF] transition-colors"
             >
               Contact support
             </Link>
