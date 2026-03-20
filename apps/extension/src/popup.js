@@ -928,6 +928,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const hasDNS = d && Object.keys(d).some((k) => d[k] && d[k].length > 0);
       const s = details.ssl;
       const hasSSL = s && !s.error;
+      const screenshot = details.screenshot || r.screenshot || null;
+      const pageBehavior = details.pageBehavior || r.pageBehavior || null;
 
       const svgIcon = (path) =>
         `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
@@ -979,6 +981,28 @@ document.addEventListener("DOMContentLoaded", () => {
           ${spStat('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>', "Created", created ? formatRelativeDate(created) : "Not available")}
           ${spStat('<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>', "Last Analysis", lastAnalysis)}
         </div>
+
+        ${
+          pageBehavior
+            ? `<div class="sp-bot-message sp-bot-accent-blue" style="margin-top:10px;">
+                <div class="sp-bot-header"><span>Playwright Behavior Analysis</span></div>
+                <div class="sp-bot-content">
+                  Login forms: <strong>${pageBehavior.has_login_form ? `Detected (${pageBehavior.login_forms_detected || 1})` : "None detected"}</strong><br/>
+                  Dynamic findings: <strong>${pageBehavior.html_findings_count || 0}</strong><br/>
+                  JS interaction probe: <strong>${pageBehavior.js_rendered_analysis ? "Active" : "Unavailable"}</strong>
+                </div>
+              </div>`
+            : ""
+        }
+
+        ${
+          screenshot
+            ? `<div style="margin-top:10px;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg-card2)">
+                <div style="padding:8px 10px;font-size:11px;color:var(--muted)">Playwright Screenshot Capture</div>
+                <img src="data:image/png;base64,${screenshot}" alt="Scanned page screenshot" style="display:block;width:100%;max-height:200px;object-fit:cover;object-position:top;" />
+              </div>`
+            : ""
+        }
 
         <!-- HTTP Warning -->
         ${
@@ -1123,6 +1147,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const status = scan.status || "Safe";
       const whois = details?.whois || {};
       const ssl = details?.ssl || {};
+      const pageBehavior = details?.pageBehavior || scan?.pageBehavior || null;
       const isHTTP = (scan.url || "").toLowerCase().startsWith("http://");
 
       const verdictColor =
@@ -1206,6 +1231,23 @@ document.addEventListener("DOMContentLoaded", () => {
           fullText:
             "This site uses **HTTP**, which means your connection is **not encrypted**. Anyone on the same network (like public Wi-Fi) could intercept what you type — passwords, credit cards, personal information.",
           accent: "yellow",
+        });
+      }
+
+      if (pageBehavior) {
+        const loginDetected = !!pageBehavior.has_login_form;
+        const loginCount = pageBehavior.login_forms_detected || 0;
+        const findingCount = pageBehavior.html_findings_count || 0;
+
+        msgs.push({
+          id: "playwright",
+          text: loginDetected
+            ? `Playwright observed **${loginCount} login-like form${loginCount === 1 ? "" : "s"}**`
+            : "Playwright behavior probe completed",
+          fullText: loginDetected
+            ? `The browser probe detected **${loginCount} login-like form${loginCount === 1 ? "" : "s"}** and generated **${findingCount} dynamic signal${findingCount === 1 ? "" : "s"}** from rendered DOM analysis.`
+            : `The Playwright probe completed successfully. No login-form behavior was detected. Dynamic findings count: **${findingCount}**.`,
+          accent: loginDetected ? "yellow" : "blue",
         });
       }
 

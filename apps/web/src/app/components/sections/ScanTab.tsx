@@ -33,6 +33,13 @@ interface ScanResult {
     feedbackComments?: number;
     riskAdjustment?: any;
     screenshot?: string | null;
+    pageBehavior?: {
+      has_login_form?: boolean;
+      login_forms_detected?: number;
+      html_findings_count?: number;
+      interaction_ready?: boolean;
+      js_rendered_analysis?: boolean;
+    } | null;
   };
 }
 
@@ -1367,6 +1374,7 @@ function GuestScanner({
       let sslInfo = data.ssl || null;
       let riskAdjustment = data.risk_adjustment || null;
       let screenshot = data.screenshot || null;
+      const pageBehavior = data.page_behavior || null;
 
       let riskScore = 0;
       let status: "Safe" | "Warning" | "Dangerous" = "Safe";
@@ -1437,6 +1445,7 @@ function GuestScanner({
           feedbackComments: data.community_comments || 0,
           riskAdjustment,
           screenshot,
+          pageBehavior,
         },
       };
 
@@ -2492,6 +2501,7 @@ function GuestScanner({
                   const allIndicators: string[] =
                     currentScan.details?.riskAdjustment?.indicators || [];
                   const screenshot = currentScan.details?.screenshot || null;
+                  const pageBehavior = currentScan.details?.pageBehavior || null;
                   const isBrandImpersonation = (f: string) =>
                     f.includes("Brand Impersonation") ||
                     f.includes("Impersonating");
@@ -2604,6 +2614,49 @@ function GuestScanner({
                                 objectPosition: "top",
                               }}
                             />
+                          </div>
+                        </div>
+                      )}
+
+                      {pageBehavior && (
+                        <div>
+                          <div className="flex items-center gap-2.5 mb-3 sm:mb-3.5">
+                            <div className="w-1 h-6 bg-blue-500 rounded-full" />
+                            <h4 className="text-heading font-bold text-xs sm:text-sm md:text-[15px]">
+                              Playwright Behavior Analysis
+                            </h4>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div className="p-3 rounded-xl border border-blue-500/20 bg-blue-500/8">
+                              <p className="text-[10px] uppercase tracking-wide text-blue-600 dark:text-blue-300/90">
+                                Login Form Detection
+                              </p>
+                              <p className="text-sm text-heading font-semibold mt-1">
+                                {pageBehavior.has_login_form
+                                  ? `Detected (${pageBehavior.login_forms_detected || 1})`
+                                  : "Not detected"}
+                              </p>
+                            </div>
+                            <div className="p-3 rounded-xl border border-blue-500/20 bg-blue-500/8">
+                              <p className="text-[10px] uppercase tracking-wide text-blue-600 dark:text-blue-300/90">
+                                JS/Interaction Probe
+                              </p>
+                              <p className="text-sm text-heading font-semibold mt-1">
+                                {pageBehavior.js_rendered_analysis &&
+                                pageBehavior.interaction_ready
+                                  ? "Playwright active"
+                                  : "Unavailable"}
+                              </p>
+                            </div>
+                            <div className="p-3 rounded-xl border border-blue-500/20 bg-blue-500/8 sm:col-span-2">
+                              <p className="text-[10px] uppercase tracking-wide text-blue-600 dark:text-blue-300/90">
+                                Dynamic Findings
+                              </p>
+                              <p className="text-sm text-heading font-semibold mt-1">
+                                {pageBehavior.html_findings_count || 0} browser-derived signal
+                                {(pageBehavior.html_findings_count || 0) === 1 ? "" : "s"}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       )}
