@@ -210,6 +210,7 @@ function processScanResult(rootDomain, data) {
   let isSuspicious = false;
   let warnings = [];
   let riskScore = 0;
+  let status = "Safe";
 
   // Calculate initial risk score (match web app logic)
   if (data.decision === "PHISHING") {
@@ -265,10 +266,12 @@ function processScanResult(rootDomain, data) {
   if (riskScore >= 70) {
     riskLevel = "high";
     isSuspicious = true;
+    status = "Dangerous";
     warnings.push("High risk of phishing detected");
   } else if (riskScore >= 40) {
     riskLevel = "medium";
     isSuspicious = true;
+    status = "Warning";
     warnings.push("Suspicious activity detected");
   }
 
@@ -276,14 +279,31 @@ function processScanResult(rootDomain, data) {
     warnings.push("Insecure HTTP connection - data is not encrypted");
   }
 
+  if (data.page_behavior?.has_login_form) {
+    const loginCount = data.page_behavior?.login_forms_detected || 1;
+    warnings.push(
+      `Playwright detected login-style forms (${loginCount}) on this page`,
+    );
+  }
+
+  if (data.page_behavior?.html_findings_count > 0) {
+    warnings.push(
+      `Dynamic browser analysis surfaced ${data.page_behavior.html_findings_count} content signal${data.page_behavior.html_findings_count === 1 ? "" : "s"}`,
+    );
+  }
+
   return {
     isSuspicious,
     riskLevel,
+    status,
+    url: rootDomain,
     riskScore,
     warnings,
     decision: data.decision,
     confidence: data.confidence,
     details: null,
+    pageBehavior: data.page_behavior || null,
+    screenshot: data.screenshot || null,
     rawResponse: data,
   };
 }
@@ -309,10 +329,12 @@ async function fetchDomainDetails(rootDomain) {
     const domainData = await response.json();
 
     const details = {
-      whois: domainData.whois,
-      dns: domainData.dns,
-      ssl: domainData.ssl,
-      riskAdjustment: domainData.risk_adjustment,
+      whois: domainData.whois || {},
+      dns: domainData.dns || {},
+      ssl: domainData.ssl || {},
+      screenshot: domainData.screenshot || null,
+      pageBehavior: domainData.page_behavior || null,
+      riskAdjustment: domainData.risk_adjustment || 0,
       registrar: domainData.whois?.registrar || "Unknown",
       creationDate: domainData.whois?.creation_date || "Unknown",
       expirationDate: domainData.whois?.expiration_date || "Unknown",

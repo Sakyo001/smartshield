@@ -4,6 +4,8 @@ Real-time validation against trusted sources (NOT hardcoded)
 """
 
 import re
+import os
+import base64
 import requests
 from typing import Dict, List, Optional, Tuple
 import dns.resolver
@@ -261,7 +263,7 @@ class BrandVerificationService:
         print(f"❓ Could not verify domain ownership")
         return False, "unknown"
 
-    def _detect_typosquatting(self, domain: str) -> Tuple[str, str] or None:
+    def _detect_typosquatting(self, domain: str) -> Optional[Tuple[str, str]]:
         """
         Detect typosquatting attacks by finding similar legitimate domains
         Examples: 
@@ -748,3 +750,237 @@ class BrandVerificationService:
             return domain1 == domain2
         except:
             return False
+
+    def _get_playwright_launch_config(self) -> Dict[str, Optional[str]]:
+        """Resolve an executable path for Chromium in local and container environments."""
+        try:
+            from playwright.sync_api import sync_playwright  # noqa: F401
+        except ImportError:
+            return {'available': False, 'executable_path': None}
+
+        import glob
+        import shutil
+
+        os.environ['PLAYWRIGHT_BROWSERS_PATH'] = '/app/.playwright'
+
+        headless_shell_glob = glob.glob(
+            '/app/.playwright/chromium_headless_shell-*/chrome-linux/headless_shell'
+        )
+        chromium_glob = glob.glob('/app/.playwright/chromium-*/chrome-linux/chrome')
+        system_chromium = shutil.which('chromium') or shutil.which('chromium-browser')
+
+        executable_path = None
+        if headless_shell_glob:
+            executable_path = headless_shell_glob[0]
+        elif chromium_glob:
+            executable_path = chromium_glob[0]
+        elif system_chromium:
+            executable_path = system_chromium
+
+        return {'available': True, 'executable_path': executable_path}
+
+    def _fetch_page_with_playwright(self, url: str) -> Dict:
+        """
+        Extract rendered HTML, detect login forms, interact with inputs,
+        wait for dynamic JS content, and capture a screenshot.
+        """
+        result = {
+            'html': '',
+            'phishing_score': 0,
+            'findings': [],
+            'has_login_form': False,
+            'login_forms_detected': 0,
+            'screenshot': None,
+        }
+
+        launch_cfg = self._get_playwright_launch_config()
+        if not launch_cfg.get('available'):
+            result['findings'].append('Playwright is not installed - browser analysis skipped')
+            return result
+
+        executable_path = launch_cfg.get('executable_path')
+        if not executable_path:
+            result['findings'].append('Chromium binary not found - browser analysis skipped')
+            return result
+
+        try:
+            from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
+            import base64
+
+            with sync_playwright() as p:
+                browser = p.chromium.launch(
+                    headless=True,
+                    executable_path=executable_path,
+                    args=[
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-gpu',
+                    ],
+                )
+                page = browser.new_page(
+                    viewport={'width': 1366, 'height': 768},
+                    user_agent=(
+                        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                        'AppleWebKit/537.36 (KHTML, like Gecko) '
+                        'Chrome/120.0.0.0 Safari/537.36'
+                    )
+                )
+                page.set_default_timeout(15000)
+
+                try:
+                    page.goto(url, wait_until='domcontentloaded', timeout=15000)
+                    page.wait_for_timeout(1500)
+                except PlaywrightTimeout:
+                    result['findings'].append('Page load timeout - analyzing partial content')
+
+                login_probe = page.evaluate(
+                    """
+                    () => {
+                      const forms = Array.from(document.querySelectorAll('form'));
+                      let loginLikeForms = 0;
+                      for (const form of forms) {
+                        const hasPassword = !!form.querySelector('input[type="password"]');
+                        const hasIdentity = !!form.querySelector(
+                          'input[name*="user" i],input[name*="email" i],input[name*="login" i]'
+                        );
+                        if (hasPassword || hasIdentity) loginLikeForms += 1;
+                      }
+                      return {
+                        loginLikeForms,
+                        passwordFieldCount: document.querySelectorAll('input[type="password"]').length,
+                      };
+                    }
+                    """
+                )
+
+                login_forms_detected = int(login_probe.get('loginLikeForms', 0))
+                password_field_count = int(login_probe.get('passwordFieldCount', 0))
+                result['login_forms_detected'] = login_forms_detected
+                result['has_login_form'] = login_forms_detected > 0 or password_field_count > 0
+
+                try:
+                    page.click('body', timeout=2000)
+                except Exception:
+                    pass
+
+                try:
+                    identity_input = page.query_selector(
+                        'input[name*="user" i], input[name*="email" i], input[name*="login" i], input[type="text"]'
+                    )
+                    if identity_input:
+                        identity_input.click(timeout=2000)
+                        identity_input.type('smartshield_probe', delay=25)
+                        identity_input.press('Control+A')
+                        identity_input.press('Backspace')
+                except Exception:
+                    pass
+
+                try:
+                    password_input = page.query_selector('input[type="password"]')
+                    if password_input:
+                        password_input.click(timeout=2000)
+                        password_input.type('SmartShieldProbe123!', delay=20)
+                        password_input.press('Control+A')
+                        password_input.press('Backspace')
+                except Exception:
+                    pass
+
+                page.wait_for_timeout(1000)
+
+                if result['has_login_form']:
+                    result['phishing_score'] += 12
+                    result['findings'].append(
+                        f"⚠️ Playwright detected login-like forms ({login_forms_detected})"
+                    )
+
+                result['html'] = page.content()
+                png_bytes = page.screenshot(type='png', full_page=False)
+                result['screenshot'] = base64.b64encode(png_bytes).decode('utf-8')
+                browser.close()
+
+        except Exception as e:
+            result['findings'].append(f'Playwright analysis failed: {type(e).__name__}')
+
+        return result
+
+    def capture_screenshot(self, url: str) -> Optional[str]:
+        """Capture a screenshot via Playwright for fallback screenshot-only flows."""
+        print(f"🎯 Starting screenshot capture for: {url}")
+        try:
+            page_data = self._fetch_page_with_playwright(url)
+            screenshot = page_data.get('screenshot')
+            if isinstance(screenshot, str) and screenshot:
+                print(f"✅ Screenshot captured successfully ({len(screenshot)} bytes base64)")
+                return screenshot
+            else:
+                print(f"⚠️ Screenshot data missing or invalid from page_data")
+                # Fallback: Try direct Playwright screenshot
+                return self._capture_direct_screenshot(url)
+        except Exception as e:
+            print(f"❌ Screenshot capture failed: {type(e).__name__}: {str(e)}")
+            # Fallback: Try direct Playwright screenshot
+            try:
+                return self._capture_direct_screenshot(url)
+            except Exception as fallback_e:
+                print(f"❌ Fallback screenshot also failed: {type(fallback_e).__name__}")
+                return None
+
+    def _capture_direct_screenshot(self, url: str) -> Optional[str]:
+        """Direct screenshot capture without full HTML analysis."""
+        print(f"📸 Attempting direct screenshot capture for: {url}")
+        
+        launch_cfg = self._get_playwright_launch_config()
+        if not launch_cfg.get('available'):
+            print("  ⚠️ Playwright not available")
+            return None
+
+        executable_path = launch_cfg.get('executable_path')
+        if not executable_path:
+            print("  ⚠️ Chromium binary not found")
+            return None
+
+        try:
+            from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
+            import base64
+
+            with sync_playwright() as p:
+                browser = p.chromium.launch(
+                    headless=True,
+                    executable_path=executable_path,
+                    args=[
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-gpu',
+                    ],
+                )
+                page = browser.new_page(
+                    viewport={'width': 1366, 'height': 768},
+                    user_agent=(
+                        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                        'AppleWebKit/537.36 (KHTML, like Gecko) '
+                        'Chrome/120.0.0.0 Safari/537.36'
+                    )
+                )
+                page.set_default_timeout(10000)
+
+                try:
+                    page.goto(url, wait_until='domcontentloaded', timeout=10000)
+                    page.wait_for_timeout(500)
+                except PlaywrightTimeout:
+                    print("  ⚠️ Page load timeout but proceeding with screenshot")
+                except Exception as e:
+                    print(f"  ⚠️ Navigation error: {type(e).__name__}")
+
+                # Capture full page for better coverage
+                png_bytes = page.screenshot(type='png', full_page=True)
+                screenshot_b64 = base64.b64encode(png_bytes).decode('utf-8')
+                browser.close()
+                
+                print(f"  ✅ Direct screenshot captured ({len(screenshot_b64)} bytes base64)")
+                return screenshot_b64
+
+        except Exception as e:
+            print(f"  ❌ Direct screenshot failed: {type(e).__name__}: {str(e)}")
+            return None

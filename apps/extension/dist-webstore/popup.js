@@ -902,6 +902,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const hasDNS = d && Object.keys(d).some((k) => d[k] && d[k].length > 0);
       const s = details.ssl;
       const hasSSL = s && !s.error;
+      const screenshot = details.screenshot || r.screenshot || null;
+      const pageBehavior = details.pageBehavior || r.pageBehavior || null;
 
       const svgIcon = (path) =>
         `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
@@ -953,6 +955,28 @@ document.addEventListener("DOMContentLoaded", () => {
           ${spStat('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>', "Created", created ? formatRelativeDate(created) : "Not available")}
           ${spStat('<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>', "Last Analysis", lastAnalysis)}
         </div>
+
+        ${
+          pageBehavior
+            ? `<div class="sp-bot-message sp-bot-accent-blue" style="margin-top:10px;">
+                <div class="sp-bot-header"><span>Playwright Behavior Analysis</span></div>
+                <div class="sp-bot-content">
+                  Login forms: <strong>${pageBehavior.has_login_form ? `Detected (${pageBehavior.login_forms_detected || 1})` : "None detected"}</strong><br/>
+                  Dynamic findings: <strong>${pageBehavior.html_findings_count || 0}</strong><br/>
+                  JS interaction probe: <strong>${pageBehavior.js_rendered_analysis ? "Active" : "Unavailable"}</strong>
+                </div>
+              </div>`
+            : ""
+        }
+
+        ${
+          screenshot
+            ? `<div style="margin-top:10px;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg-card2)">
+                <div style="padding:8px 10px;font-size:11px;color:var(--muted)">Playwright Screenshot Capture</div>
+                <img src="data:image/png;base64,${screenshot}" alt="Scanned page screenshot" style="display:block;width:100%;max-height:200px;object-fit:cover;object-position:top;" />
+              </div>`
+            : ""
+        }
 
         <!-- HTTP Warning -->
         ${
