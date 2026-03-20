@@ -354,42 +354,31 @@ export default function Navbar() {
             <button
               onClick={toggleTheme}
               aria-label={`Switch to ${effectiveTheme === "dark" ? "light" : "dark"} mode`}
-              className="relative hidden md:flex items-center w-[82px] h-10 rounded-full overflow-hidden
-                dark:bg-[#0a0d1f]/80 bg-white/85
-                border border-[#545BFF]/25 hover:border-[#545BFF]/55
-                backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]
-                transition-all duration-300 hover:shadow-[0_0_24px_rgba(84,91,255,0.28)]"
+              className="relative hidden md:flex items-center w-[72px] h-9 rounded-full overflow-hidden
+                dark:bg-[#0c0d1a]/80 bg-slate-100/90
+                border border-[#545BFF]/20 hover:border-[#545BFF]/50
+                backdrop-blur-sm shadow-inner
+                transition-all duration-300 hover:shadow-[0_0_18px_rgba(84,91,255,0.25)]"
             >
-              <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#545BFF]/12 via-transparent to-[#b19eef]/16" />
-              <span className="pointer-events-none absolute inset-[3px] rounded-full border border-white/35 dark:border-[#a4acff]/12" />
-
-              {/* Sun — left slot */}
-              <span
-                className={`relative z-10 flex-1 flex justify-center transition-colors duration-300 ${
-                  effectiveTheme === "light" ? "text-[#f59e0b]" : "text-faded/45"
-                }`}
-              >
+              {/* Sliding glowing knob */}
+              <motion.div
+                className="absolute top-[4px] h-[28px] w-[28px] rounded-full bg-gradient-to-br from-[#545BFF] to-[#8B5CF6]"
+                style={{ boxShadow: "0 0 14px rgba(84,91,255,0.65), 0 0 4px rgba(139,92,246,0.4)" }}
+                animate={{ x: effectiveTheme === "light" ? 4 : 40 }}
+                transition={{ type: "spring", stiffness: 300, damping: 26 }}
+              />
+              {/* Sun — left slot (light mode) */}
+              <span className={`relative z-10 flex-1 flex justify-center transition-colors duration-300 ${
+                effectiveTheme === "light" ? "text-white" : "text-faded/40"
+              }`}>
                 <SunIcon size={14} />
               </span>
-
-              {/* Moon — right slot */}
-              <span
-                className={`relative z-10 flex-1 flex justify-center transition-colors duration-300 ${
-                  effectiveTheme === "dark" ? "text-[#b19eef]" : "text-faded/45"
-                }`}
-              >
+              {/* Moon — right slot (dark mode) */}
+              <span className={`relative z-10 flex-1 flex justify-center transition-colors duration-300 ${
+                effectiveTheme === "dark" ? "text-white" : "text-faded/40"
+              }`}>
                 <MoonIcon size={14} />
               </span>
-
-              {/* Sliding core knob */}
-              <motion.span
-                className="absolute top-[4px] h-[30px] w-[30px] rounded-full bg-gradient-to-br from-[#545BFF] to-[#8B5CF6] flex items-center justify-center text-white"
-                style={{ boxShadow: "0 0 16px rgba(84,91,255,0.62), 0 0 6px rgba(139,92,246,0.35)" }}
-                animate={{ x: effectiveTheme === "light" ? 5 : 47 }}
-                transition={{ type: "spring", stiffness: 280, damping: 24 }}
-              >
-                {effectiveTheme === "light" ? <SunIcon size={13} /> : <MoonIcon size={13} />}
-              </motion.span>
             </button>
 
             {/* CTA button — desktop */}
@@ -450,13 +439,11 @@ export default function Navbar() {
             <button
               onClick={toggleTheme}
               aria-label="Toggle theme"
-              className="md:hidden relative flex items-center justify-center w-10 h-10 rounded-xl overflow-hidden
-                dark:bg-[#0a0d1f]/70 bg-white/80
-                border border-[#545BFF]/25 hover:border-[#545BFF]/55
-                transition-all duration-300 hover:shadow-[0_0_16px_rgba(84,91,255,0.32)]"
+              className="md:hidden relative flex items-center justify-center w-9 h-9 rounded-lg overflow-hidden
+                dark:bg-[#0c0d1a]/60 bg-slate-100/80
+                border border-[#545BFF]/20 hover:border-[#545BFF]/50
+                transition-all duration-300 hover:shadow-[0_0_12px_rgba(84,91,255,0.3)]"
             >
-              <span className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#545BFF]/14 to-[#b19eef]/14" />
-              <span className="pointer-events-none absolute inset-[2px] rounded-[10px] border border-white/35 dark:border-[#a4acff]/12" />
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={effectiveTheme}
@@ -464,7 +451,7 @@ export default function Navbar() {
                   animate={{ rotate: 0, opacity: 1, scale: 1 }}
                   exit={{ rotate: 90, opacity: 0, scale: 0.6 }}
                   transition={{ duration: 0.2 }}
-                  className={`relative z-10 ${effectiveTheme === "dark" ? "text-[#b19eef]" : "text-[#545BFF]"}`}
+                  className={effectiveTheme === "dark" ? "text-[#a89de8]" : "text-[#545BFF]"}
                 >
                   {effectiveTheme === "dark" ? <SunIcon size={18} /> : <MoonIcon size={18} />}
                 </motion.div>

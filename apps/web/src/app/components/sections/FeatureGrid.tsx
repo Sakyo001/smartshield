@@ -261,7 +261,7 @@ function FeatureCard({
   return (
     <div
       className="relative h-full rounded-2xl overflow-hidden flex flex-col select-none
-        dark:bg-[#070810]/96 bg-white/98 backdrop-blur-2xl"
+        bg-white/95 dark:bg-[#090d1a] backdrop-blur-2xl transition-colors duration-300"
       style={{
         border: isFront
           ? `1px solid ${feature.from}45`
@@ -343,7 +343,7 @@ function FeatureCard({
             />
             <div
               className="relative w-full h-full rounded-xl flex items-center justify-center
-                dark:bg-[#070810]/85 bg-white/50 dark:border-[#545BFF]/28 border-[#545BFF]/15 border"
+                bg-white/65 dark:bg-[#11172b] dark:border-[#545BFF]/28 border-[#545BFF]/15 border transition-colors duration-300"
               style={{
                 transition:
                   "background-color 0.3s ease, border-color 0.3s ease",
@@ -756,7 +756,7 @@ export default function FeatureGrid() {
                       ease: [0.22, 1, 0.36, 1],
                     }}
                     className="group relative overflow-hidden px-2 py-2.5 sm:px-3 sm:py-3 md:py-3.5 rounded-xl cursor-default
-                      dark:bg-[#0c0d1c]/60 bg-white/85 backdrop-blur-sm
+                      bg-white/86 dark:bg-[#11182d]/80 backdrop-blur-sm
                       border border-[#545BFF]/18 hover:border-[#545BFF]/45
                       shadow-[0_1px_10px_rgba(84,91,255,0.07)]
                       transition-colors duration-300"
