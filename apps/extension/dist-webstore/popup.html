@@ -4499,7 +4499,7 @@
           <div class="ob-title">Ready to Browse<br />Safely</div>
           <div class="ob-desc">
             Enable Safe Mode to activate real-time warning. You can change this
-            anytime from the popup.
+            anytime from the Popup.
           </div>
           <div class="ob-toggle-row">
             <div class="ob-toggle-label">
@@ -4750,28 +4750,63 @@
             <!-- Login Prompt (for unauthenticated users) -->
             <div id="community-login-prompt" class="community-prompt-inner">
               <div class="community-prompt-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
                 </svg>
               </div>
               <div class="community-prompt-content">
                 <p class="community-prompt-title">Community Feedback</p>
-                <p class="community-prompt-desc">Log in to view and share feedback about this site</p>
+                <p class="community-prompt-desc">
+                  Log in to view and share feedback about this site
+                </p>
               </div>
               <button id="community-login-btn" class="community-login-btn">
                 Log In
               </button>
             </div>
             <!-- Community View Button (for authenticated users) -->
-            <div id="community-content-section" class="community-view-section hidden">
+            <div
+              id="community-content-section"
+              class="community-view-section hidden"
+            >
               <p class="community-section-title">Community Feedback</p>
               <div class="community-compose-card">
                 <p class="community-compose-title">Share your feedback</p>
                 <div class="community-flag-row" id="community-flag-row">
-                  <button type="button" class="community-flag-btn" data-flag="legitimate" aria-pressed="false">Safe</button>
-                  <button type="button" class="community-flag-btn active" data-flag="neutral" aria-pressed="true">Neutral</button>
-                  <button type="button" class="community-flag-btn" data-flag="phishing" aria-pressed="false">Dangerous</button>
+                  <button
+                    type="button"
+                    class="community-flag-btn"
+                    data-flag="legitimate"
+                    aria-pressed="false"
+                  >
+                    Safe
+                  </button>
+                  <button
+                    type="button"
+                    class="community-flag-btn active"
+                    data-flag="neutral"
+                    aria-pressed="true"
+                  >
+                    Neutral
+                  </button>
+                  <button
+                    type="button"
+                    class="community-flag-btn"
+                    data-flag="phishing"
+                    aria-pressed="false"
+                  >
+                    Dangerous
+                  </button>
                 </div>
                 <textarea
                   id="community-comment-input"
@@ -4779,23 +4814,52 @@
                   placeholder="Write your feedback about this site..."
                   maxlength="1000"
                 ></textarea>
-                <div id="community-comment-status" class="community-comment-status info hidden"></div>
+                <div
+                  id="community-comment-status"
+                  class="community-comment-status info hidden"
+                ></div>
                 <div class="community-actions-row">
-                  <button id="community-submit-comment-btn" class="community-submit-btn">Submit Comment</button>
-                  <button id="community-view-feedback-btn" class="community-view-btn">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
+                  <button
+                    id="community-submit-comment-btn"
+                    class="community-submit-btn"
+                  >
+                    Submit Comment
+                  </button>
+                  <button
+                    id="community-view-feedback-btn"
+                    class="community-view-btn"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
                     </svg>
                     Refresh
                   </button>
                 </div>
               </div>
-              <div id="community-feedback-results" class="community-feedback-results hidden">
-                <div id="community-feedback-state" class="community-feedback-state">
+              <div
+                id="community-feedback-results"
+                class="community-feedback-results hidden"
+              >
+                <div
+                  id="community-feedback-state"
+                  class="community-feedback-state"
+                >
                   Click "Refresh" to load comments for this site.
                 </div>
-                <div id="community-feedback-list" class="community-feedback-list hidden"></div>
+                <div
+                  id="community-feedback-list"
+                  class="community-feedback-list hidden"
+                ></div>
               </div>
             </div>
           </div>
