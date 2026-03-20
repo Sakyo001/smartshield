@@ -37,6 +37,7 @@ interface ScanResult {
       has_login_form?: boolean;
       login_forms_detected?: number;
       html_findings_count?: number;
+      findings?: string[];
       interaction_ready?: boolean;
       js_rendered_analysis?: boolean;
     } | null;
@@ -2658,6 +2659,26 @@ function GuestScanner({
                               </p>
                             </div>
                           </div>
+
+                          {Array.isArray(pageBehavior.findings) &&
+                            pageBehavior.findings.length > 0 && (
+                              <div className="mt-3 p-3 rounded-xl border border-blue-500/20 bg-blue-500/6">
+                                <p className="text-[10px] uppercase tracking-wide text-blue-600 dark:text-blue-300/90 mb-2">
+                                  Playwright Findings
+                                </p>
+                                <div className="space-y-1.5">
+                                  {pageBehavior.findings.map((finding, idx) => (
+                                    <div
+                                      key={`${finding}-${idx}`}
+                                      className="text-xs text-copy/90 flex items-start gap-2"
+                                    >
+                                      <span className="text-blue-500 mt-0.5">•</span>
+                                      <span>{finding}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                         </div>
                       )}
 
