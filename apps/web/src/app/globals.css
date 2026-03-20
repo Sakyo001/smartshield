@@ -1,9 +1,6 @@
 @import "tailwindcss";
 
-/* ── Class-based dark mode (Tailwind v4) ── */
-@layer utilities {
-  @dark: (&:where(.dark, .dark *));
-}
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* ── Semantic colour tokens → bg-page, text-heading, etc. ── */
 @theme {
@@ -15,6 +12,7 @@
   --color-faded: var(--c-faded);
   --color-divider: var(--c-divider);
 }
+
 
 /* ── Light palette ── */
 :root {

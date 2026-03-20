@@ -241,10 +241,23 @@ export default function HeroSection() {
           </div>
         </motion.div>
 
-        {/* ── Layer 6.5: dark mode mobile gradient only ── */}
-        <div className="absolute inset-x-0 bottom-0 z-[7] pointer-events-none md:hidden hidden dark:block" style={{ height: "70%", background: "linear-gradient(to top, var(--c-page, #05060f) 0%, var(--c-page, #05060f) 20%, rgba(5, 6, 15, 0.92) 42%, rgba(5, 6, 15, 0.55) 70%, transparent 100%)" }} />
-        {/* Light mode mobile gradient */}
-        <div className="absolute inset-x-0 bottom-0 z-[7] pointer-events-none md:hidden dark:hidden" style={{ height: "70%", background: "linear-gradient(to top, rgba(248, 249, 252, 1) 0%, rgba(248, 249, 252, 0.98) 22%, rgba(248, 249, 252, 0.94) 45%, rgba(248, 249, 252, 0.65) 70%, transparent 100%)" }} />
+        {/* ── Layer 6.5: mobile gradients with explicit light/dark opacity switching ── */}
+        <div
+          className="absolute inset-x-0 bottom-0 z-[7] pointer-events-none md:hidden opacity-0 dark:opacity-100 transition-opacity duration-300"
+          style={{
+            height: "70%",
+            background:
+              "linear-gradient(to top, var(--c-page, #05060f) 0%, var(--c-page, #05060f) 20%, rgba(5, 6, 15, 0.92) 42%, rgba(5, 6, 15, 0.55) 70%, transparent 100%)",
+          }}
+        />
+        <div
+          className="absolute inset-x-0 bottom-0 z-[7] pointer-events-none md:hidden opacity-100 dark:opacity-0 transition-opacity duration-300"
+          style={{
+            height: "70%",
+            background:
+              "linear-gradient(to top, rgba(248, 249, 252, 1) 0%, rgba(248, 249, 252, 0.98) 22%, rgba(248, 249, 252, 0.94) 45%, rgba(248, 249, 252, 0.65) 70%, transparent 100%)",
+          }}
+        />
 
         {/* ── Layer 8: mobile HUD status strip — follows shield as it moves upward ── */}
         <motion.div
