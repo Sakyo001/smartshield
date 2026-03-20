@@ -1,5 +1,5 @@
 {
-  "name": "phishguard-extension",
+  "name": "smartshield-extension",
   "version": "1.0.0",
   "description": "PhishGuard browser extension - simple phishing protection",
   "scripts": {
