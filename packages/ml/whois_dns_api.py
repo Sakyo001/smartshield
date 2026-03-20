@@ -217,7 +217,26 @@ def domain_info():
         # MULTI-LAYER RISK ASSESSMENT
         
         # Layer 1: Apply deterministic rules
-        deterministic_risk, deterministic_flags = apply_deterministic_rules(url, domain)
+        # Defensive parsing: older/newer deployments may return extra values.
+        deterministic_result = apply_deterministic_rules(url, domain)
+        deterministic_risk = 0
+        deterministic_flags = []
+        if isinstance(deterministic_result, (tuple, list)):
+            if len(deterministic_result) >= 1:
+                try:
+                    deterministic_risk = int(deterministic_result[0] or 0)
+                except Exception:
+                    deterministic_risk = 0
+            if len(deterministic_result) >= 2 and isinstance(deterministic_result[1], list):
+                deterministic_flags = deterministic_result[1]
+            if len(deterministic_result) > 2:
+                print(
+                    f"[SmartShield] apply_deterministic_rules returned {len(deterministic_result)} values; using first two."
+                )
+        else:
+            print(
+                "[SmartShield] apply_deterministic_rules returned unexpected type; defaulting deterministic outputs."
+            )
         print(f"Layer 1 (Deterministic): +{deterministic_risk}% risk, flags: {deterministic_flags}")
         
         # Layer 3: Calculate contextual risk adjustment

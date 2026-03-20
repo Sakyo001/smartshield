@@ -179,6 +179,10 @@ class BrandVerificationService:
             # Sort by length descending so longer keywords match before shorter ones
             # (prevents "bank" matching before "unionbank")
             for kw in sorted(all_keywords.keys(), key=len, reverse=True):
+                # Ignore very short alias fragments for substring matching.
+                # They create false positives such as "wa" in "railway".
+                if len(kw) < 3:
+                    continue
                 if kw in slug:
                     resolved = all_keywords[kw]
                     if resolved in BRAND_REGISTRY:
