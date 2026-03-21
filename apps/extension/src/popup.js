@@ -138,7 +138,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const communityCommentStatus = document.getElementById(
       "community-comment-status",
     );
-    const communityFlagButtons = document.querySelectorAll(".community-flag-btn");
+    const communityFlagButtons = document.querySelectorAll(
+      ".community-flag-btn",
+    );
     const communityFeedbackResults = document.getElementById(
       "community-feedback-results",
     );
@@ -202,7 +204,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function setCommentStatus(message, kind = "info") {
       if (!communityCommentStatus) return;
-      communityCommentStatus.classList.remove("hidden", "info", "success", "error");
+      communityCommentStatus.classList.remove(
+        "hidden",
+        "info",
+        "success",
+        "error",
+      );
       communityCommentStatus.classList.add(kind);
       communityCommentStatus.textContent = message;
     }
@@ -243,7 +250,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function renderFeedbackState(message) {
-      if (!communityFeedbackResults || !communityFeedbackState || !communityFeedbackList) {
+      if (
+        !communityFeedbackResults ||
+        !communityFeedbackState ||
+        !communityFeedbackList
+      ) {
         return;
       }
       communityFeedbackResults.classList.remove("hidden");
@@ -254,7 +265,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function renderFeedbackList(reports) {
-      if (!communityFeedbackResults || !communityFeedbackState || !communityFeedbackList) {
+      if (
+        !communityFeedbackResults ||
+        !communityFeedbackState ||
+        !communityFeedbackList
+      ) {
         return;
       }
 
@@ -262,7 +277,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!Array.isArray(reports) || reports.length === 0) {
         communityFeedbackState.classList.remove("hidden");
-        communityFeedbackState.textContent = "No community feedback yet for this site.";
+        communityFeedbackState.textContent =
+          "No community feedback yet for this site.";
         communityFeedbackList.classList.add("hidden");
         communityFeedbackList.innerHTML = "";
         return;
@@ -273,7 +289,9 @@ document.addEventListener("DOMContentLoaded", () => {
       communityFeedbackList.innerHTML = reports
         .map((report) => {
           const rawFlag =
-            typeof report?.flag === "string" ? report.flag.toLowerCase() : "neutral";
+            typeof report?.flag === "string"
+              ? report.flag.toLowerCase()
+              : "neutral";
           const flag = ["phishing", "legitimate", "neutral"].includes(rawFlag)
             ? rawFlag
             : "neutral";
@@ -284,7 +302,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 ? "Safe"
                 : "Neutral";
           const description =
-            typeof report?.description === "string" && report.description.trim().length > 0
+            typeof report?.description === "string" &&
+            report.description.trim().length > 0
               ? report.description.trim()
               : "No description provided.";
           const createdAt = formatFeedbackDate(report?.created_at);
@@ -307,7 +326,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function fetchCommunityFeedback() {
       if (!currentRootDomain) {
-        renderFeedbackState("Run a scan first to load feedback for the current site.");
+        renderFeedbackState(
+          "Run a scan first to load feedback for the current site.",
+        );
         return;
       }
 
@@ -473,7 +494,9 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const stored = await chrome.storage.local.get(["smartshield_auth"]);
         const auth = stored?.smartshield_auth;
-        const hasToken = typeof auth?.access_token === "string" && auth.access_token.length > 0;
+        const hasToken =
+          typeof auth?.access_token === "string" &&
+          auth.access_token.length > 0;
         const notExpired =
           typeof auth?.expires_at !== "number" || auth.expires_at > Date.now();
         if (hasToken && notExpired) {
@@ -601,7 +624,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (communityCommentInput) {
       communityCommentInput.addEventListener("input", () => {
-        if (communityCommentStatus && !communityCommentStatus.classList.contains("hidden")) {
+        if (
+          communityCommentStatus &&
+          !communityCommentStatus.classList.contains("hidden")
+        ) {
           clearCommentStatus();
         }
       });
@@ -983,19 +1009,6 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
 
         ${
-          pageBehavior
-            ? `<div class="sp-bot-message sp-bot-accent-blue" style="margin-top:10px;">
-                <div class="sp-bot-header"><span>Playwright Behavior Analysis</span></div>
-                <div class="sp-bot-content">
-                  Login forms: <strong>${pageBehavior.has_login_form ? `Detected (${pageBehavior.login_forms_detected || 1})` : "None detected"}</strong><br/>
-                  Dynamic findings: <strong>${pageBehavior.html_findings_count || 0}</strong><br/>
-                  JS interaction probe: <strong>${pageBehavior.js_rendered_analysis ? "Active" : "Unavailable"}</strong>
-                </div>
-              </div>`
-            : ""
-        }
-
-        ${
           screenshot
             ? `<div style="margin-top:10px;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg-card2)">
                 <div style="padding:8px 10px;font-size:11px;color:var(--muted)">Playwright Screenshot Capture</div>
@@ -1057,6 +1070,10 @@ document.addEventListener("DOMContentLoaded", () => {
             "ssl-err": {
               label: "SSL Warning",
               icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM15 9l-6 6M9 9l6 6"/>',
+            },
+            playwright: {
+              label: "Playwright Analysis",
+              icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2-13h4v6h-4z"/><circle cx="12" cy="7" r="1"/>',
             },
             final: {
               label: "Recommendation",
