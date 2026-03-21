@@ -217,7 +217,26 @@ def domain_info():
         # MULTI-LAYER RISK ASSESSMENT
         
         # Layer 1: Apply deterministic rules
-        deterministic_risk, deterministic_flags = apply_deterministic_rules(url, domain)
+        # Defensive parsing: older/newer deployments may return extra values.
+        deterministic_result = apply_deterministic_rules(url, domain)
+        deterministic_risk = 0
+        deterministic_flags = []
+        if isinstance(deterministic_result, (tuple, list)):
+            if len(deterministic_result) >= 1:
+                try:
+                    deterministic_risk = int(deterministic_result[0] or 0)
+                except Exception:
+                    deterministic_risk = 0
+            if len(deterministic_result) >= 2 and isinstance(deterministic_result[1], list):
+                deterministic_flags = deterministic_result[1]
+            if len(deterministic_result) > 2:
+                print(
+                    f"[SmartShield] apply_deterministic_rules returned {len(deterministic_result)} values; using first two."
+                )
+        else:
+            print(
+                "[SmartShield] apply_deterministic_rules returned unexpected type; defaulting deterministic outputs."
+            )
         print(f"Layer 1 (Deterministic): +{deterministic_risk}% risk, flags: {deterministic_flags}")
         
         # Layer 3: Calculate contextual risk adjustment
@@ -225,6 +244,57 @@ def domain_info():
             whois_info, dns_records, ssl_info
         )
         print(f"Layer 3 (Contextual): risk_reduction={risk_reduction}, indicators={risk_indicators}")
+
+        # Capture a screenshot only for phishing-level outcomes so the scan page
+        # can show visual proof for dangerous detections.
+        critical_indicators = [
+            i for i in (risk_indicators or [])
+            if isinstance(i, str) and ("CRITICAL" in i or "🚨" in i)
+        ]
+        estimated_risk = 100 if critical_indicators else max(0, min(100, deterministic_risk - risk_reduction))
+        phishing_flags = [
+            f for f in deterministic_flags
+            if isinstance(f, str) and (
+                f.startswith("🚨")
+                or "PHISHING" in f.upper()
+                or "BRAND IMPERSONATION" in f.upper()
+            )
+        ]
+        phishing_detected = estimated_risk >= 70 or len(phishing_flags) > 0
+
+        screenshot_b64 = None
+        if phishing_detected:
+            print(f"📸 Attempting screenshot capture (risk={estimated_risk}, phishing_flags={len(phishing_flags)})")
+            try:
+                from third_party_apis import BrandVerificationService as _BVS
+                bvs = _BVS()
+                screenshot_b64 = bvs.capture_screenshot(url)
+                if screenshot_b64 and len(screenshot_b64) > 100:
+                    print(f"✅ Screenshot successfully captured ({len(screenshot_b64)} bytes)")
+                else:
+                    print(f"⚠️ Screenshot empty or None (data={screenshot_b64 is not None})")
+            except Exception as e:
+                import traceback
+                print(f"❌ Screenshot capture failed: {type(e).__name__}: {str(e)}")
+                traceback.print_exc()
+
+        login_flags = [
+            f for f in deterministic_flags
+            if isinstance(f, str) and ("login form" in f.lower() or "credential harvesting form" in f.lower())
+        ]
+        browser_findings = [
+            f for f in deterministic_flags
+            if isinstance(f, str) and (f.startswith("⚠️") or f.startswith("🚨"))
+        ]
+
+        page_behavior = {
+            'has_login_form': len(login_flags) > 0,
+            'login_forms_detected': len(login_flags),
+            'html_findings_count': len(browser_findings),
+            'findings': browser_findings[:8],
+            'interaction_ready': True,
+            'js_rendered_analysis': True,
+        }
         
         response_data = {
             'domain': domain,
@@ -233,6 +303,8 @@ def domain_info():
             'whois': whois_info,
             'dns': dns_records,
             'ssl': ssl_info,
+            'screenshot': screenshot_b64,
+            'page_behavior': page_behavior,
             'risk_adjustment': {
                 'reduction_percentage': risk_reduction,
                 'positive_factors': positive_count,

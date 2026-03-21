@@ -23,7 +23,7 @@ export function UserAuthForm() {
 			envOrigin ??
 			(typeof window !== "undefined" ? window.location.origin : "http://localhost:3001");
 
-		return `${origin}/auth/callback?next=${encodeURIComponent("/dashboard")}`;
+		return `${origin}/auth/callback?next=${encodeURIComponent("/")}`;
 	};
 
 	const [email, setEmail] = useState("");
@@ -129,7 +129,7 @@ export function UserAuthForm() {
 					aria-label="Back to home"
 				>
 					<ArrowLeft size={16} />
-					<span>Back</span>
+					<span>Back to Home</span>
 				</button>
 				<div className="mb-7 text-center">
 					<div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center">
