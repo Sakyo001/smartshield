@@ -23,16 +23,24 @@ export function AdminLoginForm() {
 
     try {
       // Try Supabase auth first
+      const normalizedEmail = email.trim().toLowerCase();
       const { data, error: authError } = await supabase.auth.signInWithPassword(
         {
-          email,
+          email: normalizedEmail,
           password,
         },
       );
 
       if (authError) {
-        setError("Invalid email or password");
-        setLoading(false);
+        const message = (authError.message || "").toLowerCase();
+        if (message.includes("email not confirmed")) {
+          setError("Email is not confirmed. Confirm it in Supabase Auth and try again.");
+        } else if (message.includes("invalid login credentials")) {
+          setError("Invalid email or password.");
+        } else {
+          setError(authError.message || "Unable to sign in right now.");
+        }
+        console.error("Admin login auth error:", authError);
         return;
       }
 
@@ -48,18 +56,19 @@ export function AdminLoginForm() {
           // User authenticated but not an admin
           await supabase.auth.signOut();
           setError("You do not have admin access");
-          setLoading(false);
           return;
         }
 
         // User is authenticated and is an admin
-        router.push("/admin/dashboard");
+        router.replace("/admin/dashboard");
+        router.refresh();
       } else {
         setError("Invalid email or password");
       }
     } catch (err) {
       setError("An error occurred. Please try again.");
       console.error(err);
+    } finally {
       setLoading(false);
     }
   };
