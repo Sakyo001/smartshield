@@ -1507,7 +1507,7 @@ function GuestScanner({
 
     setSubmittingComment(true);
     try {
-      const res = await fetch("/api/feedback", {
+      const res = await fetch("/api/community", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
