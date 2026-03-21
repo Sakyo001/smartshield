@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "@lib/theme-context";
+import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 
 // ─── FAQ data ────────────────────────────────────────────────────────────────
 const FAQS = [
@@ -73,6 +73,7 @@ export default function ChatbotWidget() {
   const [displayed, setDisplayed] = useState("");
   const [typing, setTyping] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
   const { theme } = useTheme();
   const isDark = theme === "dark";
   const rafRef = useRef<number | null>(null);
@@ -108,7 +109,7 @@ export default function ChatbotWidget() {
         lastTickRef.current = ts;
         typingIndexRef.current = Math.min(
           typingIndexRef.current + TYPING_CHARS_PER_FRAME,
-          typingTextRef.current.length
+          typingTextRef.current.length,
         );
         setDisplayed(typingTextRef.current.slice(0, typingIndexRef.current));
 
@@ -135,7 +136,12 @@ export default function ChatbotWidget() {
   };
 
   // Cleanup on unmount
-  useEffect(() => () => { stopTyping(); }, []);
+  useEffect(
+    () => () => {
+      stopTyping();
+    },
+    [],
+  );
 
   useEffect(() => {
     const updateViewport = () => {
@@ -149,8 +155,31 @@ export default function ChatbotWidget() {
 
   // Auto-scroll the body as text is typed
   useEffect(() => {
-    if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
+    if (bodyRef.current)
+      bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
   }, [displayed]);
+
+  // Popup timer: show "Got any questions?" every 1 minute when chat is closed
+  useEffect(() => {
+    const intervalRef = { id: null as NodeJS.Timeout | null };
+
+    const setupPopupInterval = () => {
+      intervalRef.id = setInterval(() => {
+        if (!open) {
+          setShowPopup(true);
+          // Auto-hide popup after 4 seconds
+          setTimeout(() => setShowPopup(false), 4000);
+        }
+      }, 60000); // Every 60 seconds
+    };
+
+    // Start the interval immediately
+    setupPopupInterval();
+
+    return () => {
+      if (intervalRef.id) clearInterval(intervalRef.id);
+    };
+  }, [open]);
 
   // ── Shared styles ─────────────────────────────────────────────────────────
   const panelStyle: React.CSSProperties = {
@@ -158,13 +187,15 @@ export default function ChatbotWidget() {
     WebkitBackdropFilter: "blur(24px)",
     ...(isDark
       ? {
-          background: "linear-gradient(145deg, rgba(13,14,26,0.97) 0%, rgba(22,20,48,0.96) 100%)",
+          background:
+            "linear-gradient(145deg, rgba(13,14,26,0.97) 0%, rgba(22,20,48,0.96) 100%)",
           border: "1px solid rgba(84,91,255,0.42)",
           boxShadow:
             "0 0 0 1px rgba(84,91,255,0.10), 0 0 48px rgba(84,91,255,0.20), 0 24px 70px rgba(0,0,0,0.72)",
         }
       : {
-          background: "linear-gradient(145deg, rgba(255,255,255,0.98) 0%, rgba(236,239,255,0.97) 100%)",
+          background:
+            "linear-gradient(145deg, rgba(255,255,255,0.98) 0%, rgba(236,239,255,0.97) 100%)",
           border: "1px solid rgba(84,91,255,0.26)",
           boxShadow:
             "0 0 0 1px rgba(84,91,255,0.07), 0 0 32px rgba(84,91,255,0.10), 0 16px 50px rgba(0,0,0,0.13)",
@@ -222,10 +253,18 @@ export default function ChatbotWidget() {
               {/* Avatar */}
               <div
                 className="relative flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg sm:rounded-xl"
-                style={{ background: "linear-gradient(135deg,#545BFF 0%,#9B73FF 100%)" }}
+                style={{
+                  background: "linear-gradient(135deg,#545BFF 0%,#9B73FF 100%)",
+                }}
               >
                 {/* Shield icon */}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden
+                >
                   <path
                     d="M12 2L4 6v6c0 5.25 3.5 10.14 8 11.36C16.5 22.14 20 17.25 20 12V6l-8-4z"
                     fill="rgba(255,255,255,0.25)"
@@ -233,7 +272,13 @@ export default function ChatbotWidget() {
                     strokeWidth="1.8"
                     strokeLinejoin="round"
                   />
-                  <path d="M9 12l2 2 4-4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d="M9 12l2 2 4-4"
+                    stroke="white"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
                 {/* Online indicator */}
                 <span
@@ -243,20 +288,38 @@ export default function ChatbotWidget() {
               </div>
 
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] sm:text-sm font-bold leading-none" style={{ color: headingText }}>
+                <p
+                  className="text-[13px] sm:text-sm font-bold leading-none"
+                  style={{ color: headingText }}
+                >
                   SmartShield AI
                 </p>
-                <p className="text-[10px] sm:text-[11px] mt-0.5" style={{ color: subText }}>
+                <p
+                  className="text-[10px] sm:text-[11px] mt-0.5"
+                  style={{ color: subText }}
+                >
                   Ask me anything · always here
                 </p>
               </div>
 
               <button
-                onClick={() => { setOpen(false); reset(); }}
+                onClick={() => {
+                  setOpen(false);
+                  reset();
+                }}
                 aria-label="Close assistant"
                 className="flex h-7 w-7 items-center justify-center rounded-lg transition-colors hover:bg-[#545BFF]/10"
               >
-                <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" className={isDark ? "text-slate-400" : "text-slate-500"}>
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  className={isDark ? "text-slate-400" : "text-slate-500"}
+                >
                   <line x1="1" y1="1" x2="13" y2="13" />
                   <line x1="13" y1="1" x2="1" y2="13" />
                 </svg>
@@ -283,17 +346,31 @@ export default function ChatbotWidget() {
                   <div className="flex gap-2.5 items-start">
                     <div
                       className="h-6 w-6 shrink-0 mt-0.5 rounded-lg flex items-center justify-center"
-                      style={{ background: "linear-gradient(135deg,#545BFF,#9B73FF)" }}
+                      style={{
+                        background: "linear-gradient(135deg,#545BFF,#9B73FF)",
+                      }}
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                        <circle cx="12" cy="12" r="10" /><path d="M12 16v-4m0-4h.01" />
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 16v-4m0-4h.01" />
                       </svg>
                     </div>
                     <div
                       className="rounded-2xl rounded-tl-sm px-3 py-2 sm:px-3.5 sm:py-2.5 text-[11px] sm:text-xs leading-relaxed flex-1"
                       style={{ background: bubbleBg, color: bubbleText }}
                     >
-                      Hi! I'm SmartShield AI. Tap a question below and I'll explain how I keep you safe online.
+                      Hi! I'm SmartShield AI. Tap a question below and I'll
+                      explain how I keep you safe online.
                     </div>
                   </div>
 
@@ -304,11 +381,19 @@ export default function ChatbotWidget() {
                         key={i}
                         onClick={() => startTyping(i)}
                         className="w-full text-left text-[11px] sm:text-xs px-2.5 py-2 sm:px-3 sm:py-2.5 rounded-lg sm:rounded-xl flex items-center gap-2 sm:gap-2.5 transition-all duration-150"
-                        style={{ background: chipBg, border: `1px solid ${chipBorder}`, color: chipText }}
+                        style={{
+                          background: chipBg,
+                          border: `1px solid ${chipBorder}`,
+                          color: chipText,
+                        }}
                         onMouseEnter={(e) => {
                           const el = e.currentTarget as HTMLElement;
-                          el.style.background = isDark ? "rgba(84,91,255,0.18)" : "rgba(84,91,255,0.12)";
-                          el.style.borderColor = isDark ? "rgba(84,91,255,0.44)" : "rgba(84,91,255,0.36)";
+                          el.style.background = isDark
+                            ? "rgba(84,91,255,0.18)"
+                            : "rgba(84,91,255,0.12)";
+                          el.style.borderColor = isDark
+                            ? "rgba(84,91,255,0.44)"
+                            : "rgba(84,91,255,0.36)";
                         }}
                         onMouseLeave={(e) => {
                           const el = e.currentTarget as HTMLElement;
@@ -316,11 +401,35 @@ export default function ChatbotWidget() {
                           el.style.borderColor = chipBorder;
                         }}
                       >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B73FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-70" aria-hidden>
-                          <circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><path d="M12 17h.01" />
+                        <svg
+                          width="13"
+                          height="13"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#6B73FF"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="shrink-0 opacity-70"
+                          aria-hidden
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                          <path d="M12 17h.01" />
                         </svg>
                         <span className="flex-1">{faq.q}</span>
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6B73FF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-40" aria-hidden>
+                        <svg
+                          width="11"
+                          height="11"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#6B73FF"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="shrink-0 opacity-40"
+                          aria-hidden
+                        >
                           <polyline points="9 18 15 12 9 6" />
                         </svg>
                       </button>
@@ -333,7 +442,10 @@ export default function ChatbotWidget() {
                   <div className="flex justify-end">
                     <div
                       className="max-w-[82%] rounded-2xl rounded-br-sm px-3 py-2 sm:px-3.5 sm:py-2.5 text-[11px] sm:text-xs leading-relaxed font-medium"
-                      style={{ background: "linear-gradient(135deg,#545BFF,#7B73FF)", color: "#fff" }}
+                      style={{
+                        background: "linear-gradient(135deg,#545BFF,#7B73FF)",
+                        color: "#fff",
+                      }}
                     >
                       {FAQS[selected].q}
                     </div>
@@ -343,10 +455,23 @@ export default function ChatbotWidget() {
                   <div className="flex gap-2.5 items-start">
                     <div
                       className="h-6 w-6 shrink-0 mt-0.5 rounded-lg flex items-center justify-center"
-                      style={{ background: "linear-gradient(135deg,#545BFF,#9B73FF)" }}
+                      style={{
+                        background: "linear-gradient(135deg,#545BFF,#9B73FF)",
+                      }}
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                        <circle cx="12" cy="12" r="10" /><path d="M12 16v-4m0-4h.01" />
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 16v-4m0-4h.01" />
                       </svg>
                     </div>
                     <div
@@ -356,9 +481,18 @@ export default function ChatbotWidget() {
                       {displayed}
                       {typing && (
                         <span className="inline-flex gap-0.5 ml-1 align-middle">
-                          <span className="h-1 w-1 rounded-full bg-[#6B73FF] animate-bounce" style={{ animationDelay: "0ms" }} />
-                          <span className="h-1 w-1 rounded-full bg-[#6B73FF] animate-bounce" style={{ animationDelay: "150ms" }} />
-                          <span className="h-1 w-1 rounded-full bg-[#6B73FF] animate-bounce" style={{ animationDelay: "300ms" }} />
+                          <span
+                            className="h-1 w-1 rounded-full bg-[#6B73FF] animate-bounce"
+                            style={{ animationDelay: "0ms" }}
+                          />
+                          <span
+                            className="h-1 w-1 rounded-full bg-[#6B73FF] animate-bounce"
+                            style={{ animationDelay: "150ms" }}
+                          />
+                          <span
+                            className="h-1 w-1 rounded-full bg-[#6B73FF] animate-bounce"
+                            style={{ animationDelay: "300ms" }}
+                          />
                         </span>
                       )}
                     </div>
@@ -374,12 +508,26 @@ export default function ChatbotWidget() {
                   onClick={reset}
                   className="w-full text-[11px] sm:text-xs py-2 rounded-lg sm:rounded-xl font-medium flex items-center justify-center gap-1.5 transition-all duration-150"
                   style={{
-                    background: isDark ? "rgba(84,91,255,0.10)" : "rgba(84,91,255,0.07)",
-                    border: isDark ? "1px solid rgba(84,91,255,0.24)" : "1px solid rgba(84,91,255,0.20)",
+                    background: isDark
+                      ? "rgba(84,91,255,0.10)"
+                      : "rgba(84,91,255,0.07)",
+                    border: isDark
+                      ? "1px solid rgba(84,91,255,0.24)"
+                      : "1px solid rgba(84,91,255,0.20)",
                     color: isDark ? "#9ea8ff" : "#545BFF",
                   }}
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
                     <polyline points="15 18 9 12 15 6" />
                   </svg>
                   Back to questions
@@ -400,10 +548,52 @@ export default function ChatbotWidget() {
         )}
       </AnimatePresence>
 
+      {/* ── Popup message ─────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showPopup && !open && (
+          <motion.div
+            key="popup-message"
+            initial={{ opacity: 0, scale: 0.85, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.85, y: 10 }}
+            transition={{ type: "spring", stiffness: 300, damping: 26 }}
+            className="fixed bottom-[140px] right-3 sm:bottom-[145px] sm:right-7 z-98 px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl shadow-lg backdrop-blur-md"
+            style={{
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              ...(isDark
+                ? {
+                    background:
+                      "linear-gradient(135deg, rgba(84,91,255,0.95) 0%, rgba(123,115,255,0.90) 100%)",
+                    border: "1px solid rgba(177,158,239,0.45)",
+                    boxShadow:
+                      "0 0 24px rgba(84,91,255,0.35), 0 8px 32px rgba(0,0,0,0.35)",
+                  }
+                : {
+                    background:
+                      "linear-gradient(135deg, rgba(84,91,255,0.92) 0%, rgba(123,115,255,0.87) 100%)",
+                    border: "1px solid rgba(84,91,255,0.35)",
+                    boxShadow:
+                      "0 0 20px rgba(84,91,255,0.25), 0 8px 28px rgba(84,91,255,0.12)",
+                  }),
+            }}
+          >
+            <p className="text-xs sm:text-sm font-semibold text-white whitespace-nowrap">
+              Got any questions?
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Toggle button ─────────────────────────────────────────────────── */}
       <motion.button
-        onClick={() => { setOpen((o) => !o); if (open) reset(); }}
-        aria-label={open ? "Close SmartShield assistant" : "Open SmartShield assistant"}
+        onClick={() => {
+          setOpen((o) => !o);
+          if (open) reset();
+        }}
+        aria-label={
+          open ? "Close SmartShield assistant" : "Open SmartShield assistant"
+        }
         initial={{ opacity: 0, scale: 0.4, y: 32 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 320, damping: 26, delay: 0.2 }}
