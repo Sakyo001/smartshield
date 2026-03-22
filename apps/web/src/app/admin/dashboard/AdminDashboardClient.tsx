@@ -1274,46 +1274,84 @@ export default function AdminDashboardClient() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          {[
-            {
-              label: "Total Scans",
-              value: totalScans.toLocaleString(),
-              sub: "All security scans",
-              color: "text-copy",
-              subColor: "text-blue-400",
-            },
-            {
-              label: "Threats Detected",
-              value: stats.phishing.toLocaleString(),
-              sub: "Phishing URLs blocked",
-              color: "text-red-400",
-              subColor: "text-red-400",
-            },
-            {
-              label: "Active Users",
-              value: activeUsers.toLocaleString(),
-              sub: `of ${totalUsers.toLocaleString()} total users`,
-              color: "text-blue-400",
-              subColor: "text-blue-400",
-            },
-            {
-              label: "Detection Accuracy",
-              value: "97.7%",
-              sub: "Phishing detection rate",
-              color: "text-green-400",
-              subColor: "text-green-400",
-            },
-          ].map((stat, index) => (
-            <div
-              key={index}
-              className="stat-card bg-panel border border-divider hover:border-[#6B73FF]/40 rounded-lg p-6 backdrop-blur-sm"
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <p className="text-faded text-sm mb-2">{stat.label}</p>
-              <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
-              <p className={`${stat.subColor} text-xs mt-2`}>{stat.sub}</p>
+          {/* Total Scans */}
+          <div
+            className="stat-card bg-panel border border-divider hover:border-[#6B73FF]/40 rounded-lg p-6 backdrop-blur-sm"
+            style={{ animationDelay: "0s" }}
+          >
+            <p className="text-faded text-sm mb-2">Total Scans</p>
+            <p className="text-3xl font-bold text-copy">{totalScans.toLocaleString()}</p>
+            <p className="text-blue-400 text-xs mt-2">All security scans</p>
+          </div>
+
+          {/* Threats Detected */}
+          <div
+            className="stat-card bg-panel border border-divider hover:border-[#6B73FF]/40 rounded-lg p-6 backdrop-blur-sm"
+            style={{ animationDelay: "0.1s" }}
+          >
+            <p className="text-faded text-sm mb-2">Threats Detected</p>
+            <p className="text-3xl font-bold text-red-400">{stats.phishing.toLocaleString()}</p>
+            <p className="text-red-400 text-xs mt-2">Phishing URLs blocked</p>
+          </div>
+
+          {/* Active Users - Realtime */}
+          <div
+            className="stat-card bg-gradient-to-br from-panel via-panel to-panel/70 border-2 border-emerald-400/50 hover:border-emerald-400/80 rounded-lg p-6 backdrop-blur-sm relative overflow-hidden group"
+            style={{ animationDelay: "0.2s" }}
+          >
+            {/* Glow effect on hover */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-5 bg-emerald-400 transition-opacity duration-300 pointer-events-none" />
+
+            {/* Live indicator with animation */}
+            <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+              <motion.span
+                className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-lg shadow-emerald-400/50"
+                animate={{ scale: [1, 1.3, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <span className="text-xs font-bold text-emerald-300 tracking-widest">LIVE</span>
             </div>
-          ))}
+
+            {/* Content */}
+            <div className="relative z-10">
+              <p className="text-faded text-sm mb-3 font-medium">Active Users</p>
+              
+              {/* Large active user count with gradient */}
+              <div className="flex items-baseline gap-3 mb-3">
+                <motion.p
+                  className="text-4xl font-bold bg-gradient-to-r from-emerald-300 via-blue-300 to-emerald-300 bg-clip-text text-transparent"
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 2 }}
+                >
+                  {activeUsers.toLocaleString()}
+                </motion.p>
+                <span className="text-sm text-faded">now</span>
+              </div>
+
+              {/* Connection status */}
+              <div className="mt-3 flex items-center gap-2 text-xs">
+                <span
+                  className={`inline-block px-2 py-1 rounded-full font-medium transition-all ${
+                    realtimeConnected
+                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                      : "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                  }`}
+                >
+                  {realtimeConnected ? "✓ Real-time" : "⟳ Syncing..."}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Detection Accuracy */}
+          <div
+            className="stat-card bg-panel border border-divider hover:border-[#6B73FF]/40 rounded-lg p-6 backdrop-blur-sm"
+            style={{ animationDelay: "0.3s" }}
+          >
+            <p className="text-faded text-sm mb-2">Detection Accuracy</p>
+            <p className="text-3xl font-bold text-green-400">97.7%</p>
+            <p className="text-green-400 text-xs mt-2">Phishing detection rate</p>
+          </div>
         </div>
 
         {/* Charts Section */}
