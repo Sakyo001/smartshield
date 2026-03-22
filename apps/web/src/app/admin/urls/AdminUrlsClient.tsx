@@ -312,8 +312,8 @@ export default function AdminUrlsClient() {
               />
             </div>
             <div>
-              <h1 className="text-white font-semibold">URLs</h1>
-              <p className="text-xs text-gray-300/80">
+              <h1 className="text-heading font-semibold">URLs</h1>
+              <p className="text-xs text-faded">
                 Newest first · Live feed from extension activity
               </p>
             </div>
@@ -325,28 +325,28 @@ export default function AdminUrlsClient() {
                 className={
                   realtimeConnected
                     ? "px-2 py-1 rounded-full bg-green-500/10 text-green-300 border border-green-500/20"
-                    : "px-2 py-1 rounded-full bg-gray-500/10 text-gray-300 border border-gray-500/20"
+                    : "px-2 py-1 rounded-full bg-gray-500/10 text-faded border border-gray-500/20"
                 }
               >
                 {realtimeConnected ? "Live" : "Offline"}
               </span>
-              <span className="text-gray-300/80">
+              <span className="text-faded">
                 Updates:{" "}
-                <span className="text-white font-medium">{realtimeEvents}</span>
+                <span className="text-heading font-medium">{realtimeEvents}</span>
               </span>
               {lastUpdatedAt && (
-                <span className="text-gray-300/80">
+                <span className="text-faded">
                   Updated:{" "}
-                  <span className="text-white font-medium">
+                  <span className="text-heading font-medium">
                     {new Date(lastUpdatedAt).toLocaleTimeString()}
                   </span>
                 </span>
               )}
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="text-xs sm:text-sm text-gray-200/90">
+              <div className="text-xs sm:text-sm text-faded">
                 Admin:{" "}
-                <span className="text-white font-medium">{adminEmail}</span>
+                <span className="text-heading font-medium">{adminEmail}</span>
               </div>
               <ThemeToggle />
             </div>
@@ -417,8 +417,8 @@ export default function AdminUrlsClient() {
 
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-page/70 dark:bg-panel/55 border border-[#545BFF]/15 rounded-2xl p-6 backdrop-blur-sm hover:border-[#545BFF]/30 transition-all duration-300">
-            <p className="text-gray-400 text-sm mb-2">Total scanned URLs</p>
-            <p className="text-3xl font-bold text-white">
+            <p className="text-faded text-sm mb-2">Total scanned URLs</p>
+            <p className="text-3xl font-bold text-heading">
               {totalScannedUrls.toLocaleString()}
             </p>
             <p className="text-[#545BFF] text-xs mt-2">
@@ -426,15 +426,15 @@ export default function AdminUrlsClient() {
             </p>
           </div>
           <div className="bg-page/70 dark:bg-panel/55 border border-[#545BFF]/15 rounded-2xl p-6 backdrop-blur-sm hover:border-[#545BFF]/30 transition-all duration-300">
-            <p className="text-gray-400 text-sm mb-2">Loaded (latest 200)</p>
-            <p className="text-3xl font-bold text-white">
+            <p className="text-faded text-sm mb-2">Loaded (latest 200)</p>
+            <p className="text-3xl font-bold text-heading">
               {rows.length.toLocaleString()}
             </p>
             <p className="text-[#545BFF] text-xs mt-2">Searchable & pageable</p>
           </div>
           <div className="bg-page/70 dark:bg-panel/55 border border-[#545BFF]/15 rounded-2xl p-6 backdrop-blur-sm hover:border-[#545BFF]/30 transition-all duration-300">
-            <p className="text-gray-400 text-sm mb-2">Unique domains</p>
-            <p className="text-3xl font-bold text-white">
+            <p className="text-faded text-sm mb-2">Unique domains</p>
+            <p className="text-3xl font-bold text-heading">
               {uniqueDomainsCount.toLocaleString()}
             </p>
             <p className="text-[#545BFF] text-xs mt-2">Across loaded URLs</p>
@@ -445,8 +445,8 @@ export default function AdminUrlsClient() {
           <div className="p-6 border-b border-[#545BFF]/15 bg-gradient-to-r from-page/25 to-transparent">
             <div className="flex items-start sm:items-center justify-between gap-4 flex-col sm:flex-row">
               <div>
-                <h2 className="text-white font-semibold">Recent URLs</h2>
-                <p className="text-xs text-gray-400 mt-1">
+                <h2 className="text-heading font-semibold">Recent URLs</h2>
+                <p className="text-xs text-faded mt-1">
                   Filter by domain and search by URL/hostname
                 </p>
               </div>
@@ -482,8 +482,8 @@ export default function AdminUrlsClient() {
                       key={header || "actions"}
                       className={
                         header
-                          ? "px-6 py-3 text-left text-xs font-semibold text-gray-300"
-                          : "px-6 py-3 text-right text-xs font-semibold text-gray-300"
+                          ? "px-6 py-3 text-left text-xs font-semibold text-faded"
+                          : "px-6 py-3 text-right text-xs font-semibold text-faded"
                       }
                     >
                       {header}
@@ -491,7 +491,7 @@ export default function AdminUrlsClient() {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800/30">
+              <tbody className="divide-y divide-divider/40">
                 {pageRows.map((r) => {
                   const host = tryGetHostname(r.url);
                   return (
@@ -499,15 +499,15 @@ export default function AdminUrlsClient() {
                       key={r.id}
                       className="hover:bg-panel/40 dark:hover:bg-black/20 transition-colors duration-200 group"
                     >
-                      <td className="px-6 py-4 text-sm text-gray-300 group-hover:text-white transition-colors whitespace-nowrap">
+                      <td className="px-6 py-4 text-sm text-copy group-hover:text-heading transition-colors whitespace-nowrap">
                         {new Date(r.createdAt).toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-300 group-hover:text-white transition-colors">
+                      <td className="px-6 py-4 text-sm text-copy group-hover:text-heading transition-colors">
                         <span className="inline-flex items-center px-2.5 py-1 rounded-xl bg-panel/40 dark:bg-black/25 border border-[#545BFF]/15 text-xs text-heading">
                           {host || "—"}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-300 group-hover:text-white transition-colors">
+                      <td className="px-6 py-4 text-sm text-copy group-hover:text-heading transition-colors">
                         <a
                           href={r.url}
                           target="_blank"
@@ -544,7 +544,7 @@ export default function AdminUrlsClient() {
                   <tr>
                     <td
                       colSpan={4}
-                      className="px-6 py-10 text-sm text-gray-400"
+                      className="px-6 py-10 text-sm text-faded"
                     >
                       {rows.length === 0
                         ? "No URLs yet."
@@ -563,7 +563,7 @@ export default function AdminUrlsClient() {
                 {Math.min(endIndex, filteredRows.length)} of{" "}
                 {filteredRows.length.toLocaleString()}
                 {filteredRows.length !== rows.length && (
-                  <span className="text-gray-500">
+                  <span className="text-faded">
                     {" "}
                     (filtered from {rows.length.toLocaleString()})
                   </span>
@@ -578,7 +578,7 @@ export default function AdminUrlsClient() {
                 >
                   Previous
                 </button>
-                <span className="min-w-24 text-center text-gray-300">
+                <span className="min-w-24 text-center text-faded">
                   Page {safeCurrentPage} of {totalPages}
                 </span>
                 <button

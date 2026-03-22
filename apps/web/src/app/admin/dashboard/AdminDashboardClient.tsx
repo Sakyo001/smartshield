@@ -1168,7 +1168,11 @@ export default function AdminDashboardClient() {
 
             {/* Text block — subtle rightward nudge on hover */}
             <div className="flex flex-col justify-center transition-transform duration-300 group-hover:translate-x-0.5">
-              <span className="text-heading text-lg sm:text-xl md:text-2xl tracking-wide font-bold leading-none">
+              <span
+                className={`text-lg sm:text-xl md:text-2xl tracking-wide font-bold leading-none ${
+                  isScrolled ? "text-white" : "text-heading"
+                }`}
+              >
                 SmartShield
               </span>
               <span className="font-medium text-[#a89de8] dark:text-[#a89de8] tracking-wide text-[9px] sm:text-[10px] md:text-xs mt-0.5 transition-colors duration-300 group-hover:text-[#b19eef]">
@@ -1194,7 +1198,9 @@ export default function AdminDashboardClient() {
                   className={`relative px-5 py-2 text-sm rounded-full transition-colors duration-300 font-medium ${
                     isActive
                       ? "text-[#545BFF] dark:text-[#7c83ff] font-semibold"
-                      : "text-faded hover:text-[#545BFF]"
+                      : isScrolled
+                        ? "text-gray-200 hover:text-white"
+                        : "text-faded hover:text-[#545BFF]"
                   }`}
                 >
                   {/* Sliding glass pill — morphs between active items */}
@@ -1225,8 +1231,15 @@ export default function AdminDashboardClient() {
 
           {/* Right Section */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="text-sm text-faded hidden sm:block">
-              Admin: <span className="text-copy font-medium">{adminEmail}</span>
+            <div
+              className={`text-sm hidden sm:block ${
+                isScrolled ? "text-gray-300" : "text-faded"
+              }`}
+            >
+              Admin:{" "}
+              <span className={isScrolled ? "text-white font-medium" : "text-copy font-medium"}>
+                {adminEmail}
+              </span>
             </div>
             <ThemeToggle />
             <button
@@ -1234,7 +1247,7 @@ export default function AdminDashboardClient() {
               disabled={logoutLoading}
               className={`group relative inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-full overflow-hidden
                 bg-gradient-to-r from-[#545BFF] to-[#6B73FF] hover:from-[#4349dd] hover:to-[#545BFF]
-                text-copy
+                text-white
                 shadow-[0_0_20px_rgba(84,91,255,0.38)] hover:shadow-[0_0_36px_rgba(84,91,255,0.62)]
                 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed`}
             >
@@ -1457,39 +1470,39 @@ export default function AdminDashboardClient() {
                   className={
                     realtimeConnected
                       ? "px-2 py-1 rounded-full bg-green-500/10 text-green-300 border border-green-500/20"
-                      : "px-2 py-1 rounded-full bg-gray-500/10 text-gray-300 border border-gray-500/20"
+                      : "px-2 py-1 rounded-full bg-gray-500/10 text-faded border border-gray-500/20"
                   }
                 >
                   {realtimeConnected ? "Live" : "Offline"}
                 </span>
-                <span className="text-gray-500">Updates: {realtimeEvents}</span>
+                <span className="text-faded">Updates: {realtimeEvents}</span>
               </div>
             </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-900 border-b border-gray-800">
+              <thead className="bg-panel/55 dark:bg-gray-900 border-b border-divider">
                 <tr>
                   {["Date", "URL", "Risk", "Feedback"].map((header) => (
                     <th
                       key={header}
-                      className="px-6 py-3 text-left text-xs font-semibold text-gray-300"
+                      className="px-6 py-3 text-left text-xs font-semibold text-faded"
                     >
                       {header}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800">
+              <tbody className="divide-y divide-divider/40">
                 {scanData.map((item, idx) => (
                   <tr
                     key={idx}
-                    className="hover:bg-gray-800/30 transition-colors duration-200 group"
+                    className="hover:bg-inset/40 dark:hover:bg-gray-800/30 transition-colors duration-200 group"
                   >
-                    <td className="px-6 py-4 text-sm text-gray-400 group-hover:text-gray-100 transition-colors">
+                    <td className="px-6 py-4 text-sm text-copy group-hover:text-heading transition-colors">
                       {item.date}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-400 truncate max-w-[200px] group-hover:text-gray-100 transition-colors">
+                    <td className="px-6 py-4 text-sm text-copy truncate max-w-[200px] group-hover:text-heading transition-colors">
                       {item.url}
                     </td>
                     <td className="px-6 py-4 text-sm">
