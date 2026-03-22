@@ -152,17 +152,17 @@ export default function AdminSettingsClient() {
               />
             </div>
             <div>
-              <h1 className="text-white font-semibold">Admin Settings</h1>
-              <p className="text-xs text-gray-300/80">
+              <h1 className="text-heading font-semibold">Admin Settings</h1>
+              <p className="text-xs text-faded">
                 Tune dashboard behavior and detection policy
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="text-xs sm:text-sm text-gray-200/90">
+            <div className="text-xs sm:text-sm text-faded">
               Admin:{" "}
-              <span className="text-white font-medium">{adminEmail}</span>
+              <span className="text-heading font-medium">{adminEmail}</span>
             </div>
             <ThemeToggle />
           </div>
@@ -218,15 +218,15 @@ export default function AdminSettingsClient() {
 
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-page/70 dark:bg-panel/55 border border-[#545BFF]/15 rounded-2xl p-6 backdrop-blur-sm hover:border-[#545BFF]/30 transition-all duration-300">
-            <p className="text-gray-400 text-sm mb-2">Detection sensitivity</p>
-            <p className="text-3xl font-bold text-white">
+            <p className="text-faded text-sm mb-2">Detection sensitivity</p>
+            <p className="text-3xl font-bold text-heading">
               {settings.detectionSensitivity}%
             </p>
             <p className="text-[#545BFF] text-xs mt-2">{riskLabel}</p>
           </div>
           <div className="bg-page/70 dark:bg-panel/55 border border-[#545BFF]/15 rounded-2xl p-6 backdrop-blur-sm hover:border-[#545BFF]/30 transition-all duration-300">
-            <p className="text-gray-400 text-sm mb-2">Suspicious threshold</p>
-            <p className="text-3xl font-bold text-white">
+            <p className="text-faded text-sm mb-2">Suspicious threshold</p>
+            <p className="text-3xl font-bold text-heading">
               {settings.warningThreshold}%
             </p>
             <p className="text-[#545BFF] text-xs mt-2">
@@ -234,8 +234,8 @@ export default function AdminSettingsClient() {
             </p>
           </div>
           <div className="bg-page/70 dark:bg-panel/55 border border-[#545BFF]/15 rounded-2xl p-6 backdrop-blur-sm hover:border-[#545BFF]/30 transition-all duration-300">
-            <p className="text-gray-400 text-sm mb-2">Phishing threshold</p>
-            <p className="text-3xl font-bold text-white">
+            <p className="text-faded text-sm mb-2">Phishing threshold</p>
+            <p className="text-3xl font-bold text-heading">
               {settings.phishingThreshold}%
             </p>
             <p className="text-[#545BFF] text-xs mt-2">Triggers block state</p>
@@ -246,8 +246,8 @@ export default function AdminSettingsClient() {
           <div className="bg-page/70 dark:bg-panel/55 border border-[#545BFF]/15 rounded-2xl p-6 backdrop-blur-sm hover:border-[#545BFF]/30 transition-all duration-300 space-y-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-white font-semibold">Threat Detection</h2>
-                <p className="text-xs text-gray-400 mt-1">
+                <h2 className="text-heading font-semibold">Threat Detection</h2>
+                <p className="text-xs text-faded mt-1">
                   Adjust sensitivity and classification thresholds
                 </p>
               </div>
@@ -258,10 +258,10 @@ export default function AdminSettingsClient() {
 
             <div>
               <div className="flex items-center justify-between text-sm mb-2">
-                <label htmlFor="sensitivity" className="text-gray-300">
+                <label htmlFor="sensitivity" className="text-copy">
                   Detection sensitivity
                 </label>
-                <span className="text-blue-300">
+                <span className="text-blue-600 dark:text-blue-300">
                   {settings.detectionSensitivity}% · {riskLabel}
                 </span>
               </div>
@@ -283,10 +283,10 @@ export default function AdminSettingsClient() {
 
             <div>
               <div className="flex items-center justify-between text-sm mb-2">
-                <label htmlFor="warningThreshold" className="text-gray-300">
+                <label htmlFor="warningThreshold" className="text-copy">
                   Suspicious threshold
                 </label>
-                <span className="text-yellow-300">
+                <span className="text-yellow-600 dark:text-yellow-300">
                   {settings.warningThreshold}%
                 </span>
               </div>
@@ -312,10 +312,10 @@ export default function AdminSettingsClient() {
 
             <div>
               <div className="flex items-center justify-between text-sm mb-2">
-                <label htmlFor="phishingThreshold" className="text-gray-300">
+                <label htmlFor="phishingThreshold" className="text-copy">
                   Phishing threshold
                 </label>
-                <span className="text-red-300">
+                <span className="text-red-600 dark:text-red-300">
                   {settings.phishingThreshold}%
                 </span>
               </div>
@@ -342,8 +342,8 @@ export default function AdminSettingsClient() {
           <div className="bg-page/70 dark:bg-panel/55 border border-[#545BFF]/15 rounded-2xl p-6 backdrop-blur-sm hover:border-[#545BFF]/30 transition-all duration-300 space-y-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-white font-semibold">Preferences</h2>
-                <p className="text-xs text-gray-400 mt-1">
+                <h2 className="text-heading font-semibold">Preferences</h2>
+                <p className="text-xs text-faded mt-1">
                   Control what the admin experience shows and sends
                 </p>
               </div>
@@ -354,8 +354,8 @@ export default function AdminSettingsClient() {
 
             <label className="flex items-center justify-between rounded-xl border border-[#545BFF]/15 bg-panel/55 dark:bg-black/20 px-4 py-3 hover:border-[#545BFF]/30 transition-colors">
               <div>
-                <p className="text-sm text-white">Realtime monitoring</p>
-                <p className="text-xs text-gray-400">
+                <p className="text-sm text-heading">Realtime monitoring</p>
+                <p className="text-xs text-faded">
                   Keep dashboard feed live with incoming scans.
                 </p>
               </div>
@@ -374,8 +374,8 @@ export default function AdminSettingsClient() {
 
             <label className="flex items-center justify-between rounded-xl border border-[#545BFF]/15 bg-panel/55 dark:bg-black/20 px-4 py-3 hover:border-[#545BFF]/30 transition-colors">
               <div>
-                <p className="text-sm text-white">Community reports panel</p>
-                <p className="text-xs text-gray-400">
+                <p className="text-sm text-heading">Community reports panel</p>
+                <p className="text-xs text-faded">
                   Show user-submitted comments in scan details.
                 </p>
               </div>
@@ -394,8 +394,8 @@ export default function AdminSettingsClient() {
 
             <label className="flex items-center justify-between rounded-xl border border-[#545BFF]/15 bg-panel/55 dark:bg-black/20 px-4 py-3 hover:border-[#545BFF]/30 transition-colors">
               <div>
-                <p className="text-sm text-white">Daily summary email</p>
-                <p className="text-xs text-gray-400">
+                <p className="text-sm text-heading">Daily summary email</p>
+                <p className="text-xs text-faded">
                   Send daily threat totals to admin inbox.
                 </p>
               </div>
