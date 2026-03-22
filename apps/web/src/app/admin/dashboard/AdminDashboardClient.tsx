@@ -1183,13 +1183,11 @@ export default function AdminDashboardClient() {
 
           {/* Center Navigation Links */}
           <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-0.5">
-            {["Dashboard", "URLs", "Settings"].map((item) => {
+            {["Dashboard", "URLs"].map((item) => {
               const href =
                 item === "URLs"
                   ? "/admin/urls"
-                  : item === "Settings"
-                    ? "/admin/settings"
-                    : "/admin/dashboard";
+                  : "/admin/dashboard";
               const isActive = pathname === href;
               return (
                 <Link
@@ -1349,7 +1347,7 @@ export default function AdminDashboardClient() {
             style={{ animationDelay: "0.3s" }}
           >
             <p className="text-faded text-sm mb-2">Detection Accuracy</p>
-            <p className="text-3xl font-bold text-green-400">97.7%</p>
+            <p className="text-3xl font-bold text-green-400">96.9%</p>
             <p className="text-green-400 text-xs mt-2">Phishing detection rate</p>
           </div>
         </div>
