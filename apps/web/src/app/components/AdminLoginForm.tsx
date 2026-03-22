@@ -222,16 +222,7 @@ export function AdminLoginForm() {
               </div>
             )}
 
-            {/* Demo Credentials Info */}
-            <div className="p-2.5 sm:p-3 bg-[#545BFF]/10 border border-[#545BFF]/25 rounded-xl">
-              <p className="text-xs text-[#545BFF]/90">
-                <span className="font-semibold">Demo Credentials:</span>
-                <br />
-                Email: admin@smartshield.com
-                <br />
-                Password: AdminSecure123!
-              </p>
-            </div>
+           
 
             {/* Login Button */}
             <button
@@ -251,18 +242,7 @@ export function AdminLoginForm() {
           </form>
         </div>
 
-        {/* Footer */}
-        <div className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-faded">
-          <p>
-            Need help?{" "}
-            <Link
-              href="/contact"
-              className="text-[#545BFF] hover:text-[#6B73FF] transition-colors"
-            >
-              Contact support
-            </Link>
-          </p>
-        </div>
+       
       </div>
     </div>
   );
