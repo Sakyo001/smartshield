@@ -6,11 +6,20 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { createClient, syncUserToDatabase } from "@lib/supabase";
+import { useTheme } from "@lib/theme-context";
 import DotGridCanvas from "./ui/DotGridCanvas";
 
 export function UserAuthForm() {
 	const router = useRouter();
 	const supabase = createClient();
+	const { theme } = useTheme();
+	const [mounted, setMounted] = useState(false);
+
+	useEffect(() => {
+		setMounted(true);
+	}, []);
+
+	const effectiveTheme = mounted ? theme : "dark";
 
 	const getCallbackRedirectUrl = () => {
 		const envSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
@@ -134,7 +143,7 @@ export function UserAuthForm() {
 				<div className="mb-7 text-center">
 					<div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center">
 						<Image
-							src="/images/light-logo.png"
+							src={effectiveTheme === "dark" ? "/images/light-logo.png" : "/images/dark-logo (1).png"}
 							alt="SmartShield"
 							width={48}
 							height={48}

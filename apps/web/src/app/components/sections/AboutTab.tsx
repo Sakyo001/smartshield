@@ -19,7 +19,7 @@ const features = [
     ),
     iconClass: "text-[#545BFF] bg-[#545BFF]/10 border border-[#545BFF]/20",
     title: "Ensemble ML Detection",
-    desc: "Three machine learning models, Random Forest, Decision Tree, and Naive Bayes, vote collectively on every URL, reducing false positives and maximizing detection confidence.",
+    desc: "Three machine learning models, XGBoost, SVM, and CNN, vote collectively on every URL, reducing false positives and maximizing detection confidence.",
   },
   {
     icon: (
@@ -75,21 +75,21 @@ const features = [
 
 const models = [
   {
-    name: "Random Forest",
+    name: "XGBoost",
     desc: "An ensemble of decision trees trained on URL lexical and structural features. High resistance to overfitting and noisy data.",
     badge: "Primary Classifier",
     badgeClass: "text-[#545BFF] dark:text-[#a89de8] bg-[#545BFF]/10 dark:bg-[#545BFF]/15 border border-[#545BFF]/25",
   },
   {
-    name: "Decision Tree",
-    desc: "A single-tree classifier that provides interpretable, rule-based decisions. Used to cross-validate the Random Forest output.",
+    name: "SVM",
+    desc: "A support vector machine that provides interpretable, rule-based decisions. Used to cross-validate the XGBoost output.",
     badge: "Cross-Validator",
     badgeClass: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20",
   },
   {
-    name: "Naive Bayes",
-    desc: "A probabilistic model that calculates phishing likelihood based on URL token frequency. Fast and effective on unseen domains.",
-    badge: "Probabilistic Voter",
+    name: "CNN",
+    desc: "A convolutional neural network that learns complex patterns in URL structures. Fast and effective on unseen domains.",
+    badge: "Deep Learning Model",
     badgeClass: "text-[#b19eef] bg-[#b19eef]/10 border border-[#b19eef]/25",
   },
 ];

@@ -70,6 +70,16 @@ function ArrowIcon() {
   );
 }
 
+function LogOutIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+      <polyline points="16 17 21 12 16 7"/>
+      <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+  );
+}
+
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 
 export default function Navbar() {
@@ -400,9 +410,9 @@ export default function Navbar() {
                   shadow-[0_0_20px_rgba(84,91,255,0.38)] hover:shadow-[0_0_36px_rgba(84,91,255,0.62)]
                   hover:-translate-y-0.5 transition-all duration-300 ${poppins.className}`}
               >
-                <span className="relative z-10 flex items-center gap-2">
+              <span className="relative z-10 flex items-center gap-2">
                   Logout
-                  <ArrowIcon />
+                  <LogOutIcon />
                 </span>
                 {/* Shimmer sweep */}
                 <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
@@ -582,7 +592,7 @@ export default function Navbar() {
                   >
                     <span className="relative z-10 flex items-center gap-2">
                       Logout
-                      <ArrowIcon />
+                      <LogOutIcon />
                     </span>
                     <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
                   </button>

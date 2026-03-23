@@ -10,7 +10,7 @@ import {
   useTransform,
 } from "motion/react";
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DotGridCanvas from "../ui/DotGridCanvas";
 
 /* ─────────────────────────────────────────────
@@ -300,19 +300,19 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
   // 1 — Greeting + overall verdict
   const verdictPhrase =
     status === "Dangerous"
-      ? `**Bottom line:** This site is **highly dangerous**. I strongly recommend you **do not visit** it.`
+      ? `**Bottom line:** This site shows **strong fraud signals**. I recommend you **exit immediately** and avoid interacting with it.`
       : status === "Warning"
-        ? `**Bottom line:** This site looks **suspicious**. You should be careful before interacting with it.`
-        : `**Bottom line:** This site looks **safe**. You can browse it normally, but always stay alert.`;
+        ? `**Bottom line:** This site carries **notable risks**. Proceed only if you must, and double-check every detail before interacting.`
+        : `**Bottom line:** This site appears **legitimate**. Feel free to browse, but keep an eye out for anything unusual.`;
   msgs.push({ id: "verdict", text: verdictPhrase, accent: verdictColor });
 
   // 2 — Score meaning (contextual - unified traffic light metaphor)
   const scoreMeaning =
     s >= 67
-      ? `**Bottom line:** Red light zone — score of **${s}**. Our AI model and multiple security layers detected serious threats. This is likely a scam or phishing site designed to steal your information.`
+      ? `**Bottom line:** Red band — score **${s}**. Multiple layers agree this is likely a phishing or scam destination built to harvest data.`
       : s >= 34
-        ? `**Bottom line:** Yellow light zone — score of **${s}**. We spotted some warning signs. Proceed with caution and verify legitimacy before entering any personal information.`
-        : `**Bottom line:** Green light zone — score of **${s}**. The site passed our security checks. You can browse it normally.`;
+        ? `**Bottom line:** Amber band — score **${s}**. We found several warning signs; validate the site's authenticity before sharing any information.`
+        : `**Bottom line:** Green band — score **${s}**. The site cleared our checks and looks trustworthy, though vigilance is still wise.`;
   msgs.push({ id: "score-meaning", text: scoreMeaning, accent: "blue" });
 
   // 3 — Specific threat flags
@@ -334,7 +334,7 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
     });
     msgs.push({
       id: "flags",
-      text: `Here's specifically what raised the alarm:\n\n${flagLines.join("\n\n")}`,
+      text: `Key signals we flagged:\n\n${flagLines.join("\n\n")}`,
       accent: "red",
     });
   }
@@ -346,7 +346,7 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
       .map((f: any) => `• **${f.title}** — ${f.description}`);
     msgs.push({
       id: "xai-risks",
-      text: `Our AI analysis engine also identified these concerns:\n\n${factorLines.join("\n\n")}`,
+      text: `SHAP-based explanation: these features pulled the score upward:\n\n${factorLines.join("\n\n")}`,
       accent: "red",
     });
   }
@@ -355,7 +355,7 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
   if (isHTTP) {
     msgs.push({
       id: "http",
-      text: "**Bottom line:** Always use HTTPS websites. This site uses **HTTP**, which means your connection is **not encrypted**. Anyone on the same network (like public Wi-Fi) could intercept what you type — passwords, credit cards, personal information.",
+      text: "**Bottom line:** This site uses **HTTP**, so traffic is **not encrypted**. Anyone sharing the network (like public Wi‑Fi) could read or tamper with what you send — passwords, payments, or personal data.",
       accent: "yellow",
     });
   }
@@ -365,8 +365,8 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
     const reg = whois.registrar || null;
     const created = whois.creation_date || null;
     if (reg || created) {
-      let whoisText = "Here's what I found about who owns this website: ";
-      if (reg) whoisText += `It's registered through **${reg}**. `;
+      let whoisText = "Ownership check: ";
+      if (reg) whoisText += `Registered via **${reg}**. `;
       if (created) {
         const d = new Date(created);
         const now = new Date();
@@ -374,11 +374,11 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
           (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24),
         );
         if (diffDays < 30)
-          whoisText += `Domain age: **very new** (${diffDays} day${diffDays !== 1 ? "s" : ""} old), so ownership history is limited.`;
+          whoisText += `Domain age: **brand new** (${diffDays} day${diffDays !== 1 ? "s" : ""}); very limited history available.`;
         else if (diffDays < 365)
-          whoisText += `Domain age: **moderately established** (${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) !== 1 ? "s" : ""} old).`;
+          whoisText += `Domain age: **growing** (${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) !== 1 ? "s" : ""}); still relatively young.`;
         else
-          whoisText += `Domain age: **well-established** (${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) !== 1 ? "s" : ""} old), indicating longevity.`;
+          whoisText += `Domain age: **well-established** (${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) !== 1 ? "s" : ""}); long-running presence suggests stability.`;
       }
       msgs.push({
         id: "whois",
@@ -403,18 +403,18 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
             null) as string | null)
         : rawIssuer;
 
-    let sslText = `**Bottom line:** Connection is encrypted (good), but SSL doesn't guarantee legitimacy. `;
+    let sslText = `**Bottom line:** The connection is encrypted, but certificates alone don't prove trustworthiness. `;
     if (issuer) {
       sslText += `SSL certificate verified by **${issuer}**. `;
     }
-    sslText += `An encrypted connection prevents eavesdropping, but scammers can also get SSL certificates. `;
+    sslText += `Encryption blocks eavesdropping, yet scammers can also obtain certificates. `;
 
     if (status === "Dangerous") {
-      sslText += `However, given this site's risk profile, I still recommend avoiding it.`;
+      sslText += `Given the overall risk, I still recommend steering clear of this site.`;
     } else if (status === "Warning") {
-      sslText += `Combined with the other warning signs we found, proceed with caution.`;
+      sslText += `Viewed alongside the other warning signs, proceed with caution.`;
     } else {
-      sslText += `This is a positive security indicator along with the other checks.`;
+      sslText += `This is a positive security signal when combined with the other checks.`;
     }
 
     const sslAccent =
@@ -447,13 +447,13 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
   if (status === "Dangerous" && positive.length > 0) {
     msgs.push({
       id: "trust-warning",
-      text: `While I did find some surface-level positive signals (${positive.slice(0, 2).join(", ")}), these **do not outweigh** the serious threats detected. Sophisticated phishing sites often have valid DNS records and SSL certificates specifically to appear legitimate.`,
+      text: `We noted a few surface-level positives (${positive.slice(0, 2).join(", ")}), but they **do not outweigh** the critical threats. Modern phishing kits often include valid DNS and SSL to look convincing.`,
       accent: "yellow",
     });
   } else if (positive.length > 0) {
     msgs.push({
       id: "trust",
-      text: `On the bright side, I found **${positive.length} positive signal${positive.length !== 1 ? "s" : ""}**: ${positive.slice(0, 3).join(", ")}${positive.length > 3 ? `, and ${positive.length - 3} more` : ""}. These are good signs.`,
+      text: `Positive signals found: **${positive.length}** (${positive.slice(0, 3).join(", ")}${positive.length > 3 ? `, plus ${positive.length - 3} more` : ""}). These are reassuring indicators.`,
       accent: "green",
     });
   }
@@ -461,10 +461,10 @@ function generateBotMessages(scan: ScanResult, xai: any): BotMessage[] {
   // 9 — Final advice (ALWAYS uses frontend verdict, never XAI)
   const finalAdvice =
     status === "Dangerous"
-      ? "**Bottom line:** Do not enter any personal information on this site. Do not download anything from it. If you received this link via email or text message, it's very likely a phishing attempt — let the sender know their account may be compromised."
+      ? "**Bottom line:** Avoid sharing any information or downloading files here. If this arrived via email or text, treat it as a likely phishing attempt and warn the sender their account may be compromised."
       : status === "Warning"
-        ? "**Bottom line:** Be cautious. Don't enter sensitive info like passwords or payment details unless you're absolutely sure this is a legitimate site you trust. When in doubt, visit the official website directly by typing the URL yourself."
-        : "**Bottom line:** This site appears to be legitimate based on our analysis. You can browse it normally, but always stay alert for unusual requests for personal information.";
+        ? "**Bottom line:** Move carefully. Only share sensitive details if you can independently confirm the site's legitimacy. When unsure, type the official address manually instead of clicking links."
+        : "**Bottom line:** The site looks sound based on our checks. Browse normally, but stay mindful of unexpected prompts for personal data.";
   msgs.push({ id: "final", text: finalAdvice, accent: verdictColor });
 
   return msgs;
@@ -649,6 +649,14 @@ function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
         ? "from-yellow-500 to-yellow-600"
         : "from-green-500 to-green-600";
 
+  const statusLine = isTyping
+    ? "Running multi-layer checks + SHAP explainability"
+    : scan.status === "Dangerous"
+      ? "Analysis complete — high risk detected"
+      : scan.status === "Warning"
+        ? "Analysis complete — caution advised"
+        : "Analysis complete — no major threats detected";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 24, scale: 0.97 }}
@@ -741,15 +749,15 @@ function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
           <div>
             <div className="flex items-center gap-2.5">
               <span className="text-heading font-bold text-base sm:text-[17px] tracking-tight">
-                SmartShield AI
+                SmartShield AI Analyst
               </span>
               <span className="px-2 py-0.5 text-[8px] sm:text-[9px] font-bold tracking-[0.16em] uppercase bg-gradient-to-r from-[#545BFF]/15 to-[#8B5CF6]/15 text-[#545BFF] dark:text-[#b19eef] rounded-md border border-[#545BFF]/20 shadow-inner">
-                AI BOT
+                Explainable AI
               </span>
             </div>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-faded text-[10px] sm:text-[11px] font-medium">
-                {isTyping ? "Analyzing threat vectors" : "Analysis complete"}
+                {statusLine}
               </span>
               {isTyping && (
                 <span className="flex items-center gap-[3px]">
@@ -1055,6 +1063,18 @@ function GuestScanner({
   const [scanHistory, setScanHistory] = useState<ScanResult[]>([]);
   const [loadingScanHistory, setLoadingScanHistory] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historySort, setHistorySort] = useState<
+    "newest" | "oldest" | "riskDesc" | "riskAsc"
+  >("newest");
+  const [historyFilter, setHistoryFilter] = useState("");
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyRiskFilter, setHistoryRiskFilter] = useState<
+    "all" | "safe" | "warning" | "dangerous"
+  >("all");
+
+  useEffect(() => {
+    setHistoryPage(1);
+  }, [historyFilter, historySort, historyRiskFilter, scanHistory.length]);
 
   // Scroll targets
   const riskScoreRef = useRef<HTMLDivElement>(null);
@@ -1534,6 +1554,72 @@ function GuestScanner({
     }
   };
 
+  const showGuestMessaging = !isAuthenticated && !hideGuestMode;
+
+  const filteredAndSortedHistory = useMemo(() => {
+    const query = historyFilter.trim().toLowerCase();
+    const safeDate = (scan: ScanResult) => {
+      const ts = new Date(scan.date).getTime();
+      return Number.isFinite(ts) ? ts : 0;
+    };
+
+    const filtered = scanHistory.filter((scan) => {
+      const matchesText = query
+        ? scan.url.toLowerCase().includes(query) ||
+          scan.status.toLowerCase().includes(query) ||
+          (scan.expandedUrl
+            ? scan.expandedUrl.toLowerCase().includes(query)
+            : false)
+        : true;
+
+      const matchesRisk =
+        historyRiskFilter === "all"
+          ? true
+          : historyRiskFilter === "safe"
+            ? scan.status === "Safe"
+            : historyRiskFilter === "warning"
+              ? scan.status === "Warning"
+              : scan.status === "Dangerous";
+
+      return matchesText && matchesRisk;
+    });
+
+    const sorted = [...filtered].sort((a, b) => {
+      switch (historySort) {
+        case "oldest":
+          return safeDate(a) - safeDate(b);
+        case "riskDesc":
+          return b.riskScore - a.riskScore;
+        case "riskAsc":
+          return a.riskScore - b.riskScore;
+        case "newest":
+        default:
+          return safeDate(b) - safeDate(a);
+      }
+    });
+
+    return sorted;
+  }, [historyFilter, historySort, historyRiskFilter, scanHistory]);
+
+  const itemsPerPage = 5;
+  const totalHistoryPages = Math.max(
+    1,
+    Math.ceil(filteredAndSortedHistory.length / itemsPerPage),
+  );
+  const currentHistoryPage = Math.min(historyPage, totalHistoryPages);
+  const paginatedHistory = filteredAndSortedHistory.slice(
+    (currentHistoryPage - 1) * itemsPerPage,
+    currentHistoryPage * itemsPerPage,
+  );
+  const historyRangeStart =
+    filteredAndSortedHistory.length === 0
+      ? 0
+      : (currentHistoryPage - 1) * itemsPerPage + 1;
+  const historyRangeEnd = Math.min(
+    filteredAndSortedHistory.length,
+    currentHistoryPage * itemsPerPage,
+  );
+
   return (
     <div
       ref={contentRef}
@@ -1635,7 +1721,7 @@ function GuestScanner({
             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#545BFF]" />
           </span>
           <span className="text-[#545BFF] dark:text-[#a89de8] text-[10px] sm:text-[11px] font-semibold tracking-widest uppercase">
-            {hideGuestMode ? "Scan URLs Instantly" : "Guest Mode"}
+            {showGuestMessaging ? "Guest Mode" : "Scan URLs Instantly"}
           </span>
         </motion.div>
 
@@ -1657,9 +1743,9 @@ function GuestScanner({
           transition={{ duration: 0.5, delay: 0.8 }}
           className="text-copy/80 text-[13px] sm:text-sm md:text-base max-w-2xl mx-auto leading-relaxed"
         >
-          {hideGuestMode
-            ? "Protect yourself from phishing attacks instantly."
-            : "Scan any URL with no account needed."}
+          {showGuestMessaging
+            ? "Scan any URL with no account needed."
+            : "Protect yourself from phishing attacks instantly."}
         </motion.p>
       </div>
 
@@ -3946,7 +4032,7 @@ function GuestScanner({
               {/* ── History ── */}
               {activeTab === "history" && (
                 <div className="py-2 sm:py-4 max-w-2xl mx-auto">
-                  <div className="flex flex-col items-center mb-6">
+                  <div className="flex flex-col items-center mb-4">
                     <div className="flex items-center justify-center gap-2.5 mb-3">
                       <div className="p-1.5 rounded-lg bg-[#545BFF]/10">
                         <svg
@@ -3971,23 +4057,99 @@ function GuestScanner({
                         </span>
                       )}
                     </div>
-                    {currentUserEmail && (
-                      <p className="text-[10px] text-faded font-mono mt-2">
-                        Viewing scans for:{" "}
-                        <span className="text-[#545BFF] dark:text-[#a89de8] font-semibold">
-                          {currentUserEmail}
-                        </span>
-                      </p>
-                    )}
-                    {currentUserEmail && (
-                      <p className="text-[10px] text-faded font-mono">
-                        Viewing:{" "}
-                        <span className="text-[#545BFF] dark:text-[#a89de8] font-semibold">
-                          {currentUserEmail}
-                        </span>
-                      </p>
-                    )}
                   </div>
+
+                  {scanHistory.length > 0 && (
+                    <div className="space-y-3 mb-5">
+                      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+                        <div className="flex-1 relative">
+                          <label className="sr-only" htmlFor="history-filter">
+                            Filter history
+                          </label>
+                          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-faded/70">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <circle cx="11" cy="11" r="7" />
+                              <line x1="16.65" y1="16.65" x2="21" y2="21" />
+                            </svg>
+                          </div>
+                          <input
+                            id="history-filter"
+                            value={historyFilter}
+                            onChange={(e) => setHistoryFilter(e.target.value)}
+                            placeholder="Search URL, status, or expanded URL"
+                            className="w-full rounded-lg border border-divider bg-white/70 dark:bg-white/[0.03] pl-9 pr-10 py-2.5 text-sm text-copy focus:outline-none focus:ring-2 focus:ring-[#545BFF]/60 shadow-[0_6px_16px_rgba(84,91,255,0.08)]"
+                          />
+                          {historyFilter && (
+                            <button
+                              aria-label="Clear filter"
+                              onClick={() => setHistoryFilter("")}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-faded hover:text-heading transition-colors"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 sm:w-auto">
+                          <label htmlFor="history-sort" className="text-[11px] uppercase tracking-wide text-faded">
+                            Sort
+                          </label>
+                          <select
+                            id="history-sort"
+                            value={historySort}
+                            onChange={(e) => setHistorySort(e.target.value as typeof historySort)}
+                            className="rounded-lg border border-divider bg-white/90 dark:bg-[#0f1024] px-3 py-2 text-sm text-heading dark:text-white focus:outline-none focus:ring-2 focus:ring-[#545BFF]/60 shadow-[0_6px_16px_rgba(84,91,255,0.08)]"
+                          >
+                            <option value="newest">Newest first</option>
+                            <option value="oldest">Oldest first</option>
+                            <option value="riskDesc">Risk high → low</option>
+                            <option value="riskAsc">Risk low → high</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        {["all", "safe", "warning", "dangerous"].map((tier) => {
+                          const label =
+                            tier === "all"
+                              ? "All"
+                              : tier === "safe"
+                                ? "Safe"
+                                : tier === "warning"
+                                  ? "Warning"
+                                  : "Dangerous";
+                          const isActive = historyRiskFilter === tier;
+                          const chipStyles =
+                            tier === "safe"
+                              ? "bg-green-500/12 text-green-600 dark:text-green-400 border-green-500/20"
+                              : tier === "warning"
+                                ? "bg-yellow-500/12 text-yellow-600 dark:text-yellow-400 border-yellow-500/25"
+                                : tier === "dangerous"
+                                  ? "bg-red-500/12 text-red-600 dark:text-red-400 border-red-500/25"
+                                  : "bg-white/70 dark:bg-white/[0.05] text-copy border-divider";
+                          return (
+                            <button
+                              key={tier}
+                              onClick={() => setHistoryRiskFilter(tier as typeof historyRiskFilter)}
+                              className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${chipStyles} ${isActive ? "ring-2 ring-offset-0 ring-[#545BFF]/50" : "opacity-80 hover:opacity-100"}`}
+                            >
+                              <span
+                                className={`w-2 h-2 rounded-full ${
+                                  tier === "safe"
+                                    ? "bg-green-500"
+                                    : tier === "warning"
+                                      ? "bg-yellow-500"
+                                      : tier === "dangerous"
+                                        ? "bg-red-500"
+                                        : "bg-[#545BFF]"
+                                }`}
+                              />
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {loadingScanHistory ? (
                     <div className="flex flex-col items-center py-12">
@@ -4014,56 +4176,92 @@ function GuestScanner({
                         Your completed scans will appear here.
                       </p>
                     </div>
+                  ) : filteredAndSortedHistory.length === 0 ? (
+                    <div className="rounded-xl border border-divider bg-white/60 dark:bg-white/[0.03] p-4 sm:p-5 text-center">
+                      <p className="text-sm font-semibold text-heading">No history matches your filter.</p>
+                      <p className="text-xs text-faded mt-1">Try a different keyword or clear the filter.</p>
+                    </div>
                   ) : (
-                    <ul className="space-y-3">
-                      {scanHistory.map((scan, idx) => (
-                        <li
-                          key={idx}
-                          className="rounded-lg border border-divider/40 dark:border-[#545BFF]/10 bg-white/50 dark:bg-white/[0.02] p-3 sm:p-4 hover:border-[#545BFF]/30 transition-all duration-200"
-                        >
-                          <div className="flex items-start justify-between gap-3 mb-2">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                <div
-                                  className={`w-2 h-2 rounded-full flex-shrink-0 ${scan.riskScore >= 70 ? "bg-red-500" : scan.riskScore >= 40 ? "bg-yellow-500" : "bg-green-500"}`}
-                                />
-                                <span className="text-heading text-xs md:text-sm break-all font-mono flex-1">
-                                  {scan.url}
+                    <>
+                      <ul className="space-y-3">
+                        {paginatedHistory.map((scan, idx) => (
+                          <li
+                            key={`${scan.url}-${idx}-${scan.date}`}
+                            className="rounded-xl border border-divider/40 dark:border-[#545BFF]/12 bg-white/70 dark:bg-white/[0.04] p-3 sm:p-4 shadow-[0_8px_22px_rgba(9,10,35,0.14)] hover:shadow-[0_10px_26px_rgba(84,91,255,0.14)] hover:border-[#545BFF]/40 transition-all duration-200"
+                          >
+                            <div className="flex items-start justify-between gap-3 mb-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                  <div
+                                    className={`w-2 h-2 rounded-full flex-shrink-0 ${scan.riskScore >= 70 ? "bg-red-500" : scan.riskScore >= 40 ? "bg-yellow-500" : "bg-green-500"}`}
+                                  />
+                                  <span className="text-heading text-xs md:text-sm break-all font-mono flex-1">
+                                    {scan.url}
+                                  </span>
+                                </div>
+                                <div className="text-[10px] text-faded font-mono">
+                                  {scan.date}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <span
+                                  className={`text-[10px] sm:text-xs px-2.5 py-1 rounded-full font-bold tracking-wide whitespace-nowrap uppercase border ${
+                                    scan.riskScore >= 70
+                                      ? "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/25"
+                                      : scan.riskScore >= 40
+                                        ? "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/25"
+                                        : "bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/25"
+                                  }`}
+                                >
+                                  {scan.riskScore}
                                 </span>
                               </div>
-                              <div className="text-[10px] text-faded font-mono">
-                                {scan.date}
-                              </div>
                             </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              <span
-                                className={`text-[10px] sm:text-xs px-2.5 py-1 rounded-full font-bold tracking-wide whitespace-nowrap uppercase border ${
-                                  scan.riskScore >= 70
-                                    ? "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/25"
-                                    : scan.riskScore >= 40
-                                      ? "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/25"
-                                      : "bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/25"
-                                }`}
+                            <div className="flex items-center justify-between text-[10px] text-faded">
+                              <span className="font-mono">{scan.status}</span>
+                              <button
+                                onClick={() => {
+                                  setUrlInput(scan.url);
+                                  doScan(scan.url);
+                                }}
+                                className="px-3 py-1 rounded-md text-[#545BFF] dark:text-[#a89de8] border border-[#545BFF]/30 bg-[#545BFF]/10 hover:bg-[#545BFF]/20 transition-colors duration-150 font-semibold"
                               >
-                                {scan.riskScore}
-                              </span>
+                                Rescan
+                              </button>
                             </div>
-                          </div>
-                          <div className="flex items-center justify-between text-[10px] text-faded">
-                            <span className="font-mono">{scan.status}</span>
-                            <button
-                              onClick={() => {
-                                setUrlInput(scan.url);
-                                doScan(scan.url);
-                              }}
-                              className="px-2.5 py-1 rounded-md text-[#545BFF] dark:text-[#a89de8] hover:bg-[#545BFF]/10 transition-colors duration-200 font-medium"
-                            >
-                              Rescan
-                            </button>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-4">
+                        <span className="text-[11px] text-faded font-mono">
+                          Showing {historyRangeStart}-{historyRangeEnd} of {filteredAndSortedHistory.length}
+                        </span>
+                        <div className="flex items-center gap-2 bg-white/60 dark:bg-white/[0.03] border border-divider px-2 py-1.5 rounded-lg shadow-[0_6px_16px_rgba(84,91,255,0.08)]">
+                          <button
+                            onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+                            disabled={currentHistoryPage === 1}
+                            className="px-3 py-1.5 rounded-md border border-divider text-sm text-copy disabled:opacity-50 disabled:cursor-not-allowed bg-white/80 dark:bg-white/[0.05] hover:border-[#545BFF]/40"
+                          >
+                            Prev
+                          </button>
+                          <span className="text-[11px] font-mono text-faded">
+                            Page {currentHistoryPage} / {totalHistoryPages}
+                          </span>
+                          <button
+                            onClick={() =>
+                              setHistoryPage((p) =>
+                                Math.min(totalHistoryPages, p + 1),
+                              )
+                            }
+                            disabled={currentHistoryPage === totalHistoryPages}
+                            className="px-3 py-1.5 rounded-md border border-divider text-sm text-copy disabled:opacity-50 disabled:cursor-not-allowed bg-white/80 dark:bg-white/[0.05] hover:border-[#545BFF]/40"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
               )}
