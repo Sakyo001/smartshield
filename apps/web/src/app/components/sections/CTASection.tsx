@@ -123,7 +123,7 @@ export default function CTASection() {
           transition={{ duration: 0.6, delay: 0.25 }}
         >
           Install SmartShield and let AI protect you against phishing, malware,
-          and suspicious websites in real time, every scan under 200ms.
+          and suspicious websites in real time, every scan under 10s.
         </motion.p>
 
         {/* CTAs */}
@@ -303,7 +303,7 @@ export default function CTASection() {
               shadow-[0_2px_18px_rgba(84,91,255,0.13),0_0_0_1px_rgba(84,91,255,0.05)] dark:shadow-none"
           >
             <div className="font-mono text-[#545BFF] dark:text-[#7c83ff] font-bold text-[15px] leading-none mb-0.5">
-              &lt;200ms
+              &lt;10s
             </div>
             <div className="text-faded text-[8px] font-medium tracking-[0.1em] uppercase">
               Scan Speed
