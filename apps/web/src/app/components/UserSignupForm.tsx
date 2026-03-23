@@ -4,13 +4,22 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { createClient } from "@lib/supabase";
+import { useTheme } from "@lib/theme-context";
 import DotGridCanvas from "./ui/DotGridCanvas";
 
 export function UserSignupForm() {
   const supabase = createClient();
   const router = useRouter();
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const effectiveTheme = mounted ? theme : "dark";
   const [signupComplete, setSignupComplete] = useState(false);
   const [signupEmail, setSignupEmail] = useState("");
   const [isResendLoading, setIsResendLoading] = useState(false);
@@ -196,11 +205,20 @@ export function UserSignupForm() {
         {/* Subtly animated glow blob for depth */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[2] w-[460px] h-[460px] md:w-[720px] md:h-[720px] rounded-full dark:bg-[#545BFF]/16 bg-[#545BFF]/12 blur-[100px] pointer-events-none transform-gpu animate-pulse" style={{ animationDuration: '4s' }} />
 
-        <div className="relative z-[10] w-full max-w-md rounded-2xl border border-[#545BFF]/20 dark:bg-[#0d0e1a]/70 bg-white/85 backdrop-blur-xl shadow-[0_12px_40px_rgba(84,91,255,0.12)] dark:shadow-none p-6 sm:p-8 transition-[border-color,box-shadow] duration-300 hover:border-[#545BFF]/40">
-          <div className="mb-7 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center">
+        <div className="relative z-[10] w-full max-w-md rounded-2xl border border-[#545BFF]/20 dark:bg-[#0d0e1a]/70 bg-white/85 backdrop-blur-xl shadow-[0_12px_40px_rgba(84,91,255,0.12)] dark:shadow-none p-5 sm:p-6 transition-[border-color,box-shadow] duration-300 hover:border-[#545BFF]/40">
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className="mb-3 flex items-center gap-2 text-[13px] text-faded hover:text-heading transition"
+            aria-label="Back to home"
+          >
+            <ArrowLeft size={16} />
+            <span>Back to Home</span>
+          </button>
+          <div className="mb-5 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center">
               <Image
-                src="/images/light-logo.png"
+                src={effectiveTheme === "dark" ? "/images/light-logo.png" : "/images/dark-logo (1).png"}
                 alt="SmartShield"
                 width={48}
                 height={48}
@@ -209,18 +227,18 @@ export function UserSignupForm() {
               />
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-heading tracking-tight">Verify Your Email</h1>
-            <p className="mt-2 text-sm text-copy/75 font-light">
+            <p className="mt-1 text-sm text-copy/75 font-light">
               We've sent a verification email to <strong>{signupEmail}</strong>
             </p>
           </div>
 
-          <div className="space-y-4">
-            <div className="rounded-lg border border-[#545BFF]/40 dark:bg-[#545BFF]/10 bg-[#545BFF]/5 px-4 py-3 text-[13px] text-copy">
-              <p className="font-semibold text-[#545BFF] dark:text-[#a89de8] mb-2">📧 Account Created Successfully!</p>
+          <div className="space-y-3">
+            <div className="rounded-lg border border-[#545BFF]/40 dark:bg-[#545BFF]/10 bg-[#545BFF]/5 px-4 py-2 text-[13px] text-copy">
+              <p className="font-semibold text-[#545BFF] dark:text-[#a89de8] mb-1">📧 Account Created Successfully!</p>
               <p>Please check your email and click the verification link to activate your account.</p>
             </div>
 
-            <div className="rounded-lg border border-[#545BFF]/20 dark:bg-[#0a0d1a]/50 bg-white/50 px-4 py-3 text-[13px] text-copy/80 space-y-2 backdrop-blur-sm">
+            <div className="rounded-lg border border-[#545BFF]/20 dark:bg-[#0a0d1a]/50 bg-white/50 px-4 py-2 text-[13px] text-copy/80 space-y-1 backdrop-blur-sm">
               <p>✓ Check your inbox for the verification email</p>
               <p>✓ Click the confirmation link to verify your email</p>
               <p>✓ You'll be redirected to the homepage after verification</p>
@@ -243,12 +261,12 @@ export function UserSignupForm() {
               type="button"
               onClick={handleResendEmail}
               disabled={isResendLoading}
-              className="w-full mt-2 rounded-lg border border-[#545BFF]/30 dark:bg-[#0a0d1a]/50 bg-white/60 px-4 py-2.5 text-sm font-semibold text-heading hover:bg-[#545BFF]/5 dark:hover:bg-[#545BFF]/15 transition-all duration-300 disabled:opacity-65 shadow-sm"
+              className="w-full mt-1.5 rounded-lg border border-[#545BFF]/30 dark:bg-[#0a0d1a]/50 bg-white/60 px-4 py-2.5 text-sm font-semibold text-heading hover:bg-[#545BFF]/5 dark:hover:bg-[#545BFF]/15 transition-all duration-300 disabled:opacity-65 shadow-sm"
             >
               {isResendLoading ? "Sending..." : "Resend Verification Email"}
             </button>
 
-            <p className="text-center text-[13px] text-copy/70 mt-6">
+            <p className="text-center text-[13px] text-copy/70 mt-4">
               Changed your mind?{" "}
               <button
                 onClick={() => {
@@ -284,11 +302,18 @@ export function UserSignupForm() {
       {/* Subtly animated glow blob for depth */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[2] w-[460px] h-[460px] md:w-[720px] md:h-[720px] rounded-full dark:bg-[#545BFF]/16 bg-[#545BFF]/12 blur-[100px] pointer-events-none transform-gpu animate-pulse" style={{ animationDuration: '4s' }} />
 
-      <div className="relative z-[10] w-full max-w-md rounded-2xl border border-[#545BFF]/20 dark:bg-[#0d0e1a]/70 bg-white/85 backdrop-blur-xl shadow-[0_12px_40px_rgba(84,91,255,0.12)] dark:shadow-none p-6 sm:p-8 transition-[border-color,box-shadow] duration-300 hover:border-[#545BFF]/40">
-        <div className="mb-7 text-center">
+      <div className="relative z-[10] w-full max-w-md rounded-2xl border border-[#545BFF]/20 dark:bg-[#0d0e1a]/70 bg-white/85 backdrop-blur-xl shadow-[0_12px_40px_rgba(84,91,255,0.12)] dark:shadow-none p-5 sm:p-6 transition-[border-color,box-shadow] duration-300 hover:border-[#545BFF]/40">          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className="mb-3 flex items-center gap-2 text-[13px] text-faded hover:text-heading transition"
+            aria-label="Back to home"
+          >
+            <ArrowLeft size={16} />
+            <span>Back to Home</span>
+          </button>        <div className="mb-5 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center">
             <Image
-              src="/images/light-logo.png"
+              src={effectiveTheme === "dark" ? "/images/light-logo.png" : "/images/dark-logo (1).png"}
               alt="SmartShield"
               width={48}
               height={48}
@@ -302,8 +327,8 @@ export function UserSignupForm() {
           </p>
         </div>
 
-        <form onSubmit={handleEmailSignup} className="space-y-4">
-          <div className="space-y-1.5">
+        <form onSubmit={handleEmailSignup} className="space-y-3">
+          <div className="space-y-1">
             <label htmlFor="email" className="block text-[13px] font-medium text-copy">
               Email
             </label>
@@ -318,7 +343,7 @@ export function UserSignupForm() {
             />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <label htmlFor="password" className="block text-[13px] font-medium text-copy">
               Password
             </label>
@@ -343,7 +368,7 @@ export function UserSignupForm() {
             </div>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <label htmlFor="confirmPassword" className="block text-[13px] font-medium text-copy">
               Confirm Password
             </label>
@@ -380,7 +405,7 @@ export function UserSignupForm() {
             </div>
           )}
 
-          <div className="pt-2">
+          <div className="pt-1">
             <label className="flex items-center cursor-pointer group">
               <input
                 type="checkbox"
@@ -395,13 +420,13 @@ export function UserSignupForm() {
           <button
             type="submit"
             disabled={isEmailLoading || isGoogleLoading}
-            className="relative mt-2 w-full rounded-lg bg-gradient-to-r from-[#545BFF] to-[#6B73FF] hover:from-[#4349dd] hover:to-[#545BFF] py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(84,91,255,0.3)] hover:shadow-[0_0_32px_rgba(84,91,255,0.5)] hover:-translate-y-px transition-all duration-300 disabled:opacity-65 disabled:hover:translate-y-0 overflow-hidden group"
+            className="relative mt-1.5 w-full rounded-lg bg-gradient-to-r from-[#545BFF] to-[#6B73FF] hover:from-[#4349dd] hover:to-[#545BFF] py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(84,91,255,0.3)] hover:shadow-[0_0_32px_rgba(84,91,255,0.5)] hover:-translate-y-px transition-all duration-300 disabled:opacity-65 disabled:hover:translate-y-0 overflow-hidden group"
           >
             <span className="relative z-10">{isEmailLoading ? "Creating account..." : "Sign up"}</span>
           </button>
         </form>
 
-        <div className="my-6 flex items-center gap-3">
+        <div className="my-4 flex items-center gap-3">
           <span className="h-px flex-1 bg-divider/30" />
           <span className="text-[11px] font-medium uppercase tracking-wider text-faded/70">or continue with</span>
           <span className="h-px flex-1 bg-divider/30" />
@@ -417,7 +442,7 @@ export function UserSignupForm() {
           {isGoogleLoading ? "Redirecting..." : "Google"}
         </button>
 
-        <p className="mt-7 text-center text-[13px] text-copy/70">
+        <p className="mt-5 text-center text-[13px] text-copy/70">
           Already have an account?{" "}
           <Link href="/login" className="text-[#545BFF] dark:text-[#7c83ff] hover:text-[#6b72ff] dark:hover:text-[#a3a8ff] font-semibold transition-colors">
             Sign in

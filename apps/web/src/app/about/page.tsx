@@ -22,11 +22,6 @@ const mlModels = [
     desc: "Extreme Gradient Boosting for ensemble learning with robust feature importance ranking.",
     features: ["Gradient boosting", "Feature importance", "Fast training"]
   },
-  {
-    name: "Logistic Regression",
-    desc: "Probabilistic classifier providing confidence scores and interpretable coefficients.",
-    features: ["Probability scores", "Interpretability", "Real-time inference"]
-  }
 ];
 
 const featureCategories = [
@@ -58,7 +53,7 @@ const howItWorks = [
   {
     step: 3,
     title: "Model Processing",
-    desc: "Ensemble of 4 ML models processes features simultaneously and votes on risk level."
+    desc: "Ensemble of 3 ML models processes features simultaneously and votes on risk level."
   },
   {
     step: 4,
@@ -167,7 +162,7 @@ function OverviewSection() {
           <div className="grid md:grid-cols-3 gap-6 mt-12">
             {[
               { label: "Real-Time Detection", desc: "Instant threat analysis" },
-              { label: "Ensemble ML", desc: "4 models voting together" },
+              { label: "Ensemble ML", desc: "3 models voting together" },
               { label: "Explainable AI", desc: "LIME & SHAP explanations" }
             ].map((item, i) => (
               <motion.div
@@ -278,7 +273,7 @@ function TechnologySection() {
           className="mb-16"
         >
           <h3 className="text-2xl font-bold text-heading mb-8">Ensemble Machine Learning</h3>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {mlModels.map((model, i) => (
               <motion.div
                 key={i}
