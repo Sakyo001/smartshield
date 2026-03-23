@@ -81,7 +81,7 @@ const FEATURES = [
 
 const STATS = [
   { value: "96.9%", label: "Detection rate" },
-  { value: "<200ms", label: "Scan speed" },
+  { value: "<10s", label: "Scan speed" },
   { value: "6×", label: "Layered defense" },
 ];
 
@@ -322,7 +322,9 @@ function FeatureCard({
       </div>
 
       {/* Card body */}
-      <div className={`relative z-10 flex flex-col flex-1 ${compact ? "px-4 pt-3 pb-2.5" : "px-5 pt-4 pb-3"}`}>
+      <div
+        className={`relative z-10 flex flex-col flex-1 ${compact ? "px-4 pt-3 pb-2.5" : "px-5 pt-4 pb-3"}`}
+      >
         {/* Left accent bar */}
         <div
           className="absolute left-0 top-0 bottom-0 w-[2.5px] rounded-r-full"
@@ -334,8 +336,12 @@ function FeatureCard({
         />
 
         {/* Icon + title row */}
-        <div className={`flex items-start ${compact ? "gap-2.5 mb-2.5" : "gap-3 mb-3"}`}>
-          <div className={`relative shrink-0 ${compact ? "w-10 h-10" : "w-11 h-11"}`}>
+        <div
+          className={`flex items-start ${compact ? "gap-2.5 mb-2.5" : "gap-3 mb-3"}`}
+        >
+          <div
+            className={`relative shrink-0 ${compact ? "w-10 h-10" : "w-11 h-11"}`}
+          >
             {/* Icon glow halo */}
             <div
               className="absolute inset-0 rounded-xl blur-md opacity-35"
@@ -364,7 +370,9 @@ function FeatureCard({
           </div>
 
           <div className="flex-1 min-w-0">
-            <h3 className={`${compact ? "text-[1rem]" : "text-[1.05rem]"} font-extrabold text-heading tracking-tight leading-tight`}>
+            <h3
+              className={`${compact ? "text-[1rem]" : "text-[1.05rem]"} font-extrabold text-heading tracking-tight leading-tight`}
+            >
               {feature.title}
             </h3>
             {isFront && !compact && (
@@ -382,7 +390,9 @@ function FeatureCard({
         </div>
 
         {/* Description */}
-        <p className={`text-copy/65 ${compact ? "text-[12.5px]" : "text-[13px]"} leading-relaxed flex-1 mb-3`}>
+        <p
+          className={`text-copy/65 ${compact ? "text-[12.5px]" : "text-[13px]"} leading-relaxed flex-1 mb-3`}
+        >
           {feature.description}
         </p>
 
@@ -553,7 +563,11 @@ function CardSwapDeck() {
                 animate={{
                   y: vis ? pos * PEEK : cardHeight + 24,
                   scale: vis ? 1 - pos * SCALE_D : 0.78,
-                  rotateZ: vis ? (isMobileViewport ? 0 : (ROTATE_Z[pos] ?? 0)) : 0,
+                  rotateZ: vis
+                    ? isMobileViewport
+                      ? 0
+                      : (ROTATE_Z[pos] ?? 0)
+                    : 0,
                   opacity: vis ? 1 - pos * OPACITY_D : 0,
                   filter:
                     !isMobileViewport && vis && pos > 0
@@ -564,7 +578,11 @@ function CardSwapDeck() {
                 onClick={pos === 0 ? () => advance(1) : undefined}
                 whileTap={pos === 0 ? { scale: 0.993 } : {}}
               >
-                <FeatureCard feature={feat} isFront={pos === 0} compact={isMobileViewport} />
+                <FeatureCard
+                  feature={feat}
+                  isFront={pos === 0}
+                  compact={isMobileViewport}
+                />
               </motion.div>
             );
           })}

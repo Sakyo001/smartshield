@@ -1,11 +1,11 @@
 ﻿"use client";
 
+import { motion, useScroll, useSpring, useTransform } from "motion/react";
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import { Poppins } from "next/font/google";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { motion, useScroll, useTransform, useSpring } from "motion/react";
 import DotGridCanvas from "../ui/DotGridCanvas";
 
 const ShieldModel = dynamic(() => import("../ui/ShieldModel"), {
@@ -22,7 +22,7 @@ const poppins = Poppins({
 const stats = [
   { value: "600K+", label: "Total Datasets" },
   { value: "96.9%", label: "Detection Rate" },
-  { value: "<200ms", label: "Scan Speed" },
+  { value: "<10s", label: "Scan Speed" },
   { value: "24/7", label: "Active Monitoring" },
 ];
 
@@ -51,7 +51,9 @@ function ScanRings({ animated = true }: { animated?: boolean }) {
             height: size,
             top: -size / 2,
             left: -size / 2,
-            animation: animated ? `pulseScaleRing 5s ease-out ${delay}s infinite` : undefined,
+            animation: animated
+              ? `pulseScaleRing 5s ease-out ${delay}s infinite`
+              : undefined,
           }}
         />
       ))}
@@ -75,7 +77,10 @@ export default function HeroSection() {
 
   useEffect(() => {
     type IdleWindow = Window & {
-      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+      requestIdleCallback?: (
+        callback: () => void,
+        options?: { timeout: number },
+      ) => number;
       cancelIdleCallback?: (id: number) => void;
     };
 
@@ -97,7 +102,9 @@ export default function HeroSection() {
     const evaluate = () => {
       clearPending();
 
-      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
       const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
       const smallViewport = window.innerWidth < 768;
       setAllowAnimatedEffects(!reducedMotion && !coarsePointer);
@@ -109,7 +116,9 @@ export default function HeroSection() {
       }
 
       if (typeof w.requestIdleCallback === "function") {
-        idleId = w.requestIdleCallback(() => setShowShield3D(true), { timeout: 1500 });
+        idleId = w.requestIdleCallback(() => setShowShield3D(true), {
+          timeout: 1500,
+        });
       } else {
         timeoutId = window.setTimeout(() => setShowShield3D(true), 900);
       }
@@ -148,23 +157,23 @@ export default function HeroSection() {
 
   /* ── Shield travels: right→left desktop, mobile stays centered ── */
   const shieldXDesktop = useTransform(smooth, [0, 0.52], ["26vw", "-19vw"]);
-  const shieldXMobile  = useTransform(smooth, [0, 1],    ["0px",  "0px"]);
+  const shieldXMobile = useTransform(smooth, [0, 1], ["0px", "0px"]);
 
   /* ── Shield on mobile: upper-center in hero, glides subtly upward; desktop stays centered ── */
-  const shieldYMobile  = useTransform(smooth, [0, 0.35], ["-14vh", "-23vh"]);
-  const shieldYDesktop = useTransform(smooth, [0, 1],    ["0px", "0px"]);
+  const shieldYMobile = useTransform(smooth, [0, 0.35], ["-14vh", "-23vh"]);
+  const shieldYDesktop = useTransform(smooth, [0, 1], ["0px", "0px"]);
 
   /* ── Scale: shrinks slightly (not too much) ── */
   const shieldScale = useTransform(smooth, [0, 0.52], [1, 0.85]);
 
   /* ── Hero content fades out while scrolling ── */
-  const heroOpacity      = useTransform(smooth, [0, 0.25], [1, 0]);
-  const heroY            = useTransform(smooth, [0, 0.25], [0, -40]);
+  const heroOpacity = useTransform(smooth, [0, 0.25], [1, 0]);
+  const heroY = useTransform(smooth, [0, 0.25], [0, -40]);
   const scrollHintOpacity = useTransform(smooth, [0, 0.08], [1, 0]);
 
   /* ── Stats content fades in after shield settles ── */
   const statsOpacity = useTransform(smooth, [0.33, 0.53], [0, 1]);
-  const statsY       = useTransform(smooth, [0.33, 0.53], [36, 0]);
+  const statsY = useTransform(smooth, [0.33, 0.53], [36, 0]);
 
   /* Pick responsive motion values */
   const shieldX = isMobile ? shieldXMobile : shieldXDesktop;
@@ -176,9 +185,12 @@ export default function HeroSection() {
      * Mobile: 160vh (stats removed), Desktop: 220vh
      * The sticky inner stays at the top of the viewport the whole time.
      */
-    <div ref={containerRef} className="relative" style={{ height: isMobile ? "160vh" : "220vh" }}>
+    <div
+      ref={containerRef}
+      className="relative"
+      style={{ height: isMobile ? "160vh" : "220vh" }}
+    >
       <div className="sticky top-0 h-[100dvh] md:h-screen overflow-hidden bg-page">
-
         {/* ── Layer 1: dot-grid background ── */}
         <div className="absolute inset-0 z-[1]">
           <DotGridCanvas maxNodes={26} />
@@ -205,7 +217,13 @@ export default function HeroSection() {
         {/* ── Layer 5: scan pulse rings — visible on mobile too, follows shield ── */}
         <motion.div
           className="absolute top-1/2 left-1/2 z-[5] pointer-events-none transform-gpu"
-          style={{ x: shieldX, y: shieldY, translateX: "-50%", translateY: "-50%", scale: shieldScale }}
+          style={{
+            x: shieldX,
+            y: shieldY,
+            translateX: "-50%",
+            translateY: "-50%",
+            scale: shieldScale,
+          }}
         >
           <ScanRings animated={allowAnimatedEffects} />
         </motion.div>
@@ -268,11 +286,21 @@ export default function HeroSection() {
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 dark:bg-[#07080f]/95 border border-[#545BFF]/35 dark:border-[#545BFF]/25 backdrop-blur-md shadow-sm dark:shadow-none">
             <motion.span
               className="w-1.5 h-1.5 rounded-full bg-[#22c55e]"
-              animate={allowAnimatedEffects ? { opacity: [1, 0.2, 1] } : { opacity: 1 }}
-              transition={allowAnimatedEffects ? { duration: 1.5, repeat: Infinity } : undefined}
+              animate={
+                allowAnimatedEffects ? { opacity: [1, 0.2, 1] } : { opacity: 1 }
+              }
+              transition={
+                allowAnimatedEffects
+                  ? { duration: 1.5, repeat: Infinity }
+                  : undefined
+              }
             />
-            <span className="font-mono text-[8px] tracking-[0.2em] text-[#4349cd] dark:text-[#7c83ff] uppercase font-semibold">Threat Scanner</span>
-            <span className="font-mono text-[8px] text-[#22c55e] dark:text-[#4ade80] font-bold">Active</span>
+            <span className="font-mono text-[8px] tracking-[0.2em] text-[#4349cd] dark:text-[#7c83ff] uppercase font-semibold">
+              Threat Scanner
+            </span>
+            <span className="font-mono text-[8px] text-[#22c55e] dark:text-[#4ade80] font-bold">
+              Active
+            </span>
           </div>
           <div className="h-px w-16 bg-gradient-to-r from-[#545BFF]/50 to-transparent" />
         </motion.div>
@@ -289,7 +317,6 @@ export default function HeroSection() {
         >
           <div className="w-full max-w-7xl mx-auto px-5 sm:px-6 lg:px-16 flex flex-col justify-start md:justify-center h-full pt-[47vh] sm:pt-[49vh] md:pt-20 lg:pt-24 xl:pt-16 2xl:pt-0">
             <div className="mx-auto md:mx-0 max-w-[350px] sm:max-w-[420px] md:max-w-[520px] pb-6 sm:pb-8 md:pb-0 text-center sm:text-left">
-
               {/* Badge */}
               <motion.div
                 initial={{ opacity: 0, y: 14 }}
@@ -337,20 +364,26 @@ export default function HeroSection() {
                 <div className="flex items-center gap-2 sm:hidden mb-4">
                   {[
                     { val: "96.9%", label: "Accuracy" },
-                    { val: "<200ms", label: "Speed" },
+                    { val: "<10s", label: "Speed" },
                     { val: "3 AI", label: "Models" },
                   ].map(({ val, label }) => (
                     <div
                       key={label}
                       className="flex-1 text-center py-2.5 px-1 rounded-xl border dark:border-[#545BFF]/25 border-[#545BFF]/35 dark:bg-[#545BFF]/7 bg-[#545BFF]/12 backdrop-blur-sm"
                     >
-                      <div className="dark:text-[#7c83ff] text-[#4349cd] font-bold text-[13px] leading-none mb-[3px]">{val}</div>
-                      <div className="dark:text-faded/55 text-faded/65 text-[9px] font-medium uppercase tracking-wider">{label}</div>
+                      <div className="dark:text-[#7c83ff] text-[#4349cd] font-bold text-[13px] leading-none mb-[3px]">
+                        {val}
+                      </div>
+                      <div className="dark:text-faded/55 text-faded/65 text-[9px] font-medium uppercase tracking-wider">
+                        {label}
+                      </div>
                     </div>
                   ))}
                 </div>
 
-                <p className={`${poppins.className} hidden sm:block dark:text-copy/80 text-copy/85 text-sm md:text-base leading-relaxed max-w-sm md:max-w-md mb-2.5 sm:mb-3 md:mb-4 font-light`}>
+                <p
+                  className={`${poppins.className} hidden sm:block dark:text-copy/80 text-copy/85 text-sm md:text-base leading-relaxed max-w-sm md:max-w-md mb-2.5 sm:mb-3 md:mb-4 font-light`}
+                >
                   Real-time phishing detection powered by machine learning.
                   Every link scanned. Every threat stopped.
                 </p>
@@ -362,11 +395,25 @@ export default function HeroSection() {
                   ].map((feat) => (
                     <div key={feat} className="flex items-start gap-2.5">
                       <div className="mt-[3px] flex-shrink-0 w-4 h-4 rounded-full dark:bg-[#545BFF]/15 bg-[#545BFF]/12 dark:border-[#545BFF]/30 border-[#545BFF]/40 border flex items-center justify-center">
-                        <svg width="8" height="7" viewBox="0 0 8 7" fill="none" aria-hidden>
-                          <path d="M1 3.5L3 5.5L7 1.5" stroke="#545BFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        <svg
+                          width="8"
+                          height="7"
+                          viewBox="0 0 8 7"
+                          fill="none"
+                          aria-hidden
+                        >
+                          <path
+                            d="M1 3.5L3 5.5L7 1.5"
+                            stroke="#545BFF"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
                         </svg>
                       </div>
-                      <span className={`${poppins.className} dark:text-copy/75 text-copy/80 text-[13px] sm:text-sm font-light leading-snug`}>
+                      <span
+                        className={`${poppins.className} dark:text-copy/75 text-copy/80 text-[13px] sm:text-sm font-light leading-snug`}
+                      >
                         {feat}
                       </span>
                     </div>
@@ -389,8 +436,20 @@ export default function HeroSection() {
                 >
                   <span className="relative z-10 flex items-center gap-2">
                     Get the Extension
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:translate-x-0.5 transition-transform duration-200" aria-hidden>
-                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="group-hover:translate-x-0.5 transition-transform duration-200"
+                      aria-hidden
+                    >
+                      <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
                   </span>
                   <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
@@ -401,8 +460,20 @@ export default function HeroSection() {
                 >
                   <span className="relative z-10 flex items-center gap-2">
                     Scan a Website
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:translate-x-0.5 transition-transform duration-200" aria-hidden>
-                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="group-hover:translate-x-0.5 transition-transform duration-200"
+                      aria-hidden
+                    >
+                      <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
                   </span>
                 </a>
@@ -422,7 +493,6 @@ export default function HeroSection() {
         >
           <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-16 pb-0 md:pb-0">
             <div className="md:ml-auto md:max-w-[46%]">
-
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full dark:bg-[#545BFF]/10 bg-[#545BFF]/12 dark:border-[#545BFF]/20 border-[#545BFF]/30 border backdrop-blur-sm mb-3 md:mb-5 shadow-sm dark:shadow-none">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#545BFF] animate-pulse" />
                 <span className="text-[#545BFF] dark:text-[#a89de8] text-[11px] font-semibold tracking-widest uppercase">
@@ -437,13 +507,18 @@ export default function HeroSection() {
                 </span>
               </h2>
 
-              <p className={`${poppins.className} text-copy/65 text-[13px] leading-relaxed mb-3 sm:hidden font-light`}>
-                Millisecond threat detection powered by AI, always on, zero data stored.
+              <p
+                className={`${poppins.className} text-copy/65 text-[13px] leading-relaxed mb-3 sm:hidden font-light`}
+              >
+                Within Seconds threat detection powered by AI, always on, zero
+                data stored.
               </p>
 
-              <p className={`${poppins.className} hidden sm:block text-copy/80 text-[13px] md:text-base leading-relaxed mb-4 md:mb-6 font-light max-w-[320px] sm:max-w-sm md:max-w-none`}>
+              <p
+                className={`${poppins.className} hidden sm:block text-copy/80 text-[13px] md:text-base leading-relaxed mb-4 md:mb-6 font-light max-w-[320px] sm:max-w-sm md:max-w-none`}
+              >
                 SmartShield analyzes URLs, domain age, SSL certificates, and
-                page content in milliseconds, giving you instant threat
+                page content within seconds, giving you instant threat
                 assessments with clear, human-readable explanations.
               </p>
 
@@ -455,7 +530,11 @@ export default function HeroSection() {
                     initial={{ opacity: 0, y: 14, scale: 0.93 }}
                     whileInView={{ opacity: 1, y: 0, scale: 1 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.45, delay: i * 0.09, ease: [0.22, 1, 0.36, 1] }}
+                    transition={{
+                      duration: 0.45,
+                      delay: i * 0.09,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
                     whileHover={{ y: -3, scale: 1.03 }}
                     className="group relative overflow-hidden px-2.5 py-2.5 sm:px-3 sm:py-3 md:px-4 md:py-4 rounded-xl md:rounded-2xl cursor-default
                       dark:bg-[#0d0e1a]/60 bg-white/85 backdrop-blur-md
@@ -471,9 +550,11 @@ export default function HeroSection() {
                     <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#545BFF]/0 group-hover:via-[#545BFF]/50 to-transparent transition-all duration-300 pointer-events-none" />
                     {/* Left accent bar */}
                     <div className="absolute left-0 top-2 bottom-2 w-[2px] rounded-full bg-gradient-to-b from-[#545BFF] to-[#b19eef] opacity-60 group-hover:opacity-100 group-hover:shadow-[0_0_8px_rgba(84,91,255,0.7)] transition-all duration-300" />
-                    <div className="relative text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold mb-0.5 tracking-tight pl-1
+                    <div
+                      className="relative text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold mb-0.5 tracking-tight pl-1
                       text-transparent bg-clip-text bg-gradient-to-r from-[#545BFF] to-[#b19eef]
-                      group-hover:from-[#7c83ff] group-hover:to-[#c4b8f5] transition-all duration-300">
+                      group-hover:from-[#7c83ff] group-hover:to-[#c4b8f5] transition-all duration-300"
+                    >
                       {stat.value}
                     </div>
                     <div className="relative text-faded text-[10px] sm:text-[11px] md:text-xs font-medium tracking-wide pl-1 group-hover:text-faded/80 transition-colors duration-300">
@@ -501,15 +582,27 @@ export default function HeroSection() {
             <span className="text-faded/50 text-[9px] tracking-[0.22em] uppercase">
               Scroll
             </span>
-            <svg width="13" height="20" viewBox="0 0 13 20" fill="none" className="text-faded/40">
-              <rect x="1" y="1" width="11" height="18" rx="5.5" stroke="currentColor" strokeWidth="1.2" />
+            <svg
+              width="13"
+              height="20"
+              viewBox="0 0 13 20"
+              fill="none"
+              className="text-faded/40"
+            >
+              <rect
+                x="1"
+                y="1"
+                width="11"
+                height="18"
+                rx="5.5"
+                stroke="currentColor"
+                strokeWidth="1.2"
+              />
               <circle cx="6.5" cy="6.5" r="1.5" fill="currentColor" />
             </svg>
           </motion.div>
         </motion.div>
-
       </div>
     </div>
   );
 }
-
