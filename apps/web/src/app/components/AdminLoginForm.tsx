@@ -137,14 +137,14 @@ export function AdminLoginForm() {
                 className="object-contain"
               />
             </div>
-            <span className="text-gray-100 text-lg sm:text-2xl font-bold">
+            <span className="text-heading text-lg sm:text-2xl font-bold">
               SmartShield
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-100 mb-1 sm:mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-heading mb-1 sm:mb-2">
             Admin Portal
           </h1>
-          <p className="text-gray-400 text-sm sm:text-base">
+          <p className="text-copy text-sm sm:text-base">
             Sign in to access the admin dashboard
           </p>
         </div>
@@ -218,7 +218,7 @@ export function AdminLoginForm() {
             {/* Error Message */}
             {error && (
               <div className="p-2.5 sm:p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
-                <p className="text-xs sm:text-sm text-red-400">{error}</p>
+                <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">{error}</p>
               </div>
             )}
 
@@ -228,7 +228,7 @@ export function AdminLoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="login-button w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gradient-to-r from-[#545BFF] to-[#4349CD] text-heading font-semibold rounded-xl text-sm sm:text-base hover:shadow-lg disabled:opacity-50 transition-all duration-300"
+              className="login-button w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gradient-to-r from-[#545BFF] to-[#4349CD] text-white font-semibold rounded-xl text-sm sm:text-base hover:shadow-lg disabled:opacity-50 transition-all duration-300"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
