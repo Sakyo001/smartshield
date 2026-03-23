@@ -93,6 +93,19 @@ function getNumberField(obj: unknown, key: string): number | null {
   return typeof value === "number" ? value : null;
 }
 
+function getDateKeyLocal(now = new Date()): string {
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function getNextLocalMidnightEpochMs(now = new Date()): number {
+  const nextMidnight = new Date(now);
+  nextMidnight.setHours(24, 0, 0, 0);
+  return nextMidnight.getTime();
+}
+
 // Lazily initialised so a missing env var doesn't crash the module at build/boot
 // time — it only fails at request time when we can return a proper error.
 let ratelimit: Ratelimit | null = null;
@@ -103,7 +116,7 @@ function getRatelimit(): Ratelimit | null {
   try {
     ratelimit = new Ratelimit({
       redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(3, "60 s"),
+      limiter: Ratelimit.fixedWindow(3, "1 d"),
       analytics: false,
       prefix: "smartshield:scan",
     });
@@ -139,28 +152,71 @@ export async function POST(req: NextRequest) {
     req.headers.get("x-real-ip") ??
     "anonymous";
   const rateLimitKey = deviceId ? `device:${deviceId}` : `ip:${ip}`;
+  const dateKey = getDateKeyLocal();
+  const quotaBucketKey = `${rateLimitKey}:day:${dateKey}`;
 
   // Rate-limit headers to attach to every successful response
   let rlHeaders: Record<string, string> = {};
 
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return req.cookies.get(name)?.value;
+        },
+        set() {
+          // No-op: auth lookup only.
+        },
+        remove() {
+          // No-op: auth lookup only.
+        },
+      },
+    }
+  );
+
+  let userId: string | null = null;
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    userId = user?.id ?? null;
+  } catch {
+    userId = null;
+  }
+
+  const isGuestRequest = !userId;
+
   const rl = getRatelimit();
   // X-RateLimit-Active lets you confirm in DevTools whether limiting is running
   rlHeaders["X-RateLimit-Active"] = rl ? "true" : "false";
+  rlHeaders["X-Guest-Quota-Active"] = isGuestRequest ? "true" : "false";
 
   try {
-    if (rl) {
-      const { success, limit, remaining, reset } = await rl.limit(rateLimitKey);
+    if (rl && isGuestRequest) {
+      const { success, limit, remaining } = await rl.limit(quotaBucketKey);
+      const resetAt = getNextLocalMidnightEpochMs();
       rlHeaders = {
+        ...rlHeaders,
         "X-RateLimit-Limit": String(limit),
         "X-RateLimit-Remaining": String(remaining),
-        "X-RateLimit-Reset": String(reset),
+        "X-RateLimit-Reset": String(resetAt),
       };
       if (!success) {
-        const retryAfter = Math.ceil((reset - Date.now()) / 1000);
+        const retryAfter = Math.max(
+          0,
+          Math.ceil((resetAt - Date.now()) / 1000)
+        );
         return NextResponse.json(
           {
-            error: `Rate limit exceeded. You can perform up to 3 scans per minute. Please wait ${retryAfter} second${retryAfter !== 1 ? "s" : ""} before trying again.`,
+            error:
+              "Daily guest quota reached. You can run up to 3 scans per day in guest mode. Please sign in to continue scanning.",
             retryAfter,
+            quotaType: "guest_daily_quota",
+            signInRequired: true,
+            dailyLimit: 3,
+            resetAt,
           },
           {
             status: 429,

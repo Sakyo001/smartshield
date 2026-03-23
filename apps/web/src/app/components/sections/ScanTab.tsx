@@ -10,6 +10,7 @@ import {
   useTransform,
 } from "motion/react";
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DotGridCanvas from "../ui/DotGridCanvas";
 
@@ -1001,6 +1002,22 @@ function BotExplainer({ scan, xai }: { scan: ScanResult; xai: any }) {
   );
 }
 
+function formatDuration(seconds: number): string {
+  const safeSeconds = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+
+  if (minutes > 0) {
+    return `${minutes}m`;
+  }
+
+  return `${safeSeconds}s`;
+}
+
 /* ─────────────────────────────────────────────
    Guest Scanner (no auth required)
 ───────────────────────────────────────────── */
@@ -1024,6 +1041,11 @@ function GuestScanner({
   const [rateLimited, setRateLimited] = useState<{ retryAfter: number } | null>(
     null,
   );
+  const [guestDailyQuota, setGuestDailyQuota] = useState<{
+    dailyLimit: number;
+    resetAt: number;
+    retryAfter: number;
+  } | null>(null);
   const [retryCountdown, setRetryCountdown] = useState(0);
   const [apiStatus, setApiStatus] = useState<"checking" | "online" | "offline">(
     "checking",
@@ -1118,6 +1140,41 @@ function GuestScanner({
     const t = setTimeout(() => setRetryCountdown((c) => c - 1), 1000);
     return () => clearTimeout(t);
   }, [rateLimited, retryCountdown]);
+
+  useEffect(() => {
+    if (isAuthenticated && guestDailyQuota) {
+      setGuestDailyQuota(null);
+    }
+  }, [isAuthenticated, guestDailyQuota]);
+
+  useEffect(() => {
+    if (!guestDailyQuota) return;
+
+    const tick = () => {
+      const nextRetryAfter = Math.max(
+        0,
+        Math.ceil((guestDailyQuota.resetAt - Date.now()) / 1000),
+      );
+
+      if (nextRetryAfter <= 0) {
+        setGuestDailyQuota(null);
+        return;
+      }
+
+      setGuestDailyQuota((prev) =>
+        prev
+          ? {
+              ...prev,
+              retryAfter: nextRetryAfter,
+            }
+          : prev,
+      );
+    };
+
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [guestDailyQuota?.resetAt]);
 
   // Score counter animation
   const [scoreActive, setScoreActive] = useState(false);
@@ -1378,6 +1435,22 @@ function GuestScanner({
       if (response.status === 429) {
         const errData = await response.json().catch(() => ({}));
         const retryAfter = errData.retryAfter ?? 60;
+
+        if (errData.quotaType === "guest_daily_quota") {
+          const resetAt =
+            typeof errData.resetAt === "number"
+              ? errData.resetAt
+              : Date.now() + retryAfter * 1000;
+
+          setGuestDailyQuota({
+            dailyLimit:
+              typeof errData.dailyLimit === "number" ? errData.dailyLimit : 3,
+            resetAt,
+            retryAfter,
+          });
+          return;
+        }
+
         setRateLimited({ retryAfter });
         setRetryCountdown(retryAfter);
         return;
@@ -1555,6 +1628,7 @@ function GuestScanner({
   };
 
   const showGuestMessaging = !isAuthenticated && !hideGuestMode;
+  const guestQuotaLocked = showGuestMessaging && Boolean(guestDailyQuota);
 
   const filteredAndSortedHistory = useMemo(() => {
     const query = historyFilter.trim().toLowerCase();
@@ -1794,14 +1868,15 @@ function GuestScanner({
               className="w-full bg-transparent border-none text-heading placeholder:text-faded focus:outline-none focus:ring-0 py-3 text-sm sm:text-base"
               maxLength={100}
               required
+              disabled={guestQuotaLocked}
               suppressHydrationWarning
             />
           </div>
           <button
             type="submit"
-            disabled={scanning || !urlInput}
+            disabled={scanning || !urlInput || guestQuotaLocked}
             className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-2 text-sm sm:text-base ${
-              scanning
+              scanning || guestQuotaLocked
                 ? "bg-inset text-faded cursor-wait"
                 : "bg-gradient-to-r from-[#545BFF] to-[#6B73FF] hover:from-[#4349dd] hover:to-[#5a62ff] text-white shadow-lg shadow-[#545BFF]/20 hover:shadow-[#545BFF]/40"
             }`}
@@ -1830,6 +1905,10 @@ function GuestScanner({
                 </svg>
                 <span>Scanning...</span>
               </>
+            ) : guestQuotaLocked ? (
+              <>
+                <span>Daily Limit Reached</span>
+              </>
             ) : (
               <>
                 <span>Scan Now</span>
@@ -1851,6 +1930,65 @@ function GuestScanner({
           </button>
         </div>
       </motion.form>
+
+      <AnimatePresence>
+        {guestQuotaLocked && (
+          <motion.div
+            key="guest-daily-quota"
+            initial={{ opacity: 0, y: -10, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.97 }}
+            transition={{ duration: 0.28 }}
+            className="mb-6 rounded-2xl border border-[#545BFF]/30 bg-[#545BFF]/10 dark:bg-[#0f1333]/55 p-4 sm:p-5"
+          >
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#545BFF]/20">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-[#545BFF] dark:text-[#a89de8]"
+                >
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <path d="M12 8v4" />
+                  <path d="M12 16h.01" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm sm:text-[15px] font-semibold text-[#545BFF] dark:text-[#a89de8]">
+                  Guest daily quota reached
+                </p>
+                <p className="text-xs sm:text-sm text-copy/75 mt-1 leading-relaxed">
+                  You used all {guestDailyQuota?.dailyLimit ?? 3} guest scans for
+                  this device today. Sign in to continue scanning right now.
+                </p>
+                <p className="text-[11px] text-faded mt-2">
+                  Daily quota resets in {formatDuration(guestDailyQuota?.retryAfter ?? 0)}.
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2.5">
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center justify-center px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-[#545BFF] to-[#6B73FF] hover:from-[#4349dd] hover:to-[#5a62ff] transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="inline-flex items-center justify-center px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold text-[#545BFF] dark:text-[#a89de8] border border-[#545BFF]/35 hover:bg-[#545BFF]/10 transition-colors"
+                  >
+                    Create Account
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* character counter — only visible once the user starts typing */}
       {urlInput.length > 0 && (
