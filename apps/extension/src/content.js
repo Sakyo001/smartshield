@@ -63,9 +63,10 @@
     }
 
     const expiresIn = Number(tokens.expires_in || 0);
-    const expiresAt = Number.isFinite(expiresIn) && expiresIn > 0
-      ? Date.now() + expiresIn * 1000
-      : null;
+    const expiresAt =
+      Number.isFinite(expiresIn) && expiresIn > 0
+        ? Date.now() + expiresIn * 1000
+        : null;
 
     const authPayload = {
       access_token: accessToken,
@@ -170,7 +171,8 @@
     // Cookie fallback for SSR/cookie-based Supabase sessions.
     // Supabase cookie keys usually contain "sb-" and "auth-token".
     try {
-      const cookieBlob = typeof document.cookie === "string" ? document.cookie : "";
+      const cookieBlob =
+        typeof document.cookie === "string" ? document.cookie : "";
       if (cookieBlob.length > 0) {
         const hasSupabaseAuthCookie = cookieBlob
           .split(";")
@@ -202,20 +204,18 @@
           return;
         }
 
-        // If a badge is already visible for this domain, update it in-place
-        // instead of destroying & recreating (which resets position visually)
-        if (
-          currentBannerDomain === domain &&
-          document.getElementById("smartshield-root")
-        ) {
-          // Only re-create if the scan was pending and now has a real result
-          if (message.result.scanPending) {
-            sendResponse({ displayed: false, reason: "already_shown" });
-            return;
-          }
-          // Replace with real result, keeping persistent & position
+        const badgeElement = document.getElementById("smartshield-root");
+        const isBadgeShowing = currentBannerDomain === domain && badgeElement;
+
+        // If a badge is already visible for this domain, only skip update if the
+        // new result is still pending (meaning we're waiting for the actual result)
+        if (isBadgeShowing && message.result.scanPending) {
+          // Scan is still pending - don't replace scanning badge with another pending state
+          sendResponse({ displayed: false, reason: "already_shown" });
+          return;
         }
 
+        // Either no badge is showing, or a real result has arrived - update/show it
         showBanner(message.result, domain, false, !!message.persistent);
         sendResponse({ displayed: true });
       }
@@ -298,6 +298,8 @@
     // Remove existing badge + cancel any in-flight build
     removeBanner();
 
+    // Set the current domain early so message handlers know a badge is being built
+    // (even if the async build gets cancelled later)
     currentBannerDomain = domain;
 
     const isPending = !!result.scanPending;
@@ -334,7 +336,13 @@
     // Build the badge at the default bottom-left position
     getSavedPosition(({ offsetLeft, offsetBottom }) => {
       // Abort if a newer showBanner call has already taken over
-      if (myBuildId !== bannerBuildId) return;
+      if (myBuildId !== bannerBuildId) {
+        // If aborted, clear currentBannerDomain since we're not building this badge
+        if (currentBannerDomain === domain && myBuildId < bannerBuildId) {
+          currentBannerDomain = null;
+        }
+        return;
+      }
 
       const host = document.createElement("div");
       host.id = "smartshield-root";

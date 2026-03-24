@@ -153,11 +153,14 @@ async function scanURL(rootDomain) {
   try {
     const result = await scanPromise;
     const now = Date.now();
-    resultCache.set(rootDomain, { result, timestamp: now });
-    chrome.storage.local.set({
-      [storageKey]: result,
-      [`${storageKey}_ts`]: now,
-    });
+    // Only cache actual results, not error states with scanPending
+    if (!result.scanPending) {
+      resultCache.set(rootDomain, { result, timestamp: now });
+      chrome.storage.local.set({
+        [storageKey]: result,
+        [`${storageKey}_ts`]: now,
+      });
+    }
     return result;
   } finally {
     pendingScans.delete(rootDomain);
