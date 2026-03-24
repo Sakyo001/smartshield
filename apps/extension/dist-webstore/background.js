@@ -11,7 +11,6 @@
  */
 
 const WHOIS_API_URL = "https://railway-whois-production.up.railway.app";
-const WEB_APP_ORIGIN = "https://smartshield.it.com";
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 const SCAN_TIMEOUT = 30000;
 const DETAIL_TIMEOUT = 30000;
@@ -173,11 +172,9 @@ async function performScan(rootDomain) {
   );
 
   try {
-    // Route scans through the web app so each scan is logged in extension_activity.
-    const response = await fetch(`${WEB_APP_ORIGIN}/api/scan`, {
+    const response = await fetch(`${WHOIS_API_URL}/api/scan`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify({ url: rootDomain }),
       signal: controller.signal,
     });
