@@ -1,14 +1,3 @@
-/**
- * Background Script - SmartShield
- * Optimized for fast real-time scanning.
- *
- * Key optimizations:
- * - Scans by ROOT DOMAIN (not full URL) — sub-routes reuse the cached result
- * - Single API call for scan (domain-info fetched lazily on demand)
- * - Request deduplication: only one in-flight request per domain
- * - Smart cache with TTL to avoid redundant scans
- * - AbortController for proper request cancellation/timeout
- */
 
 const WHOIS_API_URL = "https://web-production-568aa.up.railway.app";
 const WEB_APP_ORIGIN = "https://smartshield.it.com";

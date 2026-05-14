@@ -1422,7 +1422,7 @@ function GuestScanner({
 
     try {
       const deviceId = getDeviceId();
-      const response = await fetchWithTimeout(`/api/scan`, {
+      const response = await fetchWithTimeout("/api/scan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
