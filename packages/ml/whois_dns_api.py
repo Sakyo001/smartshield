@@ -89,6 +89,7 @@ def _check_rate_limit(device_id: str):
 CORS(app, origins=[
     "https://www.smartshield.it.com",  # Production frontend
     "https://smartshield.it.com",       # Production frontend (without www)
+    "https://www.smartshield.it.com/",  # Production frontend (trailing slash)
     "http://localhost:3000",            # Local development
     "http://localhost:3001",            # Alternative local port
     "http://127.0.0.1:3000",            # Alternative localhost
