@@ -1030,12 +1030,9 @@ function GuestScanner({
   lowPerformanceMode: boolean;
   hideGuestMode: boolean;
 }) {
-  const LEGACY_WHOIS_API_URL = "https://web-production-568aa.up.railway.app";
   const DEFAULT_WHOIS_API_URL = "https://web-production-60049.up.railway.app";
   const WHOIS_API_URL =
-    process.env.NEXT_PUBLIC_WHOIS_API_URL === LEGACY_WHOIS_API_URL
-      ? DEFAULT_WHOIS_API_URL
-      : (process.env.NEXT_PUBLIC_WHOIS_API_URL ?? DEFAULT_WHOIS_API_URL);
+    process.env.NEXT_PUBLIC_WHOIS_API_URL ?? DEFAULT_WHOIS_API_URL;
   const supabase = createSupabaseClient();
 
   const [urlInput, setUrlInput] = useState("");

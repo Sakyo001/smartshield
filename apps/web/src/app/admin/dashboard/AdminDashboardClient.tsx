@@ -242,12 +242,9 @@ function buildUrlCandidates(rawUrl: string): string[] {
 }
 
 export default function AdminDashboardClient() {
-  const LEGACY_WHOIS_API_URL = "https://web-production-568aa.up.railway.app";
   const DEFAULT_WHOIS_API_URL = "https://web-production-60049.up.railway.app";
   const WHOIS_API_URL =
-    process.env.NEXT_PUBLIC_WHOIS_API_URL === LEGACY_WHOIS_API_URL
-      ? DEFAULT_WHOIS_API_URL
-      : (process.env.NEXT_PUBLIC_WHOIS_API_URL ?? DEFAULT_WHOIS_API_URL);
+    process.env.NEXT_PUBLIC_WHOIS_API_URL ?? DEFAULT_WHOIS_API_URL;
   const router = useRouter();
   const pathname = usePathname();
   const activeUserIdsRef = useRef<Set<string>>(new Set());
