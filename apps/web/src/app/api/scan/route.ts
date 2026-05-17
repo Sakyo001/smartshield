@@ -231,7 +231,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Proxy to the Python backend
-  const defaultBackendUrl = "https://web-production-60049.up.railway.app";
+  const defaultBackendUrl = "https://web-production-1eec0.up.railway.app:8080";
   const backendUrl = process.env.NEXT_PUBLIC_WHOIS_API_URL ?? defaultBackendUrl;
   if (!backendUrl) {
     return NextResponse.json({ error: "Backend URL not configured" }, { status: 500 });
