@@ -6,7 +6,7 @@
 
 const CONFIG = {
   // API Endpoints
-  WHOIS_API_URL: "https://web-production-568aa.up.railway.app",
+  WHOIS_API_URL: "https://web-production-60049.up.railway.app",
   // API Timeouts (in milliseconds)
   SCAN_TIMEOUT: 30000,
   DETAIL_TIMEOUT: 30000,

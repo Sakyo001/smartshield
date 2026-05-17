@@ -1,5 +1,5 @@
 
-const WHOIS_API_URL = "https://web-production-568aa.up.railway.app";
+const WHOIS_API_URL = "https://web-production-60049.up.railway.app";
 const WEB_APP_ORIGIN = "https://smartshield.it.com";
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 const SCAN_TIMEOUT = 30000;

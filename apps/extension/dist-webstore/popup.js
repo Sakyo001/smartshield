@@ -6,7 +6,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   const WEB_APP_ORIGIN = "https://smartshield.it.com";
-  const WHOIS_API_URL = "https://web-production-568aa.up.railway.app";
+  const WHOIS_API_URL = "https://web-production-60049.up.railway.app";
   // ─────────────────────────────────────────
   // ONBOARDING
   // ─────────────────────────────────────────
