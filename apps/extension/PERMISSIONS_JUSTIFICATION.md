@@ -34,7 +34,7 @@ The extension performs one core function: scanning websites visitors navigate to
 
 ## Host Permission Justification
 
-### `https://railway-whois-production.up.railway.app/*`
+### `https://smartshield-whois-api.onrender.com/*`
 **Purpose:** Whois and DNS lookups  
 **Usage:** SmartShield queries this backend API to retrieve domain registration details, nameserver information, and DNS records—all indicators of legitimate vs. fraudulent domains.
 
@@ -52,7 +52,7 @@ No. SmartShield does **not** execute remote code.
 
 - The extension contains **no `eval()`, `Function()` constructor, or dynamic code execution** in the manifest, background script, content script, or popup.
 - The extension **does not download or execute scripts** from remote servers.
-- Data returned from the backend APIs (`railway-whois`, `supabase`) is treated as **data only**—it is parsed and displayed, never evaluated as code.
+- Data returned from the backend APIs (`smartshield-whois-api`, `supabase`) is treated as **data only**—it is parsed and displayed, never evaluated as code.
 - All extension logic is **static and bundled** at installation time.
 
 The extension communicates with remote APIs only to **read data** (whois records, risk scores) and **write logs/scans**. Communication is request/response only, with no dynamic code injection or execution.

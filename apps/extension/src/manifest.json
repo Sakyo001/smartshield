@@ -12,9 +12,8 @@
     "alarms"
   ],
   "host_permissions": [
-    "https://railway-whois-production.up.railway.app/*",
+    "https://smartshield-whois-api.onrender.com/*",
     "https://jlgktijajxapqclgjyjx.supabase.co/*",
-    "https://web-production-1eec0.up.railway.app:8080/*",
     "https://smartshield.it.com/*",
     "https://www.smartshield.it.com/*"
   ],

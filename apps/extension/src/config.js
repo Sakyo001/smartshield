@@ -6,7 +6,7 @@
 
 const CONFIG = {
   // API Endpoints
-  WHOIS_API_URL: "https://web-production-1eec0.up.railway.app:8080",
+  WHOIS_API_URL: "https://smartshield-whois-api.onrender.com",
   // API Timeouts (in milliseconds)
   SCAN_TIMEOUT: 30000,
   DETAIL_TIMEOUT: 30000,
