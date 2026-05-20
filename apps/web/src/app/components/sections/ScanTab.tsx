@@ -1031,9 +1031,11 @@ function GuestScanner({
   hideGuestMode: boolean;
 }) {
   const DEFAULT_WHOIS_API_URL = "https://web-production-1eec0.up.railway.app:8080";
-  const WHOIS_API_URL =
+  const FALLBACK_WHOIS_API_URL = "https://smartshield-whois-api.onrender.com";
+  const PRIMARY_WHOIS_API_URL =
     process.env.NEXT_PUBLIC_WHOIS_API_URL ?? DEFAULT_WHOIS_API_URL;
   const supabase = createSupabaseClient();
+  const [whoisBaseUrl, setWhoisBaseUrl] = useState(PRIMARY_WHOIS_API_URL);
 
   const [urlInput, setUrlInput] = useState("");
   const [urlError, setUrlError] = useState<string | null>(null);
@@ -1218,15 +1220,43 @@ function GuestScanner({
   );
   const displayScore = useCountUp(currentScan?.riskScore ?? 0, scoreActive);
   useEffect(() => {
-    (async () => {
+    let active = true;
+
+    const probe = async (baseUrl: string) => {
       try {
-        const res = await fetch(`${WHOIS_API_URL}/health`).catch(() => null);
-        setApiStatus(res?.ok ? "online" : "offline");
+        const res = await fetch(`${baseUrl}/health`).catch(() => null);
+        return Boolean(res?.ok);
       } catch {
+        return false;
+      }
+    };
+
+    (async () => {
+      const primaryOk = await probe(PRIMARY_WHOIS_API_URL);
+      if (!active) return;
+
+      if (primaryOk) {
+        setWhoisBaseUrl(PRIMARY_WHOIS_API_URL);
+        setApiStatus("online");
+        return;
+      }
+
+      const fallbackOk = await probe(FALLBACK_WHOIS_API_URL);
+      if (!active) return;
+
+      if (fallbackOk) {
+        setWhoisBaseUrl(FALLBACK_WHOIS_API_URL);
+        setApiStatus("online");
+      } else {
+        setWhoisBaseUrl(PRIMARY_WHOIS_API_URL);
         setApiStatus("offline");
       }
     })();
-  }, []);
+
+    return () => {
+      active = false;
+    };
+  }, [PRIMARY_WHOIS_API_URL, FALLBACK_WHOIS_API_URL]);
 
   useEffect(() => {
     let mounted = true;
@@ -1265,7 +1295,7 @@ function GuestScanner({
 
     (async () => {
       try {
-        const res = await fetch(`${WHOIS_API_URL}/api/explain`, {
+        const res = await fetch(`${whoisBaseUrl}/api/explain`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1289,7 +1319,7 @@ function GuestScanner({
         setLoadingXAI(false);
       }
     })();
-  }, [currentScan]);
+  }, [currentScan, whoisBaseUrl]);
 
   /* Fetch feedback when tab active */
   useEffect(() => {
@@ -1304,7 +1334,7 @@ function GuestScanner({
     (async () => {
       try {
         const res = await fetch(
-          `${WHOIS_API_URL}/api/reports?url=${encodeURIComponent(currentScan.url)}`,
+          `${whoisBaseUrl}/api/reports?url=${encodeURIComponent(currentScan.url)}`,
         );
         if (res.ok) {
           const data = await res.json();
@@ -1318,7 +1348,7 @@ function GuestScanner({
         setLoadingComments(false);
       }
     })();
-  }, [activeTab, currentScan, isAuthenticated, hasCompletedScan]);
+  }, [activeTab, currentScan, isAuthenticated, hasCompletedScan, whoisBaseUrl]);
 
   /* Fetch relations / history when tab active */
   useEffect(() => {
@@ -1333,7 +1363,7 @@ function GuestScanner({
     (async () => {
       try {
         const res = await fetchWithTimeout(
-          `${WHOIS_API_URL}/api/domain-history`,
+          `${whoisBaseUrl}/api/domain-history`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1348,14 +1378,14 @@ function GuestScanner({
         setLoadingHistory(false);
       }
     })();
-  }, [activeTab, currentScan]);
+  }, [activeTab, currentScan, whoisBaseUrl]);
 
   const refreshCommunityComments = useCallback(async () => {
     if (!currentScan) return;
     setLoadingComments(true);
     try {
       const res = await fetch(
-        `${WHOIS_API_URL}/api/reports?url=${encodeURIComponent(currentScan.url)}`,
+        `${whoisBaseUrl}/api/reports?url=${encodeURIComponent(currentScan.url)}`,
       );
       if (res.ok) {
         const data = await res.json();
@@ -1368,7 +1398,7 @@ function GuestScanner({
     } finally {
       setLoadingComments(false);
     }
-  }, [WHOIS_API_URL, currentScan]);
+  }, [whoisBaseUrl, currentScan]);
 
   /* Fetch user's scan history from extension_activity */
   const fetchUserScanHistory = useCallback(async () => {

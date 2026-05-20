@@ -232,8 +232,9 @@ export async function POST(req: NextRequest) {
 
   // Proxy to the Python backend
   const defaultBackendUrl = "https://web-production-1eec0.up.railway.app:8080";
-  const backendUrl = process.env.NEXT_PUBLIC_WHOIS_API_URL ?? defaultBackendUrl;
-  if (!backendUrl) {
+  const fallbackBackendUrl = "https://smartshield-whois-api.onrender.com";
+  const primaryBackendUrl = process.env.NEXT_PUBLIC_WHOIS_API_URL ?? defaultBackendUrl;
+  if (!primaryBackendUrl) {
     return NextResponse.json({ error: "Backend URL not configured" }, { status: 500 });
   }
 
@@ -255,16 +256,41 @@ export async function POST(req: NextRequest) {
   })();
 
   try {
-    const upstream = await fetch(`${backendUrl}/api/scan`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // Forward device ID so the Flask backend can apply per-device rate limiting
-        ...(deviceId ? { "X-Device-ID": deviceId } : {}),
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(50000),
-    });
+    const callUpstream = async (baseUrl: string) =>
+      fetch(`${baseUrl}/api/scan`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Forward device ID so the Flask backend can apply per-device rate limiting
+          ...(deviceId ? { "X-Device-ID": deviceId } : {}),
+        },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(50000),
+      });
+
+    const shouldFallback = (res: Response | null) => !res || res.status >= 500;
+
+    let upstream: Response | null = null;
+    try {
+      upstream = await callUpstream(primaryBackendUrl);
+    } catch {
+      upstream = null;
+    }
+
+    if (shouldFallback(upstream) && fallbackBackendUrl !== primaryBackendUrl) {
+      try {
+        upstream = await callUpstream(fallbackBackendUrl);
+      } catch {
+        // keep upstream as-is; error handled below
+      }
+    }
+
+    if (!upstream) {
+      return NextResponse.json(
+        { error: "Upstream scan service unavailable" },
+        { status: 502, headers: rlHeaders },
+      );
+    }
 
     const data: unknown = await upstream.json();
 
